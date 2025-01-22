@@ -1,0 +1,14 @@
+__pycache__/
+.py[cod]
+$py.class
+.pyc
+__pypackages__/
+config/tournaments/*.*
+config/password.txt
+/clips/videos/
+/clips/videos - Copy/
+.DS_Store
+.vscode/
+github_token.txt
+venv/
+.venv/
