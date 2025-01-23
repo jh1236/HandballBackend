@@ -23,7 +23,7 @@ def add_user_endpoints(app):
             token = permissions.get_token(user_id, password)
             user = People.query.filter_by(id=user_id).first()
             # set cookie to token
-            response = jsonify({"token": token, 'username': user.name})
+            response = jsonify({"token": token, 'username': user.name, "permissionLevel": user.permission_level})
             response.set_cookie('token', token)
             response.set_cookie('userID', user_id)
             return response

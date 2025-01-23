@@ -131,6 +131,7 @@ class Tournaments(db.Model):
         return {
             "name": self.name,
             "searchableName": self.searchable_name,
+            "editable": get_type_from_name(self.fixtures_type, self.searchable_name).editable,
             "fixturesType": self.fixtures_type,
             "finalsType": self.finals_type,
             "ranked": self.ranked,

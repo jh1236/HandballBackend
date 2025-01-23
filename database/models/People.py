@@ -43,7 +43,7 @@ class People(db.Model):
     image_url = db.Column(db.Text())
     session_token = db.Column(db.Text())
     token_timeout = db.Column(db.Integer())
-    is_admin = db.Column(db.Boolean(), nullable=False, default=False)
+    permission_level = db.Column(db.Boolean(), nullable=False, default=False)
 
     def image(self, tournament=None):
         from database.models import Teams
@@ -213,6 +213,10 @@ class People(db.Model):
         tournament_id = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable_name).first().id
         return bool(PlayerGameStats.query.filter(PlayerGameStats.player_id == self.id,
                                                  PlayerGameStats.tournament_id == tournament_id).first())
+
+    @property
+    def is_admin(self):
+        return self.permission_level == 5
 
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None):
         from database.models import PlayerGameStats

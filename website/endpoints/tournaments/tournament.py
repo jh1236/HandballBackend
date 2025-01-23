@@ -5,7 +5,7 @@ from flask import request
 from flask import send_file
 
 from database import db
-from database.models import Tournaments
+from database.models import Tournaments, Games, Teams
 from utils.logging_handler import logger
 from utils.permissions import admin_only
 
@@ -49,6 +49,25 @@ def add_tourney_endpoints(app):
         """
         return {"tournaments": [i.as_dict() for i in Tournaments.query.all()]}
 
+    @app.get("/api/tournaments/<searchable>/winners")
+    def get_tournament_winners(searchable):
+        """
+        SCHEMA:
+        {
+            name: str = the searchable name of the tournament
+        }
+        """
+        tournament = Tournaments.query.filter(Tournaments.searchable_name == searchable).first()
+        games = Games.query.filter(Games.tournament_id == tournament.id, Games.is_final == True,
+                                   Games.court == 0).order_by(
+            Games.id.desc()).all()
+        first = games[0].winning_team.as_dict()
+        second = Teams.query.filter(Teams.id == games[0].losing_team_id).first().as_dict()
+        third = games[1].winning_team.as_dict()
+        fourth = Teams.query.filter(Teams.id == games[1].losing_team_id).first().as_dict()
+        return {"first": first, "second": second, "third": third, "fourth": fourth,
+                "podium": [first, second, third]}, 200
+
     @app.get("/api/tournaments/image")
     def tourney_image():
         """
@@ -85,7 +104,6 @@ def add_tourney_endpoints(app):
         db.session.commit()
         return "", 204
 
-
     @app.post("/api/signup/umpire")
     def umpire():
         """
@@ -100,7 +118,7 @@ def add_tourney_endpoints(app):
         with open("config/signups/officials.json", "w+") as fp:
             json.dump(umpires, fp)
         return "", 204
-    
+
     @app.post("/api/signup")
     def signup():
         """

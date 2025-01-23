@@ -8,39 +8,6 @@ from database import db
 from database.models import People
 
 
-def _requires_password():
-    return (
-        render_template(
-            "permissions/login.html",
-            error="This page requires a password to access:",
-        ),
-        403,
-    )
-
-
-def _incorrect_password():
-    return (
-        render_template(
-            "permissions/login.html",
-            error="The password you entered is not correct",
-        ),
-        403,
-    )
-
-
-def _no_permissions():
-    return (
-        render_template(
-            "permissions/no_access.html",
-            error="Your user does not have permissions to access this page",
-        ),
-        403,
-    )
-
-
-def _login_page():
-    return render_template("permissions/login.html", error=""), 200
-
 
 def encrypt(password):
     salt = bcrypt.gensalt()
@@ -129,11 +96,11 @@ def admin_only(func):
 
         user = fetch_user()
         if not user:
-            return _login_page()
+            return "This page requires authentication.", 401
         if user.is_admin:
             return func(*args, **kwargs)
 
-        return _no_permissions()
+        return "Insufficient Permissions", 401
 
     inner.__name__ = func.__name__  # changing name of inner function so flask acts nicely <3
     return inner
@@ -143,7 +110,7 @@ def officials_only(func):
     def inner(*args, **kwargs):
         user = fetch_user()
         if not user:
-            return _login_page()
+            return "This page requires authentication.", 401
 
         return func(*args, **kwargs)
 

@@ -63,6 +63,36 @@ This endpoint is open to the public.
 - image
 
 <hr>
+
+### /api/tournaments/\<tournament\>/winners
+
+#### Description
+
+Returns the image for a given tournament.
+
+#### Permissions:
+
+This endpoint is open to the public.
+
+#### Arguments:
+
+- tournament: str
+    - The searchable name of the tournament to get the winners for
+
+#### Return Structure
+
+- first: Team
+  - the team that came in first
+- second: Team
+  - the team that came in second
+- third: Team
+  - the team that came in third
+- fourth: Team
+  - the team that came in fourth
+- podium: List\[Team\]
+  - a list of the top 3 teams in order 
+
+<hr>
 <hr>
 
 ## POST endpoints

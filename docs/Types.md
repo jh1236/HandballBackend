@@ -33,7 +33,8 @@
     round: "int",
     isBye: "bool",
     status: "str",
-    faulted: "bool"
+    faulted: "bool",
+    changeCode: "int"
 }
 ```
 
@@ -275,6 +276,7 @@ if include_stats: (default false)
 {
     name: "str",
     searchableName: "str",
+    editable: "bool",
     fixturesType:  "str",
     finalsType: "str",
     ranked:  "bool",

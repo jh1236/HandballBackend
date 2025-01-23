@@ -90,6 +90,7 @@ class Games(db.Model):
     noteable_status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
 
     tournament = db.relationship("Tournaments", foreign_keys=[tournament_id])
+    winning_team = db.relationship("Teams", foreign_keys=[winning_team_id])
     team_one = db.relationship("Teams", foreign_keys=[team_one_id])
     team_two = db.relationship("Teams", foreign_keys=[team_two_id])
     best_player = db.relationship("People", foreign_keys=[best_player_id])
@@ -198,6 +199,7 @@ class Games(db.Model):
         }
 
     def as_dict(self, admin_view=False, include_game_events=False, include_player_stats=False):
+        from structure.manage_game import change_code
         d = {
             "id": self.id,
             "tournament": self.tournament.as_dict(),
@@ -228,7 +230,8 @@ class Games(db.Model):
             "round": self.round,
             "isBye": self.is_bye,
             "status": self.status,
-            "faulted": self.on_fault
+            "faulted": self.on_fault,
+            "changeCode": change_code(self.id)
         }
         if admin_view:
             d |= {

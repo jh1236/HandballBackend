@@ -4,7 +4,6 @@ from .Games import Games
 from .Officials import Officials
 from .People import People
 from .PlayerGameStats import PlayerGameStats
-from .Taunts import Taunts
 from .Teams import Teams
 from .TournamentOfficials import TournamentOfficials
 from .TournamentTeams import TournamentTeams
