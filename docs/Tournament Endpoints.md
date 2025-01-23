@@ -87,8 +87,6 @@ This endpoint is open to the public.
   - the team that came in second
 - third: Team
   - the team that came in third
-- fourth: Team
-  - the team that came in fourth
 - podium: List\[Team\]
   - a list of the top 3 teams in order 
 

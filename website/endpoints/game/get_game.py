@@ -40,7 +40,8 @@ def add_get_game_endpoints(app):
             includePlayerStats: <bool> (OPTIONAL) = whether Player Stats should be included
         }
         """
-        is_admin = fetch_user().is_admin
+        user = fetch_user()
+        is_admin = user and user.is_admin
         tournament_searchable = request.args.get('tournament', None, type=str)
         team_searchable = request.args.getlist('team', type=str)
         player_searchable = request.args.getlist('player', type=str)

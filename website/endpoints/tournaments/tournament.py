@@ -58,14 +58,17 @@ def add_tourney_endpoints(app):
         }
         """
         tournament = Tournaments.query.filter(Tournaments.searchable_name == searchable).first()
-        games = Games.query.filter(Games.tournament_id == tournament.id, Games.is_final == True,
-                                   Games.court == 0).order_by(
-            Games.id.desc()).all()
-        first = games[0].winning_team.as_dict()
-        second = Teams.query.filter(Teams.id == games[0].losing_team_id).first().as_dict()
-        third = games[1].winning_team.as_dict()
-        fourth = Teams.query.filter(Teams.id == games[1].losing_team_id).first().as_dict()
-        return {"first": first, "second": second, "third": third, "fourth": fourth,
+        games = Games.query.filter(Games.tournament_id == tournament.id, Games.is_final == True).order_by(
+            Games.round.desc(), Games.court, Games.id.desc()).all()
+        grand_final = games[0]
+        first = grand_final.winning_team.as_dict()
+        second = Teams.query.filter(Teams.id == grand_final.losing_team_id).first().as_dict()
+        if games[1].winning_team_id in [grand_final.team_one_id,
+                                            grand_final.team_two_id]:
+            third = Teams.query.filter(Teams.id == games[1].losing_team_id).first().as_dict()
+        else:
+            third = games[1].winning_team.as_dict()
+        return {"first": first, "second": second, "third": third,
                 "podium": [first, second, third]}, 200
 
     @app.get("/api/tournaments/image")

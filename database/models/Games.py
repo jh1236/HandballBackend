@@ -142,7 +142,7 @@ class Games(db.Model):
     @property
     def losing_team_id(self):
         # cheeky maths hack
-        return self.team_two_id + self.team_two_id - self.winning_team_id
+        return self.team_one_id + self.team_two_id - self.winning_team_id
 
     def reset(self):
         self.started = False
