@@ -1,6 +1,7 @@
 import re
 import time
 
+from Config import Config
 from database import db
 from database.database_utilities import on_court_for_game
 from database.models import *
@@ -735,7 +736,7 @@ def get_timeout_time(game_id):
     time_out_time = last_time_out.created_at
     if not last_time_out.team_id:
         return time_out_time  # the timeout is an umpire timeout
-    return time_out_time + 30 if (time_out_time > 0) else 0
+    return time_out_time + Config().time_out_time if (time_out_time > 0) else 0
 
 
 def get_last_score_time(game_id):
@@ -746,7 +747,7 @@ def get_last_score_time(game_id):
                          .order_by(GameEvents.id.desc()).first())
 
     if not most_recent_score or most_recent_score.event_type == 'Timeout': return -1
-    return most_recent_score.created_at + 20 if (most_recent_score.created_at or -1) + 25 > time.time() else -1
+    return most_recent_score.created_at + Config().time_between_points if (most_recent_score.created_at or -1) + 25 > time.time() else -1
 
 
 def get_timeout_caller(game_id):

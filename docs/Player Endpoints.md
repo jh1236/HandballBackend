@@ -52,6 +52,8 @@ This endpoint is open to the public.
     - The searchable name of the tournament to get stats from
 - game: int (Optional)
     - The id of the game that was played
+- includeCourtStats: bool (Optional)
+    - True if the stats of the player on each court are to be included.
 - formatData: bool (Optional)
     - True if the server should format the data before it is sent.
 - returnTournament: bool (Optional)

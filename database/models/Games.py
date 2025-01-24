@@ -199,7 +199,7 @@ class Games(db.Model):
         }
 
     def as_dict(self, admin_view=False, include_game_events=False, include_player_stats=False):
-        from structure.manage_game import change_code
+        from structure.manage_game import change_code, get_timeout_time
         d = {
             "id": self.id,
             "tournament": self.tournament.as_dict(),
@@ -231,7 +231,8 @@ class Games(db.Model):
             "isBye": self.is_bye,
             "status": self.status,
             "faulted": self.on_fault,
-            "changeCode": change_code(self.id)
+            "changeCode": change_code(self.id),
+            "timeoutExpirationTime": 1000 * get_timeout_time(self.id)
         }
         if admin_view:
             d |= {

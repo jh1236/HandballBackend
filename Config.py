@@ -12,3 +12,5 @@ class Config(object):
         self.use_warnings = True
         self.use_green_cards = True
         self.badminton_style_serves = True
+        self.time_out_time = 30
+        self.time_between_points = 20

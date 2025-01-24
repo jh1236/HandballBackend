@@ -115,7 +115,7 @@ class People(db.Model):
                 ret[k] = round(v, 2)
         return ret
 
-    def stats(self, games_filter=None, make_nice=True, include_unranked=False, include_solo=False, admin=False) -> dict[
+    def stats(self, games_filter=None, make_nice=True, include_unranked=False, include_solo=False, admin=False, include_court_stats=False) -> dict[
         str, str | float]:
         from database.models import PlayerGameStats, Games
         from database.models import EloChange
@@ -203,6 +203,10 @@ class People(db.Model):
                     ret[k] = f"{100.0 * v: .2f}%".strip()
                 elif isinstance(v, float):
                     ret[k] = round(v, 2)
+        if include_court_stats:
+            courts = [self.stats(games_filter=lambda a: games_filter(a).filter(Games.court == i)) for i in range(2)]
+            for i, c in enumerate(courts):
+                ret[f"Court {i}"] = c
         return ret
 
     def played_in_tournament(self, tournament_searchable_name):
@@ -218,7 +222,7 @@ class People(db.Model):
     def is_admin(self):
         return self.permission_level == 5
 
-    def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None):
+    def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None, include_court_stats=False):
         from database.models import PlayerGameStats
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id, PlayerGameStats.player_id == self.id).first()
@@ -231,7 +235,7 @@ class People(db.Model):
         }
         if include_stats:
             game_filter = (lambda a: a.filter(PlayerGameStats.tournament_id == tournament)) if tournament else None
-            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view)
+            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view, include_court_stats=include_court_stats)
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin

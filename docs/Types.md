@@ -34,7 +34,8 @@
     isBye: "bool",
     status: "str",
     faulted: "bool",
-    changeCode: "int"
+    changeCode: "int",
+    timeoutExpirationTime: "float"
 }
 ```
 

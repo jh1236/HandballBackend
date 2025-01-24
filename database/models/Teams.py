@@ -133,12 +133,12 @@ class Teams(db.Model):
             "primaryColor": self.primary_color,
             "secondaryColor": self.secondary_color,
             "captain": self.captain.as_dict(include_stats=include_player_stats,
-                                            tournament=tournament, game_id=game_id) if self.captain else None,
+                                            tournament=tournament, game_id=game_id, make_nice=make_nice) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
-                                                   game_id=game_id) if self.non_captain else None,
+                                                   game_id=game_id, make_nice=make_nice) if self.non_captain else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
-                                                  tournament=tournament, game_id=game_id) if self.substitute else None,
+                                                  tournament=tournament, game_id=game_id, make_nice=make_nice) if self.substitute else None,
         }
         if game_id:
             from database.models import GameEvents, Games
