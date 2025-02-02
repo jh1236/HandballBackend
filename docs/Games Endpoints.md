@@ -39,8 +39,10 @@ This endpoint is open to the public
     - The id of the game
 - includeGameEvents: bool
     - True if the events of the game should be included
-- includePlayerStats
+- includeStats
     - True if the stats of each player should be included
+- includePreviousCards: bool (official only)
+    - True if the cards each team has previously received should be included
 
 #### Return Structure
 
@@ -294,12 +296,18 @@ The user must be logged in as an official to use this endpoint
     - The id of the game
 - bestPlayer: str
     - The searchable name of the player who played best
-- notes: str
+- notes: str (Optional)
     - Any notes that the umpire would like to leave for the tournament director
 - protestTeamOne: str (Optional)
     - If present, represents the reason that team one wants to protest
 - protestTeamTwo: str (Optional)
     - If present, represents the reason that team two wants to protest
+- notesTeamOne: str (Optional)
+    - If present, represents the notes the umpire left for team one
+- notesTeamTwo: str (Optional)
+    - If present, represents the notes the umpire left for team two
+- markedForReview: bool (Optional)
+    - If the game needs to be reviewed by a supervisor
 
 #### Return Structure
 

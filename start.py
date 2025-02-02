@@ -1,4 +1,5 @@
 import flask
+from jinja2.ext import debug
 
 from database import db
 from utils.args_handler import args
@@ -13,7 +14,7 @@ if not args.debug:
 logger.setLevel(args.log)
 
 app = flask.Flask(__name__)
-app.config["DEBUG"] = args.debug
+app.config["DEBUG"] = args.debug and False
 app.config["SQLALCHEMY_DATABASE_URI"] = args.database
 app.config['SECRET_KEY'] = 'secret!'
 app.config['EXIT_CODE'] = 1 # 0 = stop server, 1 = fatal error or restart, 2 = update and restart server
@@ -37,7 +38,7 @@ if __name__ == "__main__":
 
 
     if args.debug:
-        app.run(host="0.0.0.0", port=port, debug=True)
+        app.run(host="0.0.0.0", port=port)
 
     else:
         Minify(app=app, html=True, js=True, cssless=True)
@@ -53,7 +54,7 @@ if __name__ == "__main__":
             return "Stopping server", 200 # there is like a 50% chance this will not be returned, and the server will just close without sending a message to the client. whoopsie
 
         logger.info("Starting server...")
-        server = create_server(app, host="0.0.0.0", port=port)
+        server = create_server(app, host="0.0.0.0", port=port, debug=False)
         server.run()
 
     logger.info(f"The server has closed, exit code: {app.config['EXIT_CODE']}")

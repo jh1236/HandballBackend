@@ -198,13 +198,14 @@ class Games(db.Model):
             "Tournament": self.tournament.name,
         }
 
-    def as_dict(self, admin_view=False, include_game_events=False, include_player_stats=False):
-        from structure.manage_game import change_code, get_timeout_time
+    def as_dict(self, admin_view=False, include_game_events=False, include_stats=False, official_view=False,
+                include_prev_cards=False, make_nice=False):
+        from structure.manage_game import change_code, get_timeout_time, is_official_timeout
         d = {
             "id": self.id,
             "tournament": self.tournament.as_dict(),
-            "teamOne": self.team_one.as_dict(game_id=self.id if include_player_stats else None),
-            "teamTwo": self.team_two.as_dict(game_id=self.id if include_player_stats else None),
+            "teamOne": self.team_one.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats, make_nice=make_nice),
+            "teamTwo": self.team_two.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats, make_nice=make_nice),
             "teamOneScore": self.team_one_score,
             "teamTwoScore": self.team_two_score,
             "teamOneTimeouts": self.team_one_timeouts,
@@ -232,8 +233,19 @@ class Games(db.Model):
             "status": self.status,
             "faulted": self.on_fault,
             "changeCode": change_code(self.id),
-            "timeoutExpirationTime": 1000 * get_timeout_time(self.id)
+            "timeoutExpirationTime": 1000 * get_timeout_time(self.id),
+            "isOfficialTimeout": is_official_timeout(self.id),
         }
+        if official_view and include_prev_cards:
+            from database.models.GameEvents import GameEvents
+            card_events = GameEvents.query.filter(
+                (GameEvents.event_type == "Warning") | (GameEvents.event_type.like("% Card")),
+                (GameEvents.team_id == self.team_one_id) | (GameEvents.team_id == self.team_two_id),
+                GameEvents.tournament_id == self.tournament_id, GameEvents.game_id <= self.id).all()
+            d |= {
+                "teamOneCards": [i for i in card_events if i.team_id == self.team_one_id],
+                "teamTwoCards": [i for i in card_events if i.team_id == self.team_two_id]
+            }
         if admin_view:
             d |= {
                 "adminStatus": self.admin_status,
@@ -245,9 +257,9 @@ class Games(db.Model):
             d["events"] = [i.as_dict(include_game=False) for i in
                            GameEvents.query.filter(GameEvents.game_id == self.id).all()]
 
-        if include_player_stats:
+        if include_stats:
             from database.models import PlayerGameStats
-            d["players"] = [i.as_dict(include_game=False) for i in
+            d["players"] = [i.as_dict(include_game=False, make_nice=make_nice) for i in
                             PlayerGameStats.query.filter(PlayerGameStats.game_id == self.id).all()]
 
         return d

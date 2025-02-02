@@ -7,8 +7,6 @@ from utils.permissions import officials_only, admin_only, fetch_user
 
 def add_edit_game_endpoints(app):
     @app.get("/api/games/change_code")
-    @admin_only
-    
     def change_code():
         """
         SCHEMA:
@@ -21,7 +19,6 @@ def add_edit_game_endpoints(app):
 
     @app.post("/api/games/update/start")
     @officials_only
-    
     def start():
         """
         SCHEMA:
@@ -132,8 +129,14 @@ def add_edit_game_endpoints(app):
         logger.info(f"Request for end: {request.json}")
         game_id = request.json["id"]
         best = request.json.get("bestPlayer", None)
-        manage_game.end_game(game_id, best, request.json.get("notes", None), request.json["protestTeamOne"],
-                             request.json["protestTeamTwo"])
+        overall_notes = request.json.get("notes", '')
+        team_one_notes = request.json.get("teamOneNotes", '')
+        team_two_notes = request.json.get("teamTwoNotes", '')
+        protest_team_one = request.json.get("protestTeamOne", None)
+        protest_team_two = request.json.get("protestTeamTwo", None)
+        marked_for_review = request.json.get("markedForReview", False)
+        manage_game.end_game(game_id, best, overall_notes, protest_team_one,
+                             protest_team_two, team_one_notes, team_two_notes, marked_for_review)
         return "", 204
 
     @app.post("/api/games/update/timeout")
@@ -309,7 +312,7 @@ def add_edit_game_endpoints(app):
         }
         """
         logger.info(request.json)
-        gid = manage_game.create_game(request.json["tournament"], request.json["teamOne"], request.json["teamTwo"],
+        gid = manage_game.create_game(request.json["tournament"], request.json.get("teamOne", ''), request.json.get("teamTwo", ''),
                                       request.json["official"], request.json.get("playersOne", None),
                                       request.json.get("playersTwo", None))
         return jsonify({"id": gid})

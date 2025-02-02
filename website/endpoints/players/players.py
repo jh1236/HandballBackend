@@ -49,6 +49,7 @@ def add_get_player_endpoints(app):
         """
         make_nice = request.args.get('formatData', False, type=bool)
         return_tournament = request.args.get('returnTournament', False, type=bool)
+        include_court_stats = request.args.get('includeCourtStats', False, type=bool)
         game = request.args.get("game", None, type=int)
         user = fetch_user()
         admin = user and user.is_admin
@@ -61,7 +62,8 @@ def add_get_player_endpoints(app):
         out = {"player": People.query.filter(People.searchable_name == searchable).first().as_dict(include_stats=True,
                                                                                                    tournament=tid,
                                                                                                    make_nice=make_nice,
-                                                                                                   admin_view=admin)}
+                                                                                                   admin_view=admin,
+                                                                                                   include_court_stats=include_court_stats)}
         if return_tournament and tournament_searchable:
             out["tournament"] = tournament.as_dict()
         return out

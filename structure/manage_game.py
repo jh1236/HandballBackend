@@ -100,7 +100,6 @@ def sync(game_id):
                         if j.card_time_remaining > 0:
                             j.card_time_remaining -= 1
 
-
             case "Pardon":
                 player.card_time_remaining = 0
             case "Ace":
@@ -184,7 +183,6 @@ def sync(game_id):
         game.side_to_serve = i.side_to_serve
 
 
-
 def game_string_lookup(char: str):
     d = {
         "s": "Score",
@@ -204,7 +202,7 @@ def game_string_lookup(char: str):
     return None
 
 
-def _team_and_position_to_id(game_id, first_team, left_player, c) -> int:
+def _team_and_position_to_id(game_id, first_team, left_player) -> int:
     game = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
 
     if first_team:
@@ -354,7 +352,7 @@ def _add_to_game(game_id, char: str, first_team, left_player, team_to_serve=None
 
 def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official=None, scorer=None):
     if game_has_started(game_id):
-        raise ValueError("Game is Already Over!")
+        raise ValueError("Game is Already Started!")
     game = Games.query.filter(Games.id == game_id).first()
     team_one_id, team_two_id = game.team_one, game.team_two
 
@@ -448,7 +446,7 @@ def card(game_id, first_team, left_player, color, duration, reason):
     team = game.team_one if first_team else game.team_two
     players = on_court_for_game(game_id, team.id)
     both_carded = min([i.card_time_remaining if i.card_time_remaining >= 0 else 12 for i in players])
-    if both_carded != 0:
+    if both_carded != 0 or len(players) == 1:
         my_score = game.team_one_score
         their_score = game.team_two_score
         if game.someone_has_won:
@@ -456,7 +454,7 @@ def card(game_id, first_team, left_player, color, duration, reason):
         if not first_team:
             my_score, their_score = their_score, my_score
         both_carded = min(both_carded, max(11 - their_score, my_score + 2 - their_score))
-        _score_point(game_id, not first_team, None, penalty=True, points=both_carded)
+        _score_point(game_id, not first_team, None, penalty=True, points=duration if len(players) == 1 else both_carded)
     db.session.commit()
 
 
@@ -466,6 +464,7 @@ def undo(game_id, override=False):
     delete_after = GameEvents.query.filter(GameEvents.game_id == game_id,
                                            (GameEvents.notes == None) | (GameEvents.notes != 'Penalty'),
                                            GameEvents.event_type != 'End Timeout',
+                                           GameEvents.event_type != 'Notes',
                                            GameEvents.event_type != 'Protest').order_by(GameEvents.id.desc()).first().id
     GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.id >= delete_after).delete()
     sync(game_id)
@@ -506,7 +505,7 @@ def end_timeout(game_id):
     db.session.commit()
 
 
-def end_game(game_id, best_player, notes, protest_team_one, protest_team_two):
+def end_game(game_id, best_player, notes, protest_team_one, protest_team_two, notes_team_one='', notes_team_two='', marked_for_review=False):
     if not game_is_over(game_id):
         raise ValueError("Game is not yet Over!")
     game = Games.query.filter(Games.id == game_id).first()
@@ -522,14 +521,18 @@ def end_game(game_id, best_player, notes, protest_team_one, protest_team_two):
         _add_to_game(game_id, "Protest", True, None, notes=protest_team_one)
     if protest_team_two:
         _add_to_game(game_id, "Protest", False, None, notes=protest_team_two)
+    if notes_team_one.strip():
+        _add_to_game(game_id, "Notes", True, None, notes=notes_team_one)
+    if notes_team_two.strip():
+        _add_to_game(game_id, "Notes", False, None, notes=notes)
     _add_to_game(game_id, "End Game", None, None, notes=notes, details=best.id if best else None)
 
     if any(i.red_cards for i in players):
         game.admin_status = 'Red Card Awarded'
     elif protest_team_one or protest_team_two:
         game.admin_status = 'Protested'
-    elif notes.strip():
-        game.admin_status = 'Notes to Review'
+    elif marked_for_review:
+        game.admin_status = 'Marked For Review'
     elif any(i.yellow_cards for i in players):
         game.admin_status = 'Yellow Card Awarded'
     elif forfeit:
@@ -747,7 +750,8 @@ def get_last_score_time(game_id):
                          .order_by(GameEvents.id.desc()).first())
 
     if not most_recent_score or most_recent_score.event_type == 'Timeout': return -1
-    return most_recent_score.created_at + Config().time_between_points if (most_recent_score.created_at or -1) + 25 > time.time() else -1
+    return most_recent_score.created_at + Config().time_between_points if (
+                                                                                  most_recent_score.created_at or -1) + 25 > time.time() else -1
 
 
 def get_timeout_caller(game_id):
@@ -767,6 +771,15 @@ def delete(game_id, override=False):
     PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id).delete()
     Games.query.filter(Games.id == game_id).delete()
     db.session.commit()
+
+
+def is_official_timeout(game_id):
+    last_time_out = GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.event_type == 'Timeout').order_by(
+        GameEvents.id.desc()).first()
+    if last_time_out:
+        return last_time_out.team_id == None
+    else:
+        return False
 
 
 def resolve_game(game_id):

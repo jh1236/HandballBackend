@@ -34,7 +34,10 @@
     round: "int",
     isBye: "bool",
     status: "str",
-    faulted: "bool"
+    faulted: "bool",
+    changeCode: "int",
+    timeoutExpirationTime: "float",
+    isOfficialTimeout: "bool"
 }
 ```
 
@@ -216,6 +219,7 @@ everything from `Person` plus
     elo: "float",
     eloDelta: "float",
     sideOfCourt: "str",
+    isCaptain: "bool"
 }
 ```
 
@@ -223,7 +227,7 @@ if include_game: (default true)
 
 ```json lines
 {
-    game: "Game"
+    game: "Game",
 }
 ```
 
@@ -237,13 +241,16 @@ if include_game: (default true)
     captain: "Person",
     nonCaptain: "Person | PlayerGameStats | null",
     substitute: "Person | PlayerGameStats | null",
+    teamColor: "str",
+    elo: "float"
 }
 ```
 
 if game_id:
 ```json lines
 {
-    servedFromLeft: "bool"
+    servedFromLeft: "bool",
+    eloDelta: "float"
 }
 ```
 
@@ -276,6 +283,7 @@ if include_stats: (default false)
 {
     name: "str",
     searchableName: "str",
+    editable: "bool",
     fixturesType:  "str",
     finalsType: "str",
     ranked:  "bool",
@@ -331,8 +339,10 @@ This endpoint is open to the public
     - The id of the game
 - includeGameEvents: bool
     - True if the events of the game should be included
-- includePlayerStats
+- includeStats
     - True if the stats of each player should be included
+- includePreviousCards: bool (official only)
+    - True if the cards each team has previously received should be included
 
 #### Return Structure
 
@@ -405,7 +415,7 @@ This endpoint is open to the public
     - True if the stats of each player should be included
 - returnTournament: bool (Optional)
     - If the tournament is to be returned in the response
-- seperateFinals
+- separateFinals
     - True if the finals should be returned in a separate list
 
 #### Return Structure
@@ -586,12 +596,16 @@ The user must be logged in as an official to use this endpoint
     - The id of the game
 - bestPlayer: str
     - The searchable name of the player who played best
-- notes: str
+- notes: str (Optional)
     - Any notes that the umpire would like to leave for the tournament director
 - protestTeamOne: str (Optional)
     - If present, represents the reason that team one wants to protest
 - protestTeamTwo: str (Optional)
     - If present, represents the reason that team two wants to protest
+- notesTeamOne: str (Optional)
+    - If present, represents the notes the umpire left for team one
+- notesTeamTwo: str (Optional)
+    - If present, represents the notes the umpire left for team two
 
 #### Return Structure
 
@@ -599,28 +613,6 @@ The user must be logged in as an official to use this endpoint
 
 <hr>
 
-### /api/games/update/timeout
-
-#### Description
-
-Starts a timeout for a given team
-
-#### Permissions:
-
-The user must be logged in as an official to use this endpoint
-
-#### Arguments:
-
-- id: int
-    - The id of the game
-- firstTeam: bool
-    - True if the team listed first called the timeout
-
-#### Return Structure
-
-- N/A
-
-<hr>
 
 ### /api/games/update/forfeit
 
@@ -734,7 +726,7 @@ The user must be logged in as an official to use this endpoint
 
 <hr>
 
-### /api/games/update/official_timeout
+### /api/games/update/officialTimeout
 
 #### Description
 
@@ -954,9 +946,9 @@ This endpoint is open to the public.
     - True if the data is pooled
 - ladder: list\[Team\]
     - The list of teams in order if the tournament is _not_ pooled
-- pool_one: list\[Team\]
+- poolOne: list\[Team\]
     - The list of teams in order in pool 1 if the tournament is pooled
-- pool_two: list\[Team\]
+- poolTwo: list\[Team\]
     - The list of teams in order in pool 2 if the tournament is pooled
 - tournament: Tournament
     - The tournament that was passed in
@@ -1035,8 +1027,10 @@ This endpoint is open to the public.
     - The searchable name of the player to get stats for
 - tournament: str (Optional)
     - The searchable name of the tournament to get stats from
-- game: str (Optional)
-    - The searchable name of the tournament to get stats from
+- game: int (Optional)
+    - The id of the game that was played
+- includeCourtStats: bool (Optional)
+    - True if the stats of the player on each court are to be included.
 - formatData: bool (Optional)
     - True if the server should format the data before it is sent.
 - returnTournament: bool (Optional)
@@ -1062,7 +1056,7 @@ This endpoint is open to the public.
 
 #### Arguments:
 
-- name: str (Optional)
+- name: str
     - The searchable name of the user to get an image from
 
 #### Return Structure
@@ -1135,6 +1129,34 @@ This endpoint is open to the public.
 - image
 
 <hr>
+
+### /api/tournaments/\<tournament\>/winners
+
+#### Description
+
+Returns the image for a given tournament.
+
+#### Permissions:
+
+This endpoint is open to the public.
+
+#### Arguments:
+
+- tournament: str
+    - The searchable name of the tournament to get the winners for
+
+#### Return Structure
+
+- first: Team
+  - the team that came in first
+- second: Team
+  - the team that came in second
+- third: Team
+  - the team that came in third
+- podium: List\[Team\]
+  - a list of the top 3 teams in order 
+
+<hr>
 <hr>
 
 ## POST endpoints
@@ -1151,8 +1173,11 @@ The user must be logged in as an **admin** to use this endpoint
 
 #### Arguments:
 
-- tournament: str (Optional)
+- tournament: str
     - The searchable name of the tournament to set the note for
+
+- note: str
+    - the note for the front page of the tournament
 
 #### Return Structure
 
@@ -1160,7 +1185,7 @@ The user must be logged in as an **admin** to use this endpoint
 
 <hr>
 
-### /api/tournaments/serve_style
+### /api/tournaments/serveStyle
 
 #### Description
 
@@ -1172,9 +1197,9 @@ The user must be logged in as an **admin** to use this endpoint
 
 #### Arguments:
 
-- tournament: str (Optional)
+- tournament: str
     - The searchable name of the tournament to set the note for
-- badminton_serves: bool (Optional)
+- badmintonServes: bool (Optional)
     - True if the tournament should use badminton serves. If omitted, it will toggle the state of the badminton serve
       data
 
@@ -1207,7 +1232,7 @@ This endpoint is open to the public.
 
 #### Return Structure
 
-- official: Official
+- officials: Official
 - tournament: Tournament
   - The tournament that was passed in
 <hr>
@@ -1237,7 +1262,8 @@ This endpoint is open to the public.
 
 # USERS API REFERENCE
 
-## GET endpoints
+## POST endpoints
+
 
 ### /api/login
 
@@ -1252,19 +1278,15 @@ This endpoint is open to the public.
 #### Arguments:
 
 - userId: int
-    - the ID of the user attempting to log in
+  - the ID of the user attempting to log in
 - password: str
-    - the password of the user attempting to log in
+  - the password of the user attempting to log in
 
 #### Return Structure
 
 - token: str
-    - the token that the user received
+  - the token that the user received
 
-<hr>
-<hr>
-
-## POST endpoints
 
 ### /api/image/
 

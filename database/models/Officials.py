@@ -4,6 +4,7 @@ import time
 from database import db
 
 
+
 # create table main.officials
 # (
 #     id          INTEGER
@@ -29,8 +30,9 @@ class Officials(db.Model):
     person = db.relationship("People", foreign_keys=[person_id])
 
     def stats(self, tournament=None):
-        from database.models import PlayerGameStats
-        from database.models import Games
+        from database.models.PlayerGameStats import PlayerGameStats
+        from database.models.Games import Games
+        from database.models.Tournaments import Tournaments
         stats = {
             "Green Cards Given": 0,
             "Yellow Cards Given": 0,
@@ -45,7 +47,11 @@ class Officials(db.Model):
         }
         q = db.session.query(PlayerGameStats).join(Games, Games.id == PlayerGameStats.game_id).filter(
             Games.official_id == self.id)
-        if tournament:
+        if tournament :
+            if isinstance(tournament, str):
+                tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament).first()
+            if isinstance(tournament, int):
+                tournament = Tournaments.query.filter(Tournaments.id == tournament).first()
             q = q.filter(Games.tournament_id == tournament.id)
         prev_game_id = -1
         for pgs in q.all():

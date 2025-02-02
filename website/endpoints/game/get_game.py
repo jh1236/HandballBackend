@@ -18,11 +18,19 @@ def add_get_game_endpoints(app):
             includePlayerStats: <bool> (OPTIONAL) = whether Player Stats should be included
         }
         """
+        user = fetch_user()
+        is_admin = user and user.is_admin
+        is_official = user and user.is_official
         game = Games.query.filter(Games.id == id).first()
         include_game_events = request.args.get('includeGameEvents', None, type=bool)
-        include_player_stats = request.args.get('includePlayerStats', False, type=bool)
+        include_prev_cards = request.args.get('includePreviousCards', False, type=bool)
+        format_data = request.args.get('formatData', False, type=bool)
+        if include_prev_cards and not is_official:
+            return 'Previous cards are only accesible by officials', 403
+        include_stats = request.args.get('includeStats', False, type=bool)
         out = {
-            "game": game.as_dict(include_game_events=include_game_events, include_player_stats=include_player_stats)
+            "game": game.as_dict(include_game_events=include_game_events, include_stats=include_stats,
+                                 admin_view=is_admin, official_view=is_official, make_nice=format_data),
         }
         return out
 
@@ -70,7 +78,7 @@ def add_get_game_endpoints(app):
             games = games.join(PlayerGameStats, PlayerGameStats.game_id == Games.id).filter(
                 PlayerGameStats.player_id == pid)
         games = games.order_by((Games.start_time.desc()), Games.id.desc())
-        out = {"games": [i.as_dict(include_game_events=include_game_events, include_player_stats=include_player_stats,
+        out = {"games": [i.as_dict(include_game_events=include_game_events, include_stats=include_player_stats,
                                    admin_view=is_admin) for i in games.all()]}
         if return_tournament and tournament_searchable:
             out["tournament"] = tournament.as_dict()
@@ -84,6 +92,8 @@ def add_get_game_endpoints(app):
             tournament: <str> = the searchable name of the tournament
         }
         """
+        user = fetch_user()
+        is_admin = user and user.is_admin
         tournament_searchable = request.args.get('tournament', type=str)
         separate_finals = request.args.get('separateFinals', type=bool)
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
@@ -97,7 +107,8 @@ def add_get_game_endpoints(app):
             fixtures[game.round].append(game)
         new_fixtures = []
         for k, v in fixtures.items():
-            new_fixtures.append({"games": [j.as_dict() for j in fixture_sorter(v)], "final": v[0].is_final})
+            new_fixtures.append(
+                {"games": [j.as_dict(admin_view=is_admin) for j in fixture_sorter(v)], "final": v[0].is_final})
         fixtures = new_fixtures
         if separate_finals:
             finals = [i for i in fixtures if i["final"]]

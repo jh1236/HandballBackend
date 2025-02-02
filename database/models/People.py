@@ -2,7 +2,6 @@
 import time
 
 from database import db
-from database.models import Games
 
 # create table main.people
 # (
@@ -43,7 +42,7 @@ class People(db.Model):
     image_url = db.Column(db.Text())
     session_token = db.Column(db.Text())
     token_timeout = db.Column(db.Integer())
-    permission_level = db.Column(db.Boolean(), nullable=False, default=False)
+    permission_level = db.Column(db.Integer(), nullable=False, default=False)
 
     def image(self, tournament=None):
         from database.models import Teams
@@ -204,9 +203,11 @@ class People(db.Model):
                 elif isinstance(v, float):
                     ret[k] = round(v, 2)
         if include_court_stats:
+            if not games_filter:
+                games_filter = lambda a: a
             courts = [self.stats(games_filter=lambda a: games_filter(a).filter(Games.court == i)) for i in range(2)]
             for i, c in enumerate(courts):
-                ret[f"Court {i}"] = c
+                ret[f"Court {i + 1}"] = c
         return ret
 
     def played_in_tournament(self, tournament_searchable_name):
@@ -221,6 +222,10 @@ class People(db.Model):
     @property
     def is_admin(self):
         return self.permission_level == 5
+
+    @property
+    def is_official(self):
+        return self.permission_level >= 2
 
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None, include_court_stats=False):
         from database.models import PlayerGameStats

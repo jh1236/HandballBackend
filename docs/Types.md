@@ -35,7 +35,8 @@
     status: "str",
     faulted: "bool",
     changeCode: "int",
-    timeoutExpirationTime: "float"
+    timeoutExpirationTime: "float",
+    isOfficialTimeout: "bool"
 }
 ```
 
@@ -217,6 +218,7 @@ everything from `Person` plus
     elo: "float",
     eloDelta: "float",
     sideOfCourt: "str",
+    isCaptain: "bool"
 }
 ```
 
@@ -224,7 +226,7 @@ if include_game: (default true)
 
 ```json lines
 {
-    game: "Game"
+    game: "Game",
 }
 ```
 
@@ -238,13 +240,16 @@ if include_game: (default true)
     captain: "Person",
     nonCaptain: "Person | PlayerGameStats | null",
     substitute: "Person | PlayerGameStats | null",
+    teamColor: "str",
+    elo: "float"
 }
 ```
 
 if game_id:
 ```json lines
 {
-    servedFromLeft: "bool"
+    servedFromLeft: "bool",
+    eloDelta: "float"
 }
 ```
 

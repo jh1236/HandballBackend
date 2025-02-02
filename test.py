@@ -1,7 +1,7 @@
 # print(permissions.encrypt("0"))
 # print(permissions.encrypt("0"))
 # print(permissions.check_password())
-
+from math import floor
 
 from database import db
 from database.models import *
@@ -80,6 +80,17 @@ def interpolate_start_times():
     db.session.commit()
 
 
+def modify_team_colors():
+    FACTOR = 0.7
+    teams = Teams.query.filter(Teams.team_color != None).all()
+    for i in teams:
+        r = floor(int(i.team_color[1:3], 16) * FACTOR)
+        g = floor(int(i.team_color[3:5], 16) * FACTOR)
+        b = floor(int(i.team_color[5:7], 16) * FACTOR)
+        i.team_color = f'#{r:02X}{g:02X}{b:02X}'
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-        sync_all_games()
+        modify_team_colors()

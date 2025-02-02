@@ -23,6 +23,18 @@ PERCENTAGES = [
     "Percentage"
 ]
 
+MULTI_GAME_KEYS = [
+    "Games Played",
+    "Games Won",
+    "Games Lost",
+    "Percentage",
+]
+
+def hex_to_rgba(hexa):
+    if not hexa:
+        return None
+    hexa = hexa.lstrip('#')
+    return [*(int(hexa[i:i+2], 16)  for i in (0, 2, 4)), 255]
 
 class Teams(db.Model):
     __tablename__ = "teams"
@@ -35,8 +47,7 @@ class Teams(db.Model):
     name = db.Column(db.Text(), nullable=False)
     searchable_name = db.Column(db.Text(), nullable=False)
     image_url = db.Column(db.Text())
-    primary_color = db.Column(db.Text())
-    secondary_color = db.Column(db.Text())
+    team_color = db.Column(db.Text())
     captain_id = db.Column(db.Integer(), db.ForeignKey("people.id"), nullable=False)
     non_captain_id = db.Column(db.Integer(), db.ForeignKey("people.id"))
     substitute_id = db.Column(db.Integer(), db.ForeignKey("people.id"))
@@ -129,19 +140,22 @@ class Teams(db.Model):
             "name": self.name,
             "searchableName": self.searchable_name,
             "imageUrl": self.image_url if not self.image_url or not self.image_url.startswith(
-                "/") else "https://squarers.org" + self.image_url,
-            "primaryColor": self.primary_color,
-            "secondaryColor": self.secondary_color,
+                "/") else "https://api.squarers.club" + self.image_url,
+            "teamColor": self.team_color,
+            "teamColorAsRGBABecauseDigbyIsLazy": hex_to_rgba(self.team_color),
             "captain": self.captain.as_dict(include_stats=include_player_stats,
-                                            tournament=tournament, game_id=game_id, make_nice=make_nice) if self.captain else None,
+                                            tournament=tournament, game_id=game_id,
+                                            make_nice=make_nice) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
                                                    game_id=game_id, make_nice=make_nice) if self.non_captain else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
-                                                  tournament=tournament, game_id=game_id, make_nice=make_nice) if self.substitute else None,
+                                                  tournament=tournament, game_id=game_id,
+                                                  make_nice=make_nice) if self.substitute else None,
         }
         if game_id:
-            from database.models import GameEvents, Games
+            from database.models.GameEvents import GameEvents
+
             last_time_served = GameEvents.query.filter(
                 GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
                 GameEvents.event_type == 'Score').order_by(
@@ -151,7 +165,28 @@ class Teams(db.Model):
             else:
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:
-            from database.models import Games
-            game_filter = (lambda a: a.filter(Games.tournament_id == tournament)) if tournament else None
+            from database.models.Games import Games
+            if game_id:
+                game_filter = (lambda a: a.filter(Games.id == game_id))
+            elif tournament:
+                game_filter = (lambda a: a.filter(Games.tournament_id == tournament))
+            else:
+                game_filter = None
             d["stats"] = self.stats(game_filter, make_nice=make_nice, admin_view=admin_view)
+            if game_id:
+                from database.models.EloChange import EloChange
+                from database.models.PlayerGameStats import PlayerGameStats
+                elo_delta_q = EloChange.query.join(PlayerGameStats,
+                                                   (EloChange.player_id == PlayerGameStats.player_id) & (
+                                                           EloChange.game_id == game_id)).filter(
+                    PlayerGameStats.team_id == self.id).all()
+                elo_delta = sum(i.elo_delta for i in elo_delta_q) / (len(elo_delta_q) or 1)
+
+                if make_nice:
+                    d["stats"]["Elo Delta"] = round(elo_delta, 2) if elo_delta else 0
+                else:
+                    d["stats"]["Elo Delta"] = elo_delta if elo_delta else 0
+                for i in MULTI_GAME_KEYS:
+                    del d["stats"][i]
+
         return d
