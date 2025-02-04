@@ -231,10 +231,12 @@ def game_has_started(game_id):
     return Games.query.filter(Games.id == game_id).first().started
 
 
-def _score_point(game_id, first_team, left_player, penalty=False, points=1):
+def _score_point(game_id, first_team, left_player, penalty=False, points=1, notes=None):
+    if penalty and notes:
+        raise Exception("Penalty and notes cannot both be set!")
     for _ in range(points):
         _add_to_game(game_id, "Score", first_team, left_player, team_to_serve=first_team,
-                     notes="Penalty" if penalty else None)
+                     notes=notes if notes else "Penalty" if penalty else None)
 
 
 def get_serve_details(game, team_one, team_two, team_who_served, player_who_served, next_team_to_serve, serve_side):
@@ -403,10 +405,13 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     db.session.commit()
 
 
-def score_point(game_id, first_team, left_player):
+def score_point(game_id, first_team, left_player, score_method):
     if game_is_over(game_id):
         raise ValueError("Game is Already Over!")
-    _score_point(game_id, first_team, left_player)
+    if score_method not in [None, "Double Bounce", "Straight", "Out of Court", "Double Touch", "Grabs",
+                            "Illegal Body Part", "Obstruction"]:
+        raise ValueError(f"{score_method} is not a valid method!")
+    _score_point(game_id, first_team, left_player, notes=score_method)
     db.session.commit()
 
 
@@ -505,9 +510,13 @@ def end_timeout(game_id):
     db.session.commit()
 
 
-def end_game(game_id, best_player, notes, protest_team_one, protest_team_two, notes_team_one='', notes_team_two='', marked_for_review=False):
+def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, protest_team_one, protest_team_two,
+             notes_team_one='', notes_team_two='',
+             marked_for_review=False):
     if not game_is_over(game_id):
         raise ValueError("Game is not yet Over!")
+    if not team_one_rating or not team_two_rating:
+        raise ValueError("A rating value must be set for each team")
     game = Games.query.filter(Games.id == game_id).first()
     best = People.query.filter(People.searchable_name == best_player).first()
     players = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id).all()
@@ -517,15 +526,15 @@ def end_game(game_id, best_player, notes, protest_team_one, protest_team_two, no
         if forfeit is None and [i for i in teams if i.non_captain_id]:
             raise ValueError("Best Player was not provided")
 
+    _add_to_game(game_id, "End Game", None, None, notes=notes, details=best.id if best else None)
     if protest_team_one:
         _add_to_game(game_id, "Protest", True, None, notes=protest_team_one)
     if protest_team_two:
         _add_to_game(game_id, "Protest", False, None, notes=protest_team_two)
-    if notes_team_one.strip():
-        _add_to_game(game_id, "Notes", True, None, notes=notes_team_one)
-    if notes_team_two.strip():
-        _add_to_game(game_id, "Notes", False, None, notes=notes)
-    _add_to_game(game_id, "End Game", None, None, notes=notes, details=best.id if best else None)
+    _add_to_game(game_id, "Notes", True, None, notes=notes_team_one, details=team_one_rating)
+    _add_to_game(game_id, "Notes", False, None, notes=notes_team_two, details=team_two_rating)
+
+    game.marked_for_review = marked_for_review
 
     if any(i.red_cards for i in players):
         game.admin_status = 'Red Card Awarded'

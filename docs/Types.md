@@ -44,9 +44,18 @@ if admin:
 
 ```json lines
 {
-    adminStatus: "str",
-    noteableStatus: "str",
-    notes: "str"
+    admin: {
+        adminStatus: "str",
+        noteableStatus: "str",
+        notes: "str",
+        cards: "list[GameEvents]",
+        teamOneRating: "int",
+        teamTwoRating: "int",
+        teamOneNotes: "str",
+        teamTwoNotes: "str",
+        teamOneProtest: "str",
+        teamTwoProtest: "str"
+    }
 }
 ```
 

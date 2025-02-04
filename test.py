@@ -5,7 +5,6 @@ from math import floor
 
 from database import db
 from database.models import *
-from fix_images import load_images
 from start import app
 from structure import manage_game
 from utils.statistics import calc_elo

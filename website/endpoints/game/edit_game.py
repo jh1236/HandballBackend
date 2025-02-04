@@ -60,7 +60,8 @@ def add_edit_game_endpoints(app):
         game_id = int(request.json["id"])
         first_team = request.json["firstTeam"]
         left_player = request.json["leftPlayer"]
-        manage_game.score_point(game_id, first_team, left_player)
+        score_method = request.json.get("method", None)
+        manage_game.score_point(game_id, first_team, left_player, score_method)
         return "", 204
 
     @app.post("/api/games/update/ace")
@@ -130,12 +131,14 @@ def add_edit_game_endpoints(app):
         game_id = request.json["id"]
         best = request.json.get("bestPlayer", None)
         overall_notes = request.json.get("notes", '')
+        team_one_rating = request.json["teamOneRating"]
+        team_two_rating = request.json["teamTwoRating"]
         team_one_notes = request.json.get("teamOneNotes", '')
         team_two_notes = request.json.get("teamTwoNotes", '')
         protest_team_one = request.json.get("protestTeamOne", None)
         protest_team_two = request.json.get("protestTeamTwo", None)
         marked_for_review = request.json.get("markedForReview", False)
-        manage_game.end_game(game_id, best, overall_notes, protest_team_one,
+        manage_game.end_game(game_id, best, team_one_rating, team_two_rating, overall_notes, protest_team_one,
                              protest_team_two, team_one_notes, team_two_notes, marked_for_review)
         return "", 204
 

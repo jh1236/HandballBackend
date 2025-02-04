@@ -185,6 +185,8 @@ The user must be logged in as an official to use this endpoint
     - True if the team listed first scored the point
 - leftPlayer: bool
     - True if the player who started the point on the left side scored the point
+- method: 'Double Bounce' | 'Straight' | 'Out of Court' | 'Double Touch' | 'Grabs' | 'Illegal Body Part'| 'Obstruction'
+    - The way that the point was scored
 
 #### Return Structure
 

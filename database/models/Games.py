@@ -88,6 +88,7 @@ class Games(db.Model):
     status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
     admin_status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
     noteable_status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
+    marked_for_review = db.Column(db.Boolean(), default=False, nullable=False)
 
     tournament = db.relationship("Tournaments", foreign_keys=[tournament_id])
     winning_team = db.relationship("Teams", foreign_keys=[winning_team_id])
@@ -204,8 +205,10 @@ class Games(db.Model):
         d = {
             "id": self.id,
             "tournament": self.tournament.as_dict(),
-            "teamOne": self.team_one.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats, make_nice=make_nice),
-            "teamTwo": self.team_two.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats, make_nice=make_nice),
+            "teamOne": self.team_one.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats,
+                                             make_nice=make_nice),
+            "teamTwo": self.team_two.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats,
+                                             make_nice=make_nice),
             "teamOneScore": self.team_one_score,
             "teamTwoScore": self.team_two_score,
             "teamOneTimeouts": self.team_one_timeouts,
@@ -247,16 +250,37 @@ class Games(db.Model):
                 "teamTwoCards": [i for i in card_events if i.team_id == self.team_two_id]
             }
         if admin_view:
-            d |= {
+            from database.models import GameEvents
+            rating_events = None if not self.ended else GameEvents.query.filter(
+                GameEvents.game_id == self.id, GameEvents.event_type == 'Notes').all()
+            team_one_protest = GameEvents.query.filter(GameEvents.game_id == self.id,
+                                                       GameEvents.event_type == 'Protest',
+                                                       GameEvents.team_id == self.team_one_id).first()
+            team_two_protest = GameEvents.query.filter(GameEvents.game_id == self.id,
+                                                       GameEvents.event_type == 'Protest',
+                                                       GameEvents.team_id == self.team_two_id).first()
+            d["admin"] = {
                 "adminStatus": self.admin_status,
                 "noteableStatus": self.noteable_status,
                 "notes": self.notes,
+                "teamOneRating": [i.details for i in rating_events if i.team_id == self.team_one_id][
+                    0] if rating_events else 3,
+                "teamTwoRating": [i.details for i in rating_events if i.team_id == self.team_two_id][
+                    0] if rating_events else 3,
+                "teamOneNotes": [i.notes for i in rating_events if i.team_id == self.team_one_id][
+                    0] if rating_events else None,
+                "teamTwoNotes": [i.notes for i in rating_events if i.team_id == self.team_two_id][
+                    0] if rating_events else None,
+                "teamOneProtest": team_one_protest.notes if team_one_protest else None,
+                "teamTwoProtest": team_two_protest.notes if team_two_protest else None,
             }
         if include_game_events:
             from database.models import GameEvents
             d["events"] = [i.as_dict(include_game=False) for i in
                            GameEvents.query.filter(GameEvents.game_id == self.id).all()]
-
+            if admin_view:
+                d["admin"]["cards"] = [i for i in d["events"] if
+                                       "Card" in i["eventType"] or i["eventType"] == "Warning"]
         if include_stats:
             from database.models import PlayerGameStats
             d["players"] = [i.as_dict(include_game=False, make_nice=make_nice) for i in
