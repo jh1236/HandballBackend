@@ -4,7 +4,7 @@ import typing
 
 from FixtureGenerators.FixturesGenerator import get_type_from_name
 from database import db
-from database.models import TournamentTeams
+from database.models.TournamentTeams import TournamentTeams
 
 if typing.TYPE_CHECKING:
     from database.models import Teams

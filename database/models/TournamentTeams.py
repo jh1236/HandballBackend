@@ -24,6 +24,8 @@ class TournamentTeams(db.Model):
     # Set fields
     tournament_id = db.Column(db.Integer(), db.ForeignKey("tournaments.id"), nullable=False)
     team_id = db.Column(db.Integer(), db.ForeignKey("teams.id"), nullable=False)
+    image_url = db.Column(db.Text())
+    name = db.Column(db.Text())
     pool = db.Column(db.Integer())
 
     tournament = db.relationship("Tournaments")

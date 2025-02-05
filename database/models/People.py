@@ -114,7 +114,8 @@ class People(db.Model):
                 ret[k] = round(v, 2)
         return ret
 
-    def stats(self, games_filter=None, make_nice=True, include_unranked=False, include_solo=False, admin=False, include_court_stats=False) -> dict[
+    def stats(self, games_filter=None, make_nice=True, include_unranked=False, include_solo=False, admin=False,
+              include_court_stats=False) -> dict[
         str, str | float]:
         from database.models import PlayerGameStats, Games
         from database.models import EloChange
@@ -227,10 +228,12 @@ class People(db.Model):
     def is_official(self):
         return self.permission_level >= 2
 
-    def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None, include_court_stats=False):
+    def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None,
+                include_court_stats=False):
         from database.models import PlayerGameStats
         if game_id:
-            pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id, PlayerGameStats.player_id == self.id).first()
+            pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
+                                               PlayerGameStats.player_id == self.id).first()
             return pgs.as_dict(include_game=False)
         img = self.image(tournament=tournament)
         d = {
@@ -239,8 +242,14 @@ class People(db.Model):
             "imageUrl": img if not img or not img.startswith("/") else "https://squarers.org" + img,
         }
         if include_stats:
+            include_unranked = False
+            if tournament:
+                from database.models.Tournaments import Tournaments
+                t = Tournaments.query.filter(Tournaments.id == tournament).first()
+                include_unranked = not t.ranked
             game_filter = (lambda a: a.filter(PlayerGameStats.tournament_id == tournament)) if tournament else None
-            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view, include_court_stats=include_court_stats)
+            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view,
+                                    include_court_stats=include_court_stats, include_unranked=include_unranked)
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin

@@ -3,7 +3,6 @@ import time
 import typing
 
 from database import db
-from utils.permissions import admin_only
 
 if typing.TYPE_CHECKING:
     pass

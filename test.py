@@ -1,6 +1,4 @@
-# print(permissions.encrypt("0"))
-# print(permissions.encrypt("0"))
-# print(permissions.check_password())
+import csv
 import random
 from math import floor
 
@@ -92,22 +90,29 @@ def modify_team_colors():
     db.session.commit()
 
 
+def load_quotes():
+    with open("C:/Users/Jared Healy/Downloads/Handball Availability for 21_02 - Handball QOTD.csv",
+              'r', errors="ignore") as read_obj:
+        csv_reader = csv.reader(read_obj)
+
+        # convert string to list
+        list_of_csv = list(csv_reader)
+    random.shuffle(list_of_csv)
+    for n, i in enumerate(list_of_csv):
+        q = QOTD()
+        q.quote = i[0]
+        q.author = i[1]
+        db.session.add(q)
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-
-        import csv
-
-        with open("C:/Users/Jared Healy/Downloads/Handball Availability for 21_02 - Handball QOTD.csv",
-                  'r', errors="ignore") as read_obj:
-            csv_reader = csv.reader(read_obj)
-
-            # convert string to list
-            list_of_csv = list(csv_reader)
-
-        random.shuffle(list_of_csv)
-        for n, i in enumerate(list_of_csv):
-            q = QOTD()
-            q.quote = i[0]
-            q.author = i[1]
-            db.session.add(q)
-        db.session.commit()
+        manage_game.create_tournament("The Eighth SUSS Championship",
+                                      "Pooled",
+                                      "PooledFinals",
+                                      True,
+                                      True,
+                                      True,
+                                      teams=[97, 112, 113, 114, 115, 95, 7, 116, 117, 118, 119, 20],
+                                      officials=[1, 2, 4, 6, 12, 14])

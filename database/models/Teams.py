@@ -30,11 +30,13 @@ MULTI_GAME_KEYS = [
     "Percentage",
 ]
 
+
 def hex_to_rgba(hexa):
     if not hexa:
         return None
     hexa = hexa.lstrip('#')
-    return [*(int(hexa[i:i+2], 16)  for i in (0, 2, 4)), 255]
+    return [*(int(hexa[i:i + 2], 16) for i in (0, 2, 4)), 255]
+
 
 class Teams(db.Model):
     __tablename__ = "teams"
@@ -153,9 +155,29 @@ class Teams(db.Model):
                                                   tournament=tournament, game_id=game_id,
                                                   make_nice=make_nice) if self.substitute else None,
         }
+        if tournament:
+            from database.models.TournamentTeams import TournamentTeams
+            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+                                              TournamentTeams.team_id == self.id).first()
+            if tt:
+                d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
+                d["teamColor"] = tt.team_color if tt.image_url else d["teamColor"]
+                d["teamColorAsRGBABecauseDigbyIsLazy"] = tt.team_color if tt.image_url else d[
+                    "teamColorAsRGBABecauseDigbyIsLazy"]
+                d["name"] = tt.name if tt.name else d["name"]
         if game_id:
+            from database.models.TournamentTeams import TournamentTeams
             from database.models.GameEvents import GameEvents
-
+            from database.models.Games import Games
+            game = Games.query.filter(Games.id == game_id).first()
+            tt = TournamentTeams.query.filter(TournamentTeams.id == game.tournament_id,
+                                              TournamentTeams.team_id == self.id).first()
+            if tt:
+                d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
+                d["teamColor"] = tt.team_color if tt.image_url else d["teamColor"]
+                d["teamColorAsRGBABecauseDigbyIsLazy"] = tt.team_color if tt.image_url else d[
+                    "teamColorAsRGBABecauseDigbyIsLazy"]
+                d["name"] = tt.name if tt.name else d["name"]
             last_time_served = GameEvents.query.filter(
                 GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
                 GameEvents.event_type == 'Score').order_by(
@@ -166,13 +188,16 @@ class Teams(db.Model):
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:
             from database.models.Games import Games
+            ranked = True
             if game_id:
                 game_filter = (lambda a: a.filter(Games.id == game_id))
             elif tournament:
+                from database.models.Tournaments import Tournaments
+                ranked = Tournaments.query.filter(Tournaments.id == tournament).first().ranked
                 game_filter = (lambda a: a.filter(Games.tournament_id == tournament))
             else:
                 game_filter = None
-            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin_view=admin_view)
+            d["stats"] = self.stats(game_filter, make_nice=make_nice, admin_view=admin_view, ranked=ranked)
             if game_id:
                 from database.models.EloChange import EloChange
                 from database.models.PlayerGameStats import PlayerGameStats
