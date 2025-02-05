@@ -3,6 +3,7 @@ import time
 import typing
 
 from database import db
+from utils.permissions import admin_only
 
 if typing.TYPE_CHECKING:
     pass
@@ -233,7 +234,7 @@ class Games(db.Model):
             "isFinal": self.is_final,
             "round": self.round,
             "isBye": self.is_bye,
-            "status": self.status,
+            "status": self.admin_status if admin_view else self.status,
             "faulted": self.on_fault,
             "changeCode": change_code(self.id),
             "timeoutExpirationTime": 1000 * get_timeout_time(self.id),
@@ -260,7 +261,6 @@ class Games(db.Model):
                                                        GameEvents.event_type == 'Protest',
                                                        GameEvents.team_id == self.team_two_id).first()
             d["admin"] = {
-                "adminStatus": self.admin_status,
                 "noteableStatus": self.noteable_status,
                 "notes": self.notes,
                 "teamOneRating": [i.details for i in rating_events if i.team_id == self.team_one_id][

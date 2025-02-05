@@ -1,10 +1,12 @@
 # print(permissions.encrypt("0"))
 # print(permissions.encrypt("0"))
 # print(permissions.check_password())
+import random
 from math import floor
 
 from database import db
 from database.models import *
+from database.models.QOTD import QOTD
 from start import app
 from structure import manage_game
 from utils.statistics import calc_elo
@@ -92,4 +94,20 @@ def modify_team_colors():
 
 if __name__ == '__main__':
     with app.app_context():
-        modify_team_colors()
+
+        import csv
+
+        with open("C:/Users/Jared Healy/Downloads/Handball Availability for 21_02 - Handball QOTD.csv",
+                  'r', errors="ignore") as read_obj:
+            csv_reader = csv.reader(read_obj)
+
+            # convert string to list
+            list_of_csv = list(csv_reader)
+
+        random.shuffle(list_of_csv)
+        for n, i in enumerate(list_of_csv):
+            q = QOTD()
+            q.quote = i[0]
+            q.author = i[1]
+            db.session.add(q)
+        db.session.commit()

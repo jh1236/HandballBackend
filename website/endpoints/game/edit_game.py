@@ -137,7 +137,7 @@ def add_edit_game_endpoints(app):
         team_two_notes = request.json.get("teamTwoNotes", '')
         protest_team_one = request.json.get("protestTeamOne", None)
         protest_team_two = request.json.get("protestTeamTwo", None)
-        marked_for_review = request.json.get("markedForReview", False)
+        marked_for_review = request.json.get("markedForReview", False, type=bool)
         manage_game.end_game(game_id, best, team_one_rating, team_two_rating, overall_notes, protest_team_one,
                              protest_team_two, team_one_notes, team_two_notes, marked_for_review)
         return "", 204

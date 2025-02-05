@@ -45,7 +45,6 @@ if admin:
 ```json lines
 {
     admin: {
-        adminStatus: "str",
         noteableStatus: "str",
         notes: "str",
         cards: "list[GameEvents]",

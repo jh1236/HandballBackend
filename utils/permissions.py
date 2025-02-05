@@ -5,7 +5,7 @@ import bcrypt
 from flask import redirect, request, render_template
 
 from database import db
-from database.models import People
+from database.models.People import People
 
 
 
