@@ -46,11 +46,13 @@ def add_get_game_endpoints(app):
             court: <str> (OPTIONAL) = the court the game was on
             includeGameEvents: <bool> (OPTIONAL) = whether Game Events should be included
             includePlayerStats: <bool> (OPTIONAL) = whether Player Stats should be included
+            limit: int (OPTIONAL) = the limit of the games which should be returned
         }
         """
         user = fetch_user()
         is_admin = user and user.is_admin
         tournament_searchable = request.args.get('tournament', None, type=str)
+        limit = request.args.get('limit', -1, type=int)
         team_searchable = request.args.getlist('team', type=str)
         player_searchable = request.args.getlist('player', type=str)
         official_searchable = request.args.getlist('official', type=str)
@@ -78,6 +80,8 @@ def add_get_game_endpoints(app):
             games = games.join(PlayerGameStats, PlayerGameStats.game_id == Games.id).filter(
                 PlayerGameStats.player_id == pid)
         games = games.order_by((Games.start_time.desc()), Games.id.desc())
+        if limit > 0:
+            games = games.limit(20)
         out = {"games": [i.as_dict(include_game_events=include_game_events, include_stats=include_player_stats,
                                    admin_view=is_admin) for i in games.all()]}
         if return_tournament and tournament_searchable:

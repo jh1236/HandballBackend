@@ -150,10 +150,10 @@ class Teams(db.Model):
                                             make_nice=make_nice) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
-                                                   game_id=game_id, make_nice=make_nice) if self.non_captain else None,
+                                                   game_id=game_id, make_nice=make_nice) if self.non_captain_id else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
                                                   tournament=tournament, game_id=game_id,
-                                                  make_nice=make_nice) if self.substitute else None,
+                                                  make_nice=make_nice) if self.substitute_id else None,
         }
         if tournament:
             from database.models.TournamentTeams import TournamentTeams

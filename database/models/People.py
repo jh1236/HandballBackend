@@ -246,7 +246,8 @@ class People(db.Model):
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
                                                PlayerGameStats.player_id == self.id).first()
-            return pgs.as_dict(include_game=False, include_stats=include_stats)
+            if pgs:
+                return pgs.as_dict(include_game=False, include_stats=include_stats)
         img = self.image(tournament=tournament)
         d = {
             "name": self.name,
