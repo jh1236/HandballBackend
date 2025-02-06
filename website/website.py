@@ -1,6 +1,7 @@
 from datetime import datetime
 import random
 
+import pytz
 from flask import send_file
 
 from database.models.QOTD import QOTD
@@ -14,7 +15,7 @@ def init_api(app):
     @app.get("/api/qotd")
     def qotd():
         quotes = QOTD.query.all()
-        day = ((datetime.today() - datetime.fromtimestamp(0)).days)
+        day = ((datetime.now(pytz.timezone('Australia/Perth')) - datetime.fromtimestamp(0, pytz.utc)).days)
         return quotes[day % len(quotes)].as_dict()
 
     @app.get("/robots.txt")

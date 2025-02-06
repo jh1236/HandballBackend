@@ -49,9 +49,10 @@ def regen_elo():
 def sync_all_games():
     games = Games.query.all()
     for i in games:
-        if i.is_bye: continue
         if i.id % 20 == 0:
             print(f"Syncing Game {i.id}")
+        if i.is_bye:
+            continue
         try:
             manage_game.sync(i.id)
         except Exception as e:
@@ -106,13 +107,17 @@ def load_quotes():
     db.session.commit()
 
 
+def eight_suss_championship():
+    manage_game.create_tournament("The Eighth SUSS Championship",
+                                  "Pooled",
+                                  "PooledFinals",
+                                  True,
+                                  True,
+                                  True,
+                                  teams=[97, 112, 113, 114, 115, 95, 7, 116, 117, 118, 119, 20],
+                                  officials=[1, 2, 4, 6, 12, 14, 10])
+
+
 if __name__ == '__main__':
     with app.app_context():
-        manage_game.create_tournament("The Eighth SUSS Championship",
-                                      "Pooled",
-                                      "PooledFinals",
-                                      True,
-                                      True,
-                                      True,
-                                      teams=[97, 112, 113, 114, 115, 95, 7, 116, 117, 118, 119, 20],
-                                      officials=[1, 2, 4, 6, 12, 14])
+        sync_all_games()

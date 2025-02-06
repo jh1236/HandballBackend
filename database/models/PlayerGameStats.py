@@ -70,6 +70,7 @@ class PlayerGameStats(db.Model):
     red_cards = db.Column(db.Integer(), default=0, nullable=False)
     card_time = db.Column(db.Integer(), default=0, nullable=False)
     card_time_remaining = db.Column(db.Integer(), default=0, nullable=False)
+    rating = db.Column(db.Integer(), default=3)
     start_side = db.Column(db.Text())
     side_of_court = db.Column(db.Text())
 
@@ -161,7 +162,7 @@ class PlayerGameStats(db.Model):
     def row_by_name(cls, name):
         return cls.rows[name]
 
-    def as_dict(self, include_game=True, make_nice=False, admin_view=False):
+    def as_dict(self, include_game=True, make_nice=False, admin_view=False, include_stats=False):
         from database.models.EloChange import EloChange
         elo_delta = EloChange.query.filter(EloChange.game_id == self.game_id,
                                            EloChange.player_id == self.player_id).first()
@@ -173,33 +174,35 @@ class PlayerGameStats(db.Model):
             "isCaptain": self.team.captain_id == self.player_id,
             "startSide": self.start_side,
         }
-        stats = {
-            "Rounds on Court": self.rounds_on_court,
-            "Rounds Carded": self.rounds_carded,
-            "Points Scored": self.points_scored,
-            "Aces Scored": self.aces_scored,
-            "Faults": self.faults,
-            "Double Faults": self.double_faults,
-            "Served Points": self.served_points,
-            "Served Points Won": self.served_points_won,
-            "Serves Received": self.serves_received,
-            "Serves Returned": self.serves_returned,
-            "Biggest Ace Streak": self.ace_streak,
-            "Biggest Serve Streak": self.serve_streak,
-            "Green Cards": self.green_cards,
-            "Yellow Cards": self.yellow_cards,
-            "Red Cards": self.red_cards,
-            "Starting Side": self.start_side,
-            "Elo": round(self.player.elo(self.game_id), 2),
-            "Elo Delta": round(elo_delta.elo_delta if elo_delta else 0, 2),
-        }
-        if make_nice:
-            for k, v in stats.items():
-                if k in PERCENTAGES:
-                    d[k] = f"{100.0 * v: .2f}%".strip()
-                elif isinstance(v, float):
-                    d[k] = round(v, 2)
-        d["stats"] = stats
+        if include_stats:
+            stats = {
+                "Rounds on Court": self.rounds_on_court,
+                "Rounds Carded": self.rounds_carded,
+                "Points Scored": self.points_scored,
+                "Aces Scored": self.aces_scored,
+                "Faults": self.faults,
+                "Double Faults": self.double_faults,
+                "Served Points": self.served_points,
+                "Served Points Won": self.served_points_won,
+                "Serves Received": self.serves_received,
+                "Serves Returned": self.serves_returned,
+                "Biggest Ace Streak": self.ace_streak,
+                "Biggest Serve Streak": self.serve_streak,
+                "Green Cards": self.green_cards,
+                "Yellow Cards": self.yellow_cards,
+                "Red Cards": self.red_cards,
+                "Starting Side": self.start_side,
+                "Elo": round(self.player.elo(self.game_id), 2),
+                "Elo Delta": round(elo_delta.elo_delta if elo_delta else 0, 2),
+            }
+            if make_nice:
+                for k, v in stats.items():
+                    if k in PERCENTAGES:
+                        d[k] = f"{100.0 * v: .2f}%".strip()
+                    elif isinstance(v, float):
+                        d[k] = round(v, 2)
+            d["stats"] = stats
+
         if include_game:
             d["team"] = self.team.as_dict(),
             d["game"] = self.game.as_dict()

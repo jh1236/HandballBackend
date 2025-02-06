@@ -10,21 +10,23 @@ class Pooled(FixturesGenerator):
         super().__init__(tournament_id, fill_officials=True, editable=False, fill_courts=True)
 
     def _begin_tournament(self, tournament_id):
-        tournament = Tournaments.query.filter(Tournaments.id==tournament_id).first()
-        teams = TournamentTeams.query.filter(TournamentTeams.tournament == tournament_id).all()
+        tournament = Tournaments.query.filter(Tournaments.id == tournament_id).first()
+        teams = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament_id).all()
+        teams = sorted(teams, key=lambda x: x.team.elo())
         pool = 0
         for i in teams:
-            i.pool = pool
+            i.pool = 1 + pool
             pool = 1 - pool
         tournament.is_pooled = True
         db.session.commit()
 
     def _end_of_round(self, tournament_id):
-        tournament = Tournaments.query.filter(Tournaments.id==tournament_id).first()
-        teams = TournamentTeams.query.filter(TournamentTeams.tournament == tournament_id).all()
-        rounds = Games.query.filter(Games.tournament == tournament_id).order_by(Games.round.desc()).first().round
+        tournament = Tournaments.query.filter(Tournaments.id == tournament_id).first()
+        teams = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament_id).all()
+        game = Games.query.filter(Games.tournament_id == tournament_id).order_by(Games.round.desc()).first()
+        rounds = game.round if game else 0
 
-        pools = [[j for j in teams if j[1] == i] for i in range(2)]
+        pools = [[j for j in teams if j.pool == i] for i in range(1, 3)]
 
         for pool in pools:
             if len(pool) % 2 != 0:
@@ -42,4 +44,5 @@ class Pooled(FixturesGenerator):
             for j in range(mid):
                 team_one = pool[j]
                 team_two = pool[len(pool) - 1 - j]
-                manage_game.create_game(tournament_id, team_one, team_two, round_number=rounds + 1)
+                manage_game.create_game(tournament_id, team_one.team.searchable_name, team_two.team.searchable_name,
+                                        round_number=rounds + 1)

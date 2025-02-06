@@ -205,9 +205,9 @@ class Games(db.Model):
         d = {
             "id": self.id,
             "tournament": self.tournament.as_dict(),
-            "teamOne": self.team_one.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats,
+            "teamOne": self.team_one.as_dict(game_id=self.id, include_stats=include_stats,
                                              make_nice=make_nice),
-            "teamTwo": self.team_two.as_dict(game_id=self.id if include_stats else None, include_stats=include_stats,
+            "teamTwo": self.team_two.as_dict(game_id=self.id, include_stats=include_stats,
                                              make_nice=make_nice),
             "teamOneScore": self.team_one_score,
             "teamTwoScore": self.team_two_score,

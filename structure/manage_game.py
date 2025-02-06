@@ -164,6 +164,13 @@ def sync(game_id):
                 game.ended = True
             case "Start":
                 game.started = True
+                for j in all_players:
+                    if j.player_id in [i.team_one_left_id, i.team_two_left_id]:
+                        j.start_side = 'Left'
+                    elif j.player_id in [i.team_one_right_id, i.team_two_right_id]:
+                        j.start_side = 'Right'
+                    else:
+                        j.start_side = 'Substitute'
             case _:
                 pass
     for j in all_players:
@@ -535,6 +542,12 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
     _add_to_game(game_id, "Notes", True, None, notes=notes_team_one, details=team_one_rating)
     _add_to_game(game_id, "Notes", False, None, notes=notes_team_two, details=team_two_rating)
 
+    for i in players:
+        if i.team_id == game.team_one_id:
+            i.rating = team_one_rating
+        else:
+            i.rating = team_two_rating
+
     game.marked_for_review = marked_for_review
 
     if any(i.red_cards for i in players):
@@ -719,15 +732,15 @@ def create_tournament(name, fixtures_gen, finals_gen, ranked, two_courts, scorer
                              ranked=ranked,
                              two_courts=two_courts,
                              has_scorer=scorer,
-                             image_url='/api/tournaments/image?name=' + searchable_name
+                             image_url='https://api.squarers.club/tournaments/image?name=' + searchable_name
                              )
 
     db.session.add(tournament)
     db.session.commit()
-    for i in teams:
+    for i in sorted(teams):
         tt = TournamentTeams(tournament_id=tournament.id, team_id=i)
         db.session.add(tt)
-    for i in officials:
+    for i in sorted(officials):
         to = TournamentOfficials(tournament_id=tournament.id, official_id=i, is_scorer=True, is_umpire=True)
         db.session.add(to)
     db.session.commit()

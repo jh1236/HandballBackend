@@ -87,3 +87,32 @@ This endpoint is open to the public.
 - image
 
 <hr>
+
+### /api/players/stats
+
+#### Description
+
+Returns the average stats over a given tournament
+
+#### Permissions:
+
+This endpoint is open to the public.
+
+#### Arguments:
+
+- tournament: str (Optional)
+    - The searchable name of the tournament to get officials from
+- game: int (Optional)
+    - The id of the game to get average stats for
+- formatData: bool (Optional)
+    - True if the server should format the data before it is sent.
+- returnTournament: bool (Optional)
+    - If the tournament is to be returned in the response
+
+#### Return Structure
+
+- players: list\[Person\]
+- tournament: Tournament
+    - The tournament that was passed in
+
+<hr>

@@ -28,6 +28,20 @@ PERCENTAGES = [
 ]
 
 
+def beatify_player_stats(d):
+    out = {}
+    for k, v in d.items():
+        if v is None:
+            out[k] = "-"
+        elif k in PERCENTAGES:
+            out[k] = f"{100.0 * v: .2f}%".strip()
+        elif isinstance(v, float):
+            out[k] = round(v, 2)
+        else:
+            out[k] = v
+    return out
+
+
 class People(db.Model):
     __tablename__ = "people"
 
@@ -141,11 +155,12 @@ class People(db.Model):
         players = [i[1] for i in q]
         elo_delta = [i[2] for i in q]
         games_played = len(games) or 1  # used as a divisor to save me thinking about div by zero
+        games_lost = len([g for g, p in zip(games, players) if g.winning_team_id != p.team_id and g.ended])
         ret = {
             "B&F Votes": len([i for i in games if i.best_player_id == self.id]),
             "Elo": self.elo(max([i.id for i in games] + [0])),
             "Games Won": len([g for g, p in zip(games, players) if g.winning_team_id == p.team_id]),
-            "Games Lost": len([g for g, p in zip(games, players) if g.winning_team_id != p.team_id]),
+            "Games Lost": games_lost,
             "Games Played": len([i for i in games if i.started]),
             "Percentage": len([g for g, p in zip(games, players) if g.winning_team_id == p.team_id]) / games_played,
             "Points Scored": sum(i.points_scored for i in players),
@@ -161,8 +176,7 @@ class People(db.Model):
             "Net Elo Delta": sum(i.elo_delta for i in elo_delta if i),
             "Average Elo Delta": sum(i.elo_delta for i in elo_delta if i) / games_played,
             "Points per Game": sum(i.points_scored for i in players) / games_played,
-            "Points per Loss": sum(i.points_scored for i in players) / (
-                    len([g for g, p in zip(games, players) if g.winning_team_id != p.team_id]) or 1),
+            "Points per Loss": sum(i.points_scored for i in players) / (games_lost or 1),
             "Aces per Game": sum(i.aces_scored for i in players) / games_played,
             "Faults per Game": sum(i.faults for i in players) / games_played,
             "Cards": sum(i.green_cards + i.yellow_cards + i.red_cards for i in players),
@@ -197,12 +211,10 @@ class People(db.Model):
         if admin:
             ret["Penalty Points"] = ret["Green Cards"] * 2 + ret["Yellow Cards"] * 5 + ret["Red Cards"] * 10
             ret["Warnings"] = sum(i.warnings for i in players)
+            rated_games = [i.rating for i in players if i.rating]
+            ret["Average Rating"] = sum(rated_games) / len(rated_games) if rated_games else 3
         if make_nice:
-            for k, v in ret.items():
-                if k in PERCENTAGES:
-                    ret[k] = f"{100.0 * v: .2f}%".strip()
-                elif isinstance(v, float):
-                    ret[k] = round(v, 2)
+            ret = beatify_player_stats(ret)
         if include_court_stats:
             if not games_filter:
                 games_filter = lambda a: a
@@ -234,7 +246,7 @@ class People(db.Model):
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
                                                PlayerGameStats.player_id == self.id).first()
-            return pgs.as_dict(include_game=False)
+            return pgs.as_dict(include_game=False, include_stats=include_stats)
         img = self.image(tournament=tournament)
         d = {
             "name": self.name,
