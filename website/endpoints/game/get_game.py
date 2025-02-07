@@ -1,13 +1,39 @@
 from collections import defaultdict
 
-from flask import request
+from flask import request, jsonify
 
 from database.models import Games, Tournaments, Teams, PlayerGameStats, People, Officials
+from structure import manage_game
 from utils.permissions import fetch_user
 from utils.util import fixture_sorter
 
 
 def add_get_game_endpoints(app):
+    @app.get("/api/games/change_code")
+    def change_code():
+        """
+        SCHEMA:
+        {
+            id: <int> = id of the current game
+        }
+        """
+        game_id = int(request.args["id"])
+        return jsonify({"code": manage_game.change_code(game_id)})
+
+    @app.get("/api/games/next")
+    def next_game():
+        """
+        SCHEMA:
+        {
+            id: <int> = id of the current game
+        }
+        """
+        game_id = int(request.args["id"])
+        old_game = Games.query.filter(Games.id == game_id).first()
+        new_game = Games.query.filter(Games.id > game_id, Games.court == old_game.court,
+                                      Games.tournament_id == old_game.tournament_id).first()
+        return jsonify({"id": new_game.id if new_game else -1})
+
     @app.route('/api/games/<int:id>', methods=['GET'])
     def get_game(id):
         """

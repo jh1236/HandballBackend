@@ -58,7 +58,7 @@ class People(db.Model):
     token_timeout = db.Column(db.Integer())
     permission_level = db.Column(db.Integer(), nullable=False, default=False)
 
-    def image(self, tournament=None):
+    def image(self, tournament=None, big=False):
         from database.models import Teams
         from database.models import TournamentTeams
         if self.image_url:
@@ -73,7 +73,7 @@ class People(db.Model):
             t = Teams.query.filter((Teams.captain_id == self.id) | (Teams.non_captain_id == self.id) | (
                     Teams.substitute_id == self.id)).order_by(Teams.image_url.like('/api/teams/image?%').desc(),
                                                               Teams.id).first()
-        return t.image_url if t else "/api/teams/image?name=bye"
+        return t.image(tournament, big) if t else "/api/teams/image?name=bye"
 
     def elo(self, last_game=None):
         from database.models import EloChange
@@ -249,10 +249,13 @@ class People(db.Model):
             if pgs:
                 return pgs.as_dict(include_game=False, include_stats=include_stats)
         img = self.image(tournament=tournament)
+        big_img = self.image(tournament=tournament, big=True)
         d = {
             "name": self.name,
             "searchableName": self.searchable_name,
-            "imageUrl": img if not img or not img.startswith("/") else "https://squarers.org" + img,
+            "imageUrl": img if not img or not img.startswith("/") else "https://api.squarers.club" + img,
+            "bigImageUrl": big_img if not big_img or not big_img.startswith(
+                "/") else "https://api.squarers.club" + big_img,
         }
         if include_stats:
             include_unranked = False

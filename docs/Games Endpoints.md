@@ -23,6 +23,27 @@ The user must be logged in as an official to use this endpoint
 
 <hr>
 
+### /api/games/next
+
+#### Description
+
+Returns the id of the next game from the same tournament on the same court
+
+#### Permissions:
+
+This endpoint is open to the public
+
+#### Arguments:
+
+- id: int
+    - The id of the current game
+
+#### Return Structure
+
+- id: int = The id of the next game on the same court.
+
+<hr>
+
 ### /api/games/<id>
 
 #### Description
@@ -316,7 +337,6 @@ The user must be logged in as an official to use this endpoint
 - N/A
 
 <hr>
-
 
 ### /api/games/update/forfeit
 

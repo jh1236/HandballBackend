@@ -104,6 +104,7 @@ if include_game: (default True)
     name: "str",
     searchableName: "str",
     imageUrl: "str",
+    bigImageUrl: "str"
 }
 ```
 
@@ -245,6 +246,7 @@ if include_game: (default true)
     name: "str",
     searchableName: "str",
     imageUrl: "str",
+    bigImageUrl: "str",
     captain: "Person",
     nonCaptain: "Person | PlayerGameStats | null",
     substitute: "Person | PlayerGameStats | null",

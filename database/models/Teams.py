@@ -49,6 +49,7 @@ class Teams(db.Model):
     name = db.Column(db.Text(), nullable=False)
     searchable_name = db.Column(db.Text(), nullable=False)
     image_url = db.Column(db.Text())
+    big_image_url = db.Column(db.Text())
     team_color = db.Column(db.Text())
     captain_id = db.Column(db.Integer(), db.ForeignKey("people.id"), nullable=False)
     non_captain_id = db.Column(db.Integer(), db.ForeignKey("people.id"))
@@ -135,14 +136,26 @@ class Teams(db.Model):
     def BYE(cls):
         return cls.query.filter(cls.id == 1).first()
 
+    def image(self, tournament=None, big=False):
+        if tournament:
+            from database.models.TournamentTeams import TournamentTeams
+            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+                                              TournamentTeams.team_id == self.id).first()
+            if tt:
+                if big:
+                    return tt.big_image_url if tt.big_image_url else self.big_image_url
+                else:
+                    return tt.image_url if tt.image_url else self.image_url
+        return self.big_image_url if big and self.big_image_url else self.image_url
+
     def as_dict(self, include_stats=False, tournament=None, include_player_stats=None, make_nice=False, game_id=None,
                 admin_view=False):
         include_player_stats = include_stats if include_player_stats is None else include_player_stats
         d = {
             "name": self.name,
             "searchableName": self.searchable_name,
-            "imageUrl": self.image_url if not self.image_url or not self.image_url.startswith(
-                "/") else "https://api.squarers.club" + self.image_url,
+            "imageUrl": self.image(tournament=tournament),
+            "bigImageUrl": self.image(tournament=tournament, big=True),
             "teamColor": self.team_color,
             "teamColorAsRGBABecauseDigbyIsLazy": hex_to_rgba(self.team_color),
             "captain": self.captain.as_dict(include_stats=include_player_stats,

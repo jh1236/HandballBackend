@@ -6,17 +6,6 @@ from utils.permissions import officials_only, admin_only, fetch_user
 
 
 def add_edit_game_endpoints(app):
-    @app.get("/api/games/change_code")
-    def change_code():
-        """
-        SCHEMA:
-        {
-            id: <int> = id of the current game
-        }
-        """
-        game_id = int(request.args["id"])
-        return jsonify({"code": manage_game.change_code(game_id)})
-
     @app.post("/api/games/update/start")
     @officials_only
     def start():
@@ -137,7 +126,7 @@ def add_edit_game_endpoints(app):
         team_two_notes = request.json.get("teamTwoNotes", '')
         protest_team_one = request.json.get("protestTeamOne", None)
         protest_team_two = request.json.get("protestTeamTwo", None)
-        marked_for_review = request.json.get("markedForReview", False, type=bool)
+        marked_for_review = request.json.get("markedForReview", False)
         manage_game.end_game(game_id, best, team_one_rating, team_two_rating, overall_notes, protest_team_one,
                              protest_team_two, team_one_notes, team_two_notes, marked_for_review)
         return "", 204

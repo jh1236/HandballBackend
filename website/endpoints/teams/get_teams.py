@@ -115,11 +115,13 @@ def add_get_teams_endpoints(app):
     @app.get("/api/teams/image")
     def team_image():
         team = request.args.get("name", type=str)
-        if os.path.isfile(f"./resources/images/teams/{team}.png"):
+        big = request.args.get("big", type=bool)
+        path = f"./resources/images/{'big/' if big else ''}teams/{team}.png"
+        if os.path.isfile(path):
             return send_file(
-                f"./resources/images/teams/{team}.png", mimetype="image/png"
+                f"{path}", mimetype="image/png"
             )
         else:
             return send_file(
-                f"./resources/images/teams/blank.png", mimetype="image/png"
+                f"./resources/images/{'big/' if big else ''}teams/blank.png", mimetype="image/png"
             )
