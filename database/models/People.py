@@ -177,7 +177,7 @@ class People(db.Model):
             "Net Elo Delta": sum(i.elo_delta for i in elo_delta if i),
             "Average Elo Delta": sum(i.elo_delta for i in elo_delta if i) / games_played,
             "Points per Game": sum(i.points_scored for i in players) / games_played,
-            "Points per Loss": sum(i.points_scored for i in players) / (games_lost or 0.000001),
+            "Points per Loss": sum(i.points_scored for i in players) / (games_lost or 1),
             # make it fuckin huge if they've never lost
             "Aces per Game": sum(i.aces_scored for i in players) / games_played,
             "Faults per Game": sum(i.faults for i in players) / games_played,
