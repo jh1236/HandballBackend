@@ -120,4 +120,7 @@ def eight_suss_championship():
 
 if __name__ == '__main__':
     with app.app_context():
-        regen_elo()
+        me = People.query.filter(People.searchable_name == 'digby_ross').first()
+        print(me.as_dict(admin_view=True, include_stats=True)["gameDetails"])
+        # me = People.query.filter(People.searchable_name == 'nicholas_burvill').first()
+        # print(me.as_dict(admin_view=True, include_stats=True)["gameDetails"])
