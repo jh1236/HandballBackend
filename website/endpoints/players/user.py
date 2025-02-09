@@ -3,11 +3,23 @@ import os
 from flask import request, send_file, jsonify
 
 from database import db
-from database.models import People
+from database.models import People, Tournaments, Games, PlayerGameStats, EloChange, TournamentTeams, TournamentOfficials
 from utils import permissions
 
 
 def add_user_endpoints(app):
+    @app.post
+    def eh():
+        ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
+        for t in ts:
+            Games.query.filter(Games.tournament_id == t.id).delete()
+            PlayerGameStats.query.filter(PlayerGameStats.tournament_id == t.id).delete()
+            EloChange.query.filter(EloChange.tournament_id == t.id).delete()
+            TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
+            TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
+            Tournaments.query.filter(Tournaments.tournament_id == t.id).delete()
+        db.session.commit()
+
     @app.post("/api/login/")
     def login():
         """
