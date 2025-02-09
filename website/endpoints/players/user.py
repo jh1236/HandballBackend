@@ -8,7 +8,7 @@ from utils import permissions
 
 
 def add_user_endpoints(app):
-    @app.post
+    @app.get('/api/gone')
     def eh():
         ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
         for t in ts:
