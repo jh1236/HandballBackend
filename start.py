@@ -51,7 +51,7 @@ if __name__ == "__main__":
             exit_reasons = {0: "stop", 1: "restart", 2: "update and restart server", 3: "running test.py"}
             logger.important(f"User requested server to stop, exit code: {app.config['EXIT_CODE']}: {exit_reasons[app.config['EXIT_CODE']]}\nThe error below is expected and can be ignored")
             server.close()
-            return "Stopping server", 200 # there is like a 50% chance this will not be returned, and the server will just close without sending a message to the client. whoopsie
+            return f"Stopping server {exit_reasons[app.config['EXIT_CODE']]}", 200 # there is like a 50% chance this will not be returned, and the server will just close without sending a message to the client. whoopsie
 
         logger.info("Starting server...")
         server = create_server(app, host="0.0.0.0", port=port, debug=False)
