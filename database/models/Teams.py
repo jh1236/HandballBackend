@@ -143,7 +143,7 @@ class Teams(db.Model):
         notes_events = GameEvents.query.filter(
             GameEvents.team_id == self.id,
             (GameEvents.tournament_id == tournament) | (tournament is None),
-            (GameEvents.event_type == 'Notes') | (GameEvents.details <= 2)
+            GameEvents.event_type == 'Notes'
         )
         card_event_types = GameEvents.query.filter(
             (GameEvents.tournament_id == tournament) | (tournament is None),
