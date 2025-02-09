@@ -235,12 +235,12 @@ class People(db.Model):
             (PlayerGameStats.game_id == GameEvents.game_id) &
             (PlayerGameStats.team_id == GameEvents.team_id)
         ).filter(
-            (GameEvents.tournament == tournament) | (tournament is None),
+            (GameEvents.tournament_id == tournament) | (tournament is None),
             PlayerGameStats.player_id == self.id,
             GameEvents.event_type == 'Notes'
         )
         card_event_types = GameEvents.query.filter(
-            (GameEvents.tournament == tournament) | (tournament is None),
+            (GameEvents.tournament_id == tournament) | (tournament is None),
             GameEvents.player_id == self.id,
             (GameEvents.event_type == 'Warning') | (GameEvents.event_type.like('% Card'))
         )
