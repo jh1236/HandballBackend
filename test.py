@@ -127,5 +127,5 @@ if __name__ == '__main__':
             EloChange.query.filter(EloChange.tournament_id == t.id).delete()
             TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
             TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
-            Tournaments.query.filter(Tournaments.tournament_id == t.id).delete()
+            Tournaments.query.filter(Tournaments.id == t.id).delete()
         db.session.commit()
