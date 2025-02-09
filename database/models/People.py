@@ -253,7 +253,7 @@ class People(db.Model):
         if include_stats:
             from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i)} for
+                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True,official_view=True)} for
                     i in
                     relevant_ids}
         else:
