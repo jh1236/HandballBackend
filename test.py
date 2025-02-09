@@ -118,14 +118,18 @@ def eight_suss_championship():
                                   officials=[1, 2, 4, 6, 12, 14, 10])
 
 
+def delete_eighth_tournament():
+    ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
+    for t in ts:
+        Games.query.filter(Games.tournament_id == t.id).delete()
+        PlayerGameStats.query.filter(PlayerGameStats.tournament_id == t.id).delete()
+        EloChange.query.filter(EloChange.tournament_id == t.id).delete()
+        TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
+        TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
+        Tournaments.query.filter(Tournaments.id == t.id).delete()
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-        ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
-        for t in ts:
-            Games.query.filter(Games.tournament_id == t.id).delete()
-            PlayerGameStats.query.filter(PlayerGameStats.tournament_id == t.id).delete()
-            EloChange.query.filter(EloChange.tournament_id == t.id).delete()
-            TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
-            TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
-            Tournaments.query.filter(Tournaments.id == t.id).delete()
-        db.session.commit()
+        eight_suss_championship()
