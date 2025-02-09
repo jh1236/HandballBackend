@@ -156,6 +156,7 @@ class PlayerGameStats(db.Model):
         }
         if admin:
             d["Penalty Points"] = self.green_cards * 2 + self.yellow_cards * 5 + self.red_cards * 10
+            d["Rating"] = self.rating
         return d
 
     @classmethod

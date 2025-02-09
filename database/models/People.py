@@ -237,7 +237,7 @@ class People(db.Model):
         ).filter(
             (GameEvents.tournament_id == tournament) | (tournament is None),
             PlayerGameStats.player_id == self.id,
-            GameEvents.event_type == 'Notes'
+            (GameEvents.event_type == 'Notes') | (GameEvents.details <= 2)
         )
         card_event_types = GameEvents.query.filter(
             (GameEvents.tournament_id == tournament) | (tournament is None),
