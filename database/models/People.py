@@ -227,7 +227,7 @@ class People(db.Model):
                 ret[f"Court {i + 1}"] = c
         return ret
 
-    def get_admin_games(self, tournament=None):
+    def get_admin_games(self, tournament=None, include_stats=False):
         from database.models import GameEvents
         from database.models import PlayerGameStats
         notes_events = GameEvents.query.join(
@@ -250,9 +250,14 @@ class People(db.Model):
         notes = {i.game_id: i for i in notes_events}
         relevant_ids = list(cards.keys())
         relevant_ids += [i.game_id for i in notes_events]
-        return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                    "rating": notes[i].details if i in notes else 3} for i in
-                relevant_ids}
+        if include_stats:
+            return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                        "rating": notes[i].details if i in notes else 3, "game": notes[i].game} for i in
+                    relevant_ids}
+        else:
+            return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                        "rating": notes[i].details if i in notes else 3} for i in
+                    relevant_ids}
 
     def played_in_tournament(self, tournament_searchable_name):
         if not tournament_searchable_name:
@@ -300,6 +305,6 @@ class People(db.Model):
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin,
-                "gameDetails": self.get_admin_games(tournament)
+                "gameDetails": self.get_admin_games(tournament, include_stats=include_stats)
             }
         return d

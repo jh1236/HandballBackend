@@ -138,7 +138,7 @@ class Teams(db.Model):
     def BYE(cls):
         return cls.query.filter(cls.id == 1).first()
 
-    def get_admin_games(self, tournament=None):
+    def get_admin_games(self, tournament=None, include_stats=False):
         from database.models import GameEvents
         notes_events = GameEvents.query.filter(
             GameEvents.team_id == self.id,
@@ -156,9 +156,14 @@ class Teams(db.Model):
         notes = {i.game_id: i for i in notes_events}
         relevant_ids = list(cards.keys())
         relevant_ids += [i.game_id for i in notes_events]
-        return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                    "rating": notes[i].details if i in notes else 3} for i in
-                relevant_ids}
+        if include_stats:
+            return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                        "rating": notes[i].details if i in notes else 3, "game": notes[i].game} for i in
+                    relevant_ids}
+        else:
+            return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                        "rating": notes[i].details if i in notes else 3} for i in
+                    relevant_ids}
 
     def image(self, tournament=None, big=False):
         if tournament:
@@ -252,6 +257,6 @@ class Teams(db.Model):
                 for i in MULTI_GAME_KEYS:
                     del d["stats"][i]
         if admin_view:
-            d["gameDetails"] = self.get_admin_games(tournament)
+            d["gameDetails"] = self.get_admin_games(tournament, include_stats=include_stats)
 
         return d
