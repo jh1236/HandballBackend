@@ -47,7 +47,7 @@ if admin:
     admin: {
         noteableStatus: "str",
         notes: "str",
-        cards: "list[GameEvents]",
+        cards: "list[CardStructure]",
         teamOneRating: "int",
         teamTwoRating: "int",
         teamOneNotes: "str",
@@ -97,6 +97,18 @@ if include_game: (default True)
 }
 ```
 
+## CardStructure Data Structure
+
+```json lines
+{
+    eventType: "str",
+    firstTeam: "bool",
+    player: "Player",
+    details: "int",
+    notes: "str",
+}
+```
+
 ## Person Data Structure
 
 ```json lines
@@ -113,7 +125,7 @@ if admin:
 ```json lines
 {
     isAdmin: "bool",
-    gameDetails: {notes: "str", rating:  "int", cards: "list[GameEvents]"}
+    gameDetails: {notes: "str", rating:  "int", cards: "list[CardStructure]"}
 }
 ```
 
@@ -205,30 +217,32 @@ everything from `Person` plus
 ```json lines
 {
     team: "Team",
-    roundsOnCourt: "int",
-    roundsCarded: "int",
-    pointsScored: "int",
-    acesScored: "int",
     isBestPlayer: "bool",
-    faults: "int",
-    doubleFaults: "int",
-    servedPoints: "int",
-    servedPointsWon: "int",
-    servesReceived: "int",
-    servesReturned: "int",
-    aceStreak: "int",
-    serveStreak: "int",
-    warnings: "int",
-    greenCards: "int",
-    yellowCards: "int",
-    redCards: "int",
     cardTime: "int",
     cardTimeRemaining: "int",
-    startSide: "str",
-    elo: "float",
-    eloDelta: "float",
-    sideOfCourt: "str",
-    isCaptain: "bool"
+    sideOfCourt: "string",
+    isCaptain: "bool",
+    startSide: "string",
+    stats: {
+        "Rounds on Court": "int",
+        "Rounds Carded": "int",
+        "Points Scored": "int",
+        "Aces Scored": "int",
+        "Faults": "bool",
+        "Double Faults": "int",
+        "Served Points": "int",
+        "Served Points Won": "int",
+        "Serves Received": "int",
+        "Serves Returned": "int",
+        "Biggest Ace Streak": "int",
+        "Biggest Serve Streak": "int",
+        "Green Cards": "int",
+        "Yellow Cards": "int",
+        "Red Cards": "int",
+        "Starting Side": "int",
+        "Elo": "int",
+        "Elo Delta": "int",
+    }
 }
 ```
 
@@ -237,6 +251,17 @@ if include_game: (default true)
 ```json lines
 {
     game: "Game",
+}
+```
+
+if admin:
+```json lines
+{
+    stats: {
+        "Rating": "int",
+        "Warnings": "int"
+    },
+    
 }
 ```
 
