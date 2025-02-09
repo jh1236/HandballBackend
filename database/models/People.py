@@ -251,8 +251,10 @@ class People(db.Model):
         relevant_ids = list(cards.keys())
         relevant_ids += [i.game_id for i in notes_events]
         if include_stats:
+            from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                        "rating": notes[i].details if i in notes else 3, "game": notes[i].game} for i in
+                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i)} for
+                    i in
                     relevant_ids}
         else:
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
