@@ -120,7 +120,11 @@ def eight_suss_championship():
 
 if __name__ == '__main__':
     with app.app_context():
-        me = People.query.filter(People.searchable_name == 'digby_ross').first()
-        print(me.as_dict(admin_view=True, include_stats=True)["gameDetails"])
-        # me = People.query.filter(People.searchable_name == 'nicholas_burvill').first()
-        # print(me.as_dict(admin_view=True, include_stats=True)["gameDetails"])
+        ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
+        for t in ts:
+            Games.query.filter(Games.tournament_id == t.id).delete()
+            PlayerGameStats.query.filter(PlayerGameStats.tournament_id == t.id).delete()
+            EloChange.query.filter(EloChange.tournament_id == t.id).delete()
+            TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
+            TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
+            Tournaments.query.filter(Tournaments.tournament_id == t.id).delete()
