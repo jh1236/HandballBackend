@@ -272,16 +272,15 @@ class Games(db.Model):
                     0] if rating_events else None,
                 "teamOneProtest": team_one_protest.notes if team_one_protest else None,
                 "teamTwoProtest": team_two_protest.notes if team_two_protest else None,
+                "cards": [i.as_dict(include_game=False, card_details=True) for i in
+                          GameEvents.query.filter(GameEvents.game_id == self.id,
+                                                  (GameEvents.event_type == 'Warning') | (
+                                                      GameEvents.event_type.like('% Card'))).all()]
             }
         if include_game_events:
             from database.models import GameEvents
             d["events"] = [i.as_dict(include_game=False) for i in
                            GameEvents.query.filter(GameEvents.game_id == self.id).all()]
-            if admin_view:
-                d["admin"]["cards"] = [i.as_dict(include_game=False, card_details=True) for i in
-                                       GameEvents.query.filter(GameEvents.game_id == self.id,
-                                                               (GameEvents.event_type == 'Warning') | (
-                                                                   GameEvents.event_type.like('% Card'))).all()]
         if include_stats:
             from database.models import PlayerGameStats
             d["players"] = [i.as_dict(include_game=False, make_nice=make_nice) for i in
