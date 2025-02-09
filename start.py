@@ -43,24 +43,6 @@ if __name__ == "__main__":
     else:
         Minify(app=app, html=True, js=True, cssless=True)
 
-        @app.get("/api/delete_tournament_8")
-        def eh():
-            from database.models import Tournaments
-            from database.models import Games
-            from database.models import PlayerGameStats
-            from database.models import EloChange
-            from database.models import TournamentTeams
-            from database.models import TournamentOfficials
-            ts = Tournaments.query.filter(Tournaments.searchable_name == 'eighth_suss_championship').all()
-            for t in ts:
-                Games.query.filter(Games.tournament_id == t.id).delete()
-                PlayerGameStats.query.filter(PlayerGameStats.tournament_id == t.id).delete()
-                EloChange.query.filter(EloChange.tournament_id == t.id).delete()
-                TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
-                TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
-                Tournaments.query.filter(Tournaments.tournament_id == t.id).delete()
-            db.session.commit()
-
         @app.get("/api/stop")
         @admin_only
         def stop_server():
