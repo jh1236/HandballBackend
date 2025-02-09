@@ -120,4 +120,4 @@ def eight_suss_championship():
 
 if __name__ == '__main__':
     with app.app_context():
-        sync_all_games()
+        regen_elo()

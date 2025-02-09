@@ -112,7 +112,8 @@ if admin:
 
 ```json lines
 {
-    isAdmin: "bool"
+    isAdmin: "bool",
+    gameDetails: {notes: "str", rating:  "int", cards: "list[GameEvents]"}
 }
 ```
 

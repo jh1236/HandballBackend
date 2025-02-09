@@ -1,5 +1,6 @@
 """Defines the comments object and provides functions to get and manipulate one"""
 import time
+from collections import defaultdict
 
 from database import db
 
@@ -176,7 +177,8 @@ class People(db.Model):
             "Net Elo Delta": sum(i.elo_delta for i in elo_delta if i),
             "Average Elo Delta": sum(i.elo_delta for i in elo_delta if i) / games_played,
             "Points per Game": sum(i.points_scored for i in players) / games_played,
-            "Points per Loss": sum(i.points_scored for i in players) / (games_lost or 1),
+            "Points per Loss": sum(i.points_scored for i in players) / (games_lost or 0.000001),
+            # make it fuckin huge if they've never lost
             "Aces per Game": sum(i.aces_scored for i in players) / games_played,
             "Faults per Game": sum(i.faults for i in players) / games_played,
             "Cards": sum(i.green_cards + i.yellow_cards + i.red_cards for i in players),
@@ -209,10 +211,12 @@ class People(db.Model):
             "Votes per 100 games": 100 * len([i for i in games if i.best_player_id == self.id]) / games_played,
         }
         if admin:
+            from database.models import GameEvents
             ret["Penalty Points"] = ret["Green Cards"] * 2 + ret["Yellow Cards"] * 5 + ret["Red Cards"] * 10
             ret["Warnings"] = sum(i.warnings for i in players)
             rated_games = [i.rating for i in players if i.rating]
             ret["Average Rating"] = sum(rated_games) / len(rated_games) if rated_games else 3
+
         if make_nice:
             ret = beatify_player_stats(ret)
         if include_court_stats:
@@ -222,6 +226,33 @@ class People(db.Model):
             for i, c in enumerate(courts):
                 ret[f"Court {i + 1}"] = c
         return ret
+
+    def get_admin_games(self, tournament=None):
+        from database.models import GameEvents
+        from database.models import PlayerGameStats
+        notes_events = GameEvents.query.join(
+            PlayerGameStats,
+            (PlayerGameStats.game_id == GameEvents.game_id) &
+            (PlayerGameStats.team_id == GameEvents.team_id)
+        ).filter(
+            (GameEvents.tournament == tournament) | (tournament is None),
+            PlayerGameStats.player_id == self.id,
+            GameEvents.event_type == 'Notes'
+        )
+        card_event_types = GameEvents.query.filter(
+            (GameEvents.tournament == tournament) | (tournament is None),
+            GameEvents.player_id == self.id,
+            (GameEvents.event_type == 'Warning') | (GameEvents.event_type.like('% Card'))
+        )
+        cards = defaultdict(list)
+        for i in card_event_types:
+            cards[i.game_id].append(i.as_dict(include_game=False, card_details=True))
+        notes = {i.game_id: i for i in notes_events}
+        relevant_ids = list(cards.keys())
+        relevant_ids += [i.game_id for i in notes_events]
+        return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                    "rating": notes[i].details if i in notes else 3} for i in
+                relevant_ids}
 
     def played_in_tournament(self, tournament_searchable_name):
         if not tournament_searchable_name:
@@ -268,6 +299,7 @@ class People(db.Model):
                                     include_court_stats=include_court_stats, include_unranked=include_unranked)
         if admin_view:
             d |= {
-                "isAdmin": self.is_admin
+                "isAdmin": self.is_admin,
+                "gameDetails": self.get_admin_games(tournament)
             }
         return d

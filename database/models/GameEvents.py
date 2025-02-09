@@ -87,22 +87,25 @@ class GameEvents(db.Model):
             team_mate = self.team_two_left if self.player_id != self.team_two_left else self.team_two_right
         return team_mate if team_mate else self.player
 
-    def as_dict(self, include_game=True):
+    def as_dict(self, include_game=True, include_player=True, card_details=False):
         d = {
             "eventType": self.event_type,
             "firstTeam": (self.team_id == self.game.team_one_id) if self.team else None,
-            "player": self.player.as_dict() if self.player else None,
+            "player": self.player.as_dict() if self.player and include_player else None,
             "details": self.details,
             "notes": self.notes,
-            "firstTeamJustServed": self.team_who_served_id == self.game.team_one_id,
-            "sideServed": self.side_served,
-            "firstTeamToServe": self.team_to_serve_id == self.game.team_one_id,
-            "sideToServe": self.side_to_serve,
-            "teamOneLeft": self.team_one_left.as_dict() if self.team_one_left else None,
-            "teamOneRight": self.team_one_right.as_dict() if self.team_one_right else None,
-            "teamTwoLeft": self.team_two_left.as_dict() if self.team_two_left else None,
-            "teamTwoRight": self.team_two_right.as_dict() if self.team_two_right else None
         }
+        if not card_details:
+            d |= {
+                "firstTeamJustServed": self.team_who_served_id == self.game.team_one_id,
+                "sideServed": self.side_served,
+                "firstTeamToServe": self.team_to_serve_id == self.game.team_one_id,
+                "sideToServe": self.side_to_serve,
+                "teamOneLeft": self.team_one_left.as_dict() if self.team_one_left else None,
+                "teamOneRight": self.team_one_right.as_dict() if self.team_one_right else None,
+                "teamTwoLeft": self.team_two_left.as_dict() if self.team_two_left else None,
+                "teamTwoRight": self.team_two_right.as_dict() if self.team_two_right else None
+            }
         if include_game:
             d["game"] = self.game.as_dict()
         return d
