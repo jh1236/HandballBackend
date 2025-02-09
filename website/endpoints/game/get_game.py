@@ -107,7 +107,7 @@ def add_get_game_endpoints(app):
                 PlayerGameStats.player_id == pid)
         games = games.order_by((Games.start_time.desc()), Games.id.desc())
         if limit > 0:
-            games = games.limit(20)
+            games = games.limit(limit)
         out = {"games": [i.as_dict(include_game_events=include_game_events, include_stats=include_player_stats,
                                    admin_view=is_admin) for i in games.all()]}
         if return_tournament and tournament_searchable:
