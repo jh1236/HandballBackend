@@ -153,9 +153,9 @@ class Teams(db.Model):
         cards = defaultdict(list)
         for i in card_event_types:
             cards[i.game_id].append(i.as_dict(include_game=False, card_details=True))
-        notes = {i.game_id: i for i in notes_events}
+        notes = {i.game_id: i for i in notes_events if i.details <= 2 or (i.notes and i.notes.strip())}
         relevant_ids = list(cards.keys())
-        relevant_ids += [i.game_id for i in notes_events]
+        relevant_ids += list(notes.keys())
         if include_stats:
             from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
