@@ -137,7 +137,9 @@ This endpoint is open to the public
 - returnTournament: bool (Optional)
     - If the tournament is to be returned in the response
 - separateFinals
-    - True if the finals should be returned in a separate list
+  - True if the finals should be returned in a separate list
+- maxRounds
+    - the maximum amount of rounds to return
 
 #### Return Structure
 

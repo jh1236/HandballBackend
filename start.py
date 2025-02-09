@@ -27,7 +27,7 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
-    port = 5001
+    port = (80 if args.debug else 5001) if args.port == -1 else args.port
 
     @app.after_request
     def cors_fixer(response):
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             return "Stopping server", 200 # there is like a 50% chance this will not be returned, and the server will just close without sending a message to the client. whoopsie
 
         logger.info("Starting server...")
-        server = create_server(app, host="0.0.0.0", port=port, debug=False)
+        server = create_server(app, host="0.0.0.0", port=port)
         server.run()
 
     logger.info(f"The server has closed, exit code: {app.config['EXIT_CODE']}")

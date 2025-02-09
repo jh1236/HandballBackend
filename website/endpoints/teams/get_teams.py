@@ -63,7 +63,8 @@ def add_get_teams_endpoints(app):
         out = {"team": Teams.query.filter(Teams.searchable_name == searchable).first().as_dict(include_stats=True,
                                                                                                tournament=tournament_id,
                                                                                                make_nice=make_nice,
-                                                                                               admin_view=admin)}
+                                                                                               admin_view=admin,
+                                                                                               single=True)}
         if return_tournament and tournament_searchable:
             out["tournament"] = tournament.as_dict()
         return out

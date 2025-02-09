@@ -281,7 +281,7 @@ class People(db.Model):
         return self.permission_level >= 2
 
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None,
-                include_court_stats=False):
+                include_court_stats=False, single=False):
         from database.models import PlayerGameStats
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
@@ -309,6 +309,6 @@ class People(db.Model):
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin,
-                "gameDetails": self.get_admin_games(tournament, include_stats=include_stats and tournament)
+                "gameDetails": self.get_admin_games(tournament, include_stats=include_stats and single)
             }
         return d

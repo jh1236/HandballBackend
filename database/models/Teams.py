@@ -180,7 +180,7 @@ class Teams(db.Model):
         return self.big_image_url if big and self.big_image_url else self.image_url
 
     def as_dict(self, include_stats=False, tournament=None, include_player_stats=None, make_nice=False, game_id=None,
-                admin_view=False):
+                admin_view=False, single=False):
         include_player_stats = include_stats if include_player_stats is None else include_player_stats
         d = {
             "name": self.name,
@@ -259,6 +259,6 @@ class Teams(db.Model):
                 for i in MULTI_GAME_KEYS:
                     del d["stats"][i]
         if admin_view:
-            d["gameDetails"] = self.get_admin_games(tournament, include_stats=include_stats and tournament)
+            d["gameDetails"] = self.get_admin_games(tournament, include_stats=include_stats and single)
 
         return d

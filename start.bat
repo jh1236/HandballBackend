@@ -1,12 +1,14 @@
 @ECHO OFF
-ECHO Please make sure nginx is running, routing port 80 to 8080
+ECHO Please make sure nginx is running, routing port 80 to 5001
 timeout /t 30
 
 set repeated_failure=0
 set github_token=None
 set can_update=0
+
+REM Check if github_token.txt exists and read the token
 if exist github_token.txt (
-    set /p github_token=<github_token.txt
+    for /f "delims=" %%i in (github_token.txt) do set github_token=%%i
     set can_update=1
 ) else (
     ECHO github_token.txt not found, please create one with your github token
@@ -19,7 +21,6 @@ py start.py --no-debug
 set EXIT_CODE=%ERRORLEVEL%
 
 ECHO start.py exited with exit code %EXIT_CODE%
-
 
 if %EXIT_CODE% == 1 (
     set /a repeated_failure+=1
@@ -49,7 +50,7 @@ if %can_update% == 0 (
     goto :BEGIN
 )
 ECHO Pulling from github...
-git pull https://%github_token%@github.com/jh1236/matchmaking
+git pull https://%github_token%@github.com/jh1236/HandballBackend
 ECHO Retrying start.py... Attempt %repeated_failure%
 goto :BEGIN
 
@@ -58,7 +59,6 @@ ECHO running test.py before restart
 py test.py
 ECHO Retrying start.py... Attempt %repeated_failure%
 goto :BEGIN
-
 
 :END
 pause

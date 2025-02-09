@@ -127,12 +127,16 @@ def add_get_game_endpoints(app):
         tournament_searchable = request.args.get('tournament', type=str)
         separate_finals = request.args.get('separateFinals', type=bool)
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
+        max_rounds = request.args.get('maxRounds', -1, type=int)
 
         tid = tournament.id
         return_tournament = request.args.get('returnTournament', False, type=bool)
-
+        if max_rounds > 0:
+            last_round = Games.query.filter(Games.tournament_id == tid).order_by(Games.round.desc()).first().round - max_rounds
+        else:
+            last_round = 0
         fixtures = defaultdict(list)
-        games = Games.query.filter(Games.tournament_id == tid).all()
+        games = Games.query.filter(Games.tournament_id == tid, Games.round > last_round).all()
         for game in games:
             fixtures[game.round].append(game)
         new_fixtures = []
