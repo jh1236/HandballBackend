@@ -191,24 +191,6 @@ def sync(game_id):
         game.side_to_serve = i.side_to_serve
 
 
-def game_string_lookup(char: str):
-    d = {
-        "s": "Score",
-        "a": "Ace",
-        "g": "Green Card",
-        "y": "Yellow Card",
-        "v": "Red Card",
-        "f": "Fault",
-        "t": "Timeout",
-        "x": "Substitute",
-        "e": "Forfeit"
-    }
-    if char in d:
-        return d[char]
-    if char.isdigit():
-        return "Yellow Card"
-    return None
-
 
 def _team_and_position_to_id(game_id, first_team, left_player) -> int:
     game = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
@@ -283,7 +265,7 @@ def get_serve_details(game, team_one, team_two, team_who_served, player_who_serv
                 if next_player_to_serve == None:
                     next_player_to_serve = [i for i in serve_team if i][0]
             else:
-                next_serve_side = 'Left'
+                next_serve_side = 'Right' if Config().diby_serve else 'Left'
                 next_player_to_serve = serve_team[0]
     return next_player_to_serve, next_serve_side
 

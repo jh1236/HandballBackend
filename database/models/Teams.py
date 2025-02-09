@@ -1,5 +1,7 @@
 import time
+from collections import defaultdict
 
+from Config import Config
 from database import db
 
 # create table main.teams
@@ -136,6 +138,28 @@ class Teams(db.Model):
     def BYE(cls):
         return cls.query.filter(cls.id == 1).first()
 
+    def get_admin_games(self, tournament=None):
+        from database.models import GameEvents
+        notes_events = GameEvents.query.filter(
+            GameEvents.team_id == self.id,
+            (GameEvents.tournament_id == tournament) | (tournament is None),
+            (GameEvents.event_type == 'Notes') | (GameEvents.details <= 2)
+        )
+        card_event_types = GameEvents.query.filter(
+            (GameEvents.tournament_id == tournament) | (tournament is None),
+            GameEvents.team_id == self.id,
+            (GameEvents.event_type == 'Warning') | (GameEvents.event_type.like('% Card'))
+        )
+        cards = defaultdict(list)
+        for i in card_event_types:
+            cards[i.game_id].append(i.as_dict(include_game=False, card_details=True))
+        notes = {i.game_id: i for i in notes_events}
+        relevant_ids = list(cards.keys())
+        relevant_ids += [i.game_id for i in notes_events]
+        return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
+                    "rating": notes[i].details if i in notes else 3} for i in
+                relevant_ids}
+
     def image(self, tournament=None, big=False):
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
@@ -163,7 +187,8 @@ class Teams(db.Model):
                                             make_nice=make_nice) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
-                                                   game_id=game_id, make_nice=make_nice) if self.non_captain_id else None,
+                                                   game_id=game_id,
+                                                   make_nice=make_nice) if self.non_captain_id else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
                                                   tournament=tournament, game_id=game_id,
                                                   make_nice=make_nice) if self.substitute_id else None,
@@ -193,10 +218,10 @@ class Teams(db.Model):
                 d["name"] = tt.name if tt.name else d["name"]
             last_time_served = GameEvents.query.filter(
                 GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
-                GameEvents.event_type == 'Score').order_by(
+                (GameEvents.event_type == 'Score')).order_by(
                 GameEvents.id.desc()).first()
             if not last_time_served:
-                d["servedFromLeft"] = False
+                d["servedFromLeft"] = Config().diby_serve
             else:
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:
@@ -226,5 +251,7 @@ class Teams(db.Model):
                     d["stats"]["Elo Delta"] = elo_delta if elo_delta else 0
                 for i in MULTI_GAME_KEYS:
                     del d["stats"][i]
+        if admin_view:
+            d["gameDetails"] = self.get_admin_games(tournament)
 
         return d
