@@ -174,8 +174,9 @@ class PlayerGameStats(db.Model):
             "sideOfCourt": self.side_of_court,
             "isCaptain": self.team.captain_id == self.player_id,
             "startSide": self.start_side,
-            "rating": self.rating,
         }
+        if admin_view:
+            d["Rating"] = self.rating or 3
         if include_stats:
             stats = {
                 "Rounds on Court": self.rounds_on_court,

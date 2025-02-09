@@ -83,8 +83,8 @@ def add_get_game_endpoints(app):
         player_searchable = request.args.getlist('player', type=str)
         official_searchable = request.args.getlist('official', type=str)
         court = request.args.get('court', None, type=int)
-        include_game_events = request.args.get('includeGameEvents', False, type=bool) and is_admin
-        include_player_stats = request.args.get('includePlayerStats', False, type=bool) and is_admin
+        include_game_events = request.args.get('includeGameEvents', False, type=bool)
+        include_player_stats = request.args.get('includePlayerStats', False, type=bool)
         return_tournament = request.args.get('returnTournament', False, type=bool)
         games = Games.query
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
