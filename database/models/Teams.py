@@ -259,6 +259,6 @@ class Teams(db.Model):
                 for i in MULTI_GAME_KEYS:
                     del d["stats"][i]
         if admin_view:
-            d["gameDetails"] = self.get_admin_games(tournament, include_stats=include_stats)
+            d["gameDetails"] = self.get_admin_games(tournament, include_stats=include_stats and tournament)
 
         return d

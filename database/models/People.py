@@ -307,6 +307,6 @@ class People(db.Model):
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin,
-                "gameDetails": self.get_admin_games(tournament, include_stats=include_stats)
+                "gameDetails": self.get_admin_games(tournament, include_stats=include_stats and tournament)
             }
         return d
