@@ -790,6 +790,9 @@ def get_timeout_caller(game_id):
 def delete(game_id, override=False):
     if game_is_ended(game_id) and not override:
         raise ValueError("Game is Already Over!")
+    game = GameEvents.query.filter(GameEvents.game_id == game_id).first()
+    if not get_type_from_name(game.tournament, game.tournament).editable:
+        raise ValueError("Game is Not in an editable tournament!")
     GameEvents.query.filter(GameEvents.game_id == game_id).delete()
     PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id).delete()
     Games.query.filter(Games.id == game_id).delete()
