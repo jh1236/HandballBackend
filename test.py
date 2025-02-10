@@ -114,7 +114,7 @@ def eight_suss_championship():
                                   True,
                                   True,
                                   True,
-                                  teams=[97, 112, 113, 114, 115, 95, 7, 116, 117, 118, 119, 20],
+                                  teams=[97, 112, 113, 114, 95, 7, 116, 117, 118, 119, 20],
                                   officials=[1, 2, 4, 6, 12, 14, 10])
 
 
@@ -132,4 +132,10 @@ def delete_eighth_tournament():
 
 if __name__ == '__main__':
     with app.app_context():
-        eight_suss_championship()
+        delete_eighth_tournament()
+        Teams.filter.query(Teams.id == 115).delete()
+        modified_team = Teams.filter.query(Teams.id == 117).first()
+        modified_team.name = 'Kaliha, Brodie and Connor'
+        modified_team.substitute_id = 56
+        db.session.commit()
+        
