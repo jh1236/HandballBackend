@@ -1,6 +1,6 @@
 from FixtureGenerators.FixturesGenerator import FixturesGenerator
 from database import db
-from database.models import TournamentTeams, Tournaments, Games, Teams
+from database.models import TournamentTeams, Tournaments, Games
 from structure import manage_game
 
 
@@ -26,11 +26,11 @@ class Pooled(FixturesGenerator):
         game = Games.query.filter(Games.tournament_id == tournament_id).order_by(Games.round.desc()).first()
         rounds = game.round if game else 0
 
-        pools = [[j.team for j in teams if j.pool == i] for i in range(1, 3)]
+        pools = [[j for j in teams if j.pool == i] for i in range(1, 3)]
 
         for pool in pools:
             if len(pool) % 2 != 0:
-                pool += [Teams.BYE]
+                pool += [1]
 
         if max(len(i) for i in pools) <= rounds + 1:
             tournament.in_finals = True
@@ -44,5 +44,5 @@ class Pooled(FixturesGenerator):
             for j in range(mid):
                 team_one = pool[j]
                 team_two = pool[len(pool) - 1 - j]
-                manage_game.create_game(tournament_id, team_one.searchable_name, team_two.searchable_name,
+                manage_game.create_game(tournament_id, team_one.team.searchable_name, team_two.team.searchable_name,
                                         round_number=rounds + 1)

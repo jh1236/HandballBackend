@@ -132,10 +132,6 @@ def delete_eighth_tournament():
 
 if __name__ == '__main__':
     with app.app_context():
-        delete_eighth_tournament()
-        Teams.query.filter(Teams.id == 115).delete()
-        modified_team = Teams.query.filter(Teams.id == 117).first()
-        modified_team.name = 'Kaliha, Brodie and Connor'
-        modified_team.substitute_id = 56
         eight_suss_championship()
         db.session.commit()
+        
