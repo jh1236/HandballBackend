@@ -35,11 +35,10 @@ def add_get_player_endpoints(app):
                 tid = Teams.query.filter(Teams.searchable_name == team).first().id
                 q = q.filter(PlayerGameStats.team_id == tid)
             players = q.group_by(PlayerGameStats.player_id).all()
-            print([i for i in players if not i.player])
             out = {"players": [i.player.as_dict(include_stats=include_stats, make_nice=make_nice,
                                                 tournament=tournament.id if tournament else None, admin_view=admin) for
                                i in
-                               players if i]}
+                               players]}
             if return_tournament and tournament_searchable:
                 out["tournament"] = tournament.as_dict()
             return out
