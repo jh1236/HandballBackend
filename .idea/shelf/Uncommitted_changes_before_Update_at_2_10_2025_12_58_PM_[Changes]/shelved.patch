@@ -1,0 +1,39 @@
+Index: FixtureGenerators/Pooled.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from FixtureGenerators.FixturesGenerator import FixturesGenerator\r\nfrom database import db\r\nfrom database.models import TournamentTeams, Tournaments, Games, Teams\r\nfrom structure import manage_game\r\n\r\n\r\nclass Pooled(FixturesGenerator):\r\n\r\n    def __init__(self, tournament_id):\r\n        super().__init__(tournament_id, fill_officials=True, editable=False, fill_courts=True)\r\n\r\n    def _begin_tournament(self, tournament_id):\r\n        tournament = Tournaments.query.filter(Tournaments.id == tournament_id).first()\r\n        teams = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament_id).all()\r\n        teams = sorted(teams, key=lambda x: x.team.elo())\r\n        pool = 0\r\n        for i in teams:\r\n            i.pool = 1 + pool\r\n            pool = 1 - pool\r\n        tournament.is_pooled = True\r\n        db.session.commit()\r\n\r\n    def _end_of_round(self, tournament_id):\r\n        tournament = Tournaments.query.filter(Tournaments.id == tournament_id).first()\r\n        teams = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament_id).all()\r\n        game = Games.query.filter(Games.tournament_id == tournament_id).order_by(Games.round.desc()).first()\r\n        rounds = game.round if game else 0\r\n\r\n        pools = [[j.team for j in teams if j.pool == i] for i in range(1, 3)]\r\n\r\n        for pool in pools:\r\n            if len(pool) % 2 != 0:\r\n                pool += [Teams.BYE]\r\n\r\n        if max(len(i) for i in pools) <= rounds + 1:\r\n            tournament.in_finals = True\r\n            return\r\n        for _ in range(rounds):\r\n            for pool in pools:\r\n                pool[1:] = [pool[-1]] + pool[1:-1]\r\n            # Rotate the teams except the first one\r\n        for pool in pools:\r\n            mid = len(pool) // 2\r\n            for j in range(mid):\r\n                team_one = pool[j]\r\n                team_two = pool[len(pool) - 1 - j]\r\n                manage_game.create_game(tournament_id, team_one.searchable_name, team_two.searchable_name,\r\n                                        round_number=rounds + 1)\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/FixtureGenerators/Pooled.py b/FixtureGenerators/Pooled.py
+--- a/FixtureGenerators/Pooled.py	(revision cb920a3499c185816b4b1c58192efd45baaef685)
++++ b/FixtureGenerators/Pooled.py	(date 1739163480550)
+@@ -1,6 +1,6 @@
+ from FixtureGenerators.FixturesGenerator import FixturesGenerator
+ from database import db
+-from database.models import TournamentTeams, Tournaments, Games, Teams
++from database.models import TournamentTeams, Tournaments, Games
+ from structure import manage_game
+ 
+ 
+@@ -26,11 +26,11 @@
+         game = Games.query.filter(Games.tournament_id == tournament_id).order_by(Games.round.desc()).first()
+         rounds = game.round if game else 0
+ 
+-        pools = [[j.team for j in teams if j.pool == i] for i in range(1, 3)]
++        pools = [[j for j in teams if j.pool == i] for i in range(1, 3)]
+ 
+         for pool in pools:
+             if len(pool) % 2 != 0:
+-                pool += [Teams.BYE]
++                pool += [1]
+ 
+         if max(len(i) for i in pools) <= rounds + 1:
+             tournament.in_finals = True
+@@ -44,5 +44,5 @@
+             for j in range(mid):
+                 team_one = pool[j]
+                 team_two = pool[len(pool) - 1 - j]
+-                manage_game.create_game(tournament_id, team_one.searchable_name, team_two.searchable_name,
++                manage_game.create_game(tournament_id, team_one.team.searchable_name, team_two.team.searchable_name,
+                                         round_number=rounds + 1)
