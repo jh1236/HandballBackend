@@ -31,6 +31,7 @@ if %EXIT_CODE% == 1 (
 if %EXIT_CODE% == 1 goto :RESTART
 if %EXIT_CODE% == 2 goto :UPDATE
 if %EXIT_CODE% == 3 goto :TEST
+if %EXIT_CODE% == 4 goto :PUSH
 ECHO Server has been stopped.
 goto :END
 
@@ -59,6 +60,15 @@ ECHO running test.py before restart
 py test.py
 ECHO Retrying start.py... Attempt %repeated_failure%
 goto :BEGIN
+
+:PUSH
+ECHO commiting and pushing files
+git pull https://%github_token%@github.com/jh1236/HandballBackend
+git commit -a -m "Automatic Push From Backend"
+git push origin
+ECHO Retrying start.py... Attempt %repeated_failure%
+goto :BEGIN
+
 
 :END
 pause

@@ -18,32 +18,29 @@ def add_get_player_endpoints(app):
             includeStats: <bool> (OPTIONAL) = whether stats should be included
         }
         """
-        try:
-            tournament_searchable = request.args.get("tournament", None)
-            team = request.args.get("team", None)
-            make_nice = request.args.get('formatData', False, type=bool)
-            return_tournament = request.args.get('returnTournament', False, type=bool)
-            include_stats = request.args.get("includeStats", False, type=bool)
-            user = fetch_user()
-            admin = user and user.is_admin
-            q = PlayerGameStats.query
-            tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
-            if tournament_searchable:
-                tid = tournament.id
-                q = q.filter(PlayerGameStats.tournament_id == tid)
-            if team:
-                tid = Teams.query.filter(Teams.searchable_name == team).first().id
-                q = q.filter(PlayerGameStats.team_id == tid)
-            players = q.group_by(PlayerGameStats.player_id).all()
-            out = {"players": [i.player.as_dict(include_stats=include_stats, make_nice=make_nice,
-                                                tournament=tournament.id if tournament else None, admin_view=admin) for
-                               i in
-                               players]}
-            if return_tournament and tournament_searchable:
-                out["tournament"] = tournament.as_dict()
-            return out
-        except Exception as e:
-            return str(e)
+        tournament_searchable = request.args.get("tournament", None)
+        team = request.args.get("team", None)
+        make_nice = request.args.get('formatData', False, type=bool)
+        return_tournament = request.args.get('returnTournament', False, type=bool)
+        include_stats = request.args.get("includeStats", False, type=bool)
+        user = fetch_user()
+        admin = user and user.is_admin
+        q = PlayerGameStats.query
+        tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
+        if tournament_searchable:
+            tid = tournament.id
+            q = q.filter(PlayerGameStats.tournament_id == tid)
+        if team:
+            tid = Teams.query.filter(Teams.searchable_name == team).first().id
+            q = q.filter(PlayerGameStats.team_id == tid)
+        players = q.group_by(PlayerGameStats.player_id).all()
+        out = {"players": [i.player.as_dict(include_stats=include_stats, make_nice=make_nice,
+                                            tournament=tournament.id if tournament else None, admin_view=admin) for
+                           i in
+                           players]}
+        if return_tournament and tournament_searchable:
+            out["tournament"] = tournament.as_dict()
+        return out
 
     @app.get("/api/players/<searchable>")
     def get_player(searchable):
