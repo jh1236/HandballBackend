@@ -132,5 +132,8 @@ def delete_eighth_tournament():
 
 if __name__ == '__main__':
     with app.app_context():
-        PlayerGameStats.query.filter(PlayerGameStats.team_id == 1).delete()
+        teams = TournamentTeams.filter(TournamentTeams.tournament_id == 10).all()
+        for i in teams:
+            i.image_url = f"https://api.squarers.org/teams/image?name={i.searchable_name}"
+            i.big_image_url = f"https://api.squarers.org/teams/image?name={i.searchable_name}&big=true"
         db.session.commit()
