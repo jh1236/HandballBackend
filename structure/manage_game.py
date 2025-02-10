@@ -653,7 +653,7 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
         teams.append(out_team)
     ranked = True
     for i in teams:
-        if i == 1: continue
+        if i.id == 1: continue
         if not TournamentTeams.query.filter(TournamentTeams.team_id == i.id,
                                             TournamentTeams.tournament_id == tournament_id):
             t = TournamentTeams(tournament_id=tournament_id, team_id=i)
@@ -692,6 +692,7 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
     db.session.add(g)
     db.session.commit()  # this is a risk, but i want this to work so ¯\_(ツ)_/¯
     for i, opp in [teams, list(reversed(teams))]:
+        if i.id == 1: continue
         players = [i.captain_id, i.non_captain_id, i.substitute_id]
         for j in players:
             if not j: break
