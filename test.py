@@ -132,6 +132,8 @@ def delete_eighth_tournament():
 
 if __name__ == '__main__':
     with app.app_context():
-        delete_eighth_tournament()
-        eight_suss_championship()
-        
+        count = 1
+        for i in Games.query.all():
+            i.game_number = count
+            count += 1
+        db.session.commit()

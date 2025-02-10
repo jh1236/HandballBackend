@@ -84,6 +84,7 @@ class Games(db.Model):
     is_final = db.Column(db.Boolean(), default=False, nullable=False)
     round = db.Column(db.Integer(), nullable=False)
     notes = db.Column(db.Text())
+    game_number = db.Column(db.Integer())
     is_bye = db.Column(db.Boolean(), default=False, nullable=False)
     status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
     admin_status = db.Column(db.Text(), default='Waiting For Start', nullable=False)
@@ -123,6 +124,14 @@ class Games(db.Model):
                   "Format",
                   "Tournament"
                   ]
+
+    @classmethod
+    def game_number_to_id(cls, num):
+        return Games.query.filter(Games.game_number == num).first().id
+
+    @classmethod
+    def get_latest_game_number(cls):
+        return Games.query.order_by(Games.game_number.desc()).limit(1).first().game_number
 
     @property
     def teams_protested(self):
@@ -203,7 +212,7 @@ class Games(db.Model):
                 include_prev_cards=False, make_nice=False):
         from structure.manage_game import change_code, get_timeout_time, is_official_timeout
         d = {
-            "id": self.id,
+            "id": self.game_number,
             "tournament": self.tournament.as_dict(),
             "teamOne": self.team_one.as_dict(game_id=self.id, include_stats=include_stats,
                                              make_nice=make_nice, admin_view=admin_view),

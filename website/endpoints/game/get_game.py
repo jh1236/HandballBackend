@@ -18,7 +18,7 @@ def add_get_game_endpoints(app):
         }
         """
         game_id = int(request.args["id"])
-        return jsonify({"code": manage_game.change_code(game_id)})
+        return jsonify({"code": manage_game.change_code(Games.game_number_to_id(game_id))})
 
     @app.get("/api/games/next")
     def next_game():
@@ -29,10 +29,10 @@ def add_get_game_endpoints(app):
         }
         """
         game_id = int(request.args["id"])
-        old_game = Games.query.filter(Games.id == game_id).first()
-        new_game = Games.query.filter(Games.id > game_id, Games.court == old_game.court,
+        old_game = Games.query.filter(Games.game_number == game_id).first()
+        new_game = Games.query.filter(Games.game_number > game_id, Games.court == old_game.court,
                                       Games.tournament_id == old_game.tournament_id).first()
-        return jsonify({"id": new_game.id if new_game else -1})
+        return jsonify({"id": new_game.game_number if new_game else -1})
 
     @app.route('/api/games/<int:id>', methods=['GET'])
     def get_game(id):
@@ -47,7 +47,7 @@ def add_get_game_endpoints(app):
         user = fetch_user()
         is_admin = user and user.is_admin
         is_official = user and user.is_official
-        game = Games.query.filter(Games.id == id).first()
+        game = Games.query.filter(Games.game_number == id).first()
         include_game_events = request.args.get('includeGameEvents', None, type=bool)
         include_prev_cards = request.args.get('includePreviousCards', False, type=bool)
         format_data = request.args.get('formatData', False, type=bool)

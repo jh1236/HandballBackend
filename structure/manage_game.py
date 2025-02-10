@@ -191,7 +191,6 @@ def sync(game_id):
         game.side_to_serve = i.side_to_serve
 
 
-
 def _team_and_position_to_id(game_id, first_team, left_player) -> int:
     game = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
 
@@ -683,7 +682,7 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
 
     g = Games(tournament_id=tournament_id, team_one_id=teams[0].id, team_two_id=teams[1].id,
               official_id=official, court=court, is_final=is_final, round=round_number, ranked=ranked, is_bye=is_bye,
-              someone_has_won=is_bye)
+              someone_has_won=is_bye, game_number=Games.get_latest_game_number() + 1)
     if is_bye:
         g.noteable_status = "Bye"
         g.admin_status = "Bye"
@@ -700,7 +699,7 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
                                 tournament_id=tournament_id)
             db.session.add(p)
     db.session.commit()
-    return g.id
+    return g.game_number
 
 
 def create_tournament(name, fixtures_gen, finals_gen, ranked, two_courts, scorer, teams: list[int] = None,
