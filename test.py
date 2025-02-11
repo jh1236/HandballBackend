@@ -132,8 +132,7 @@ def delete_eighth_tournament():
 
 if __name__ == '__main__':
     with app.app_context():
-        count = 1
-        for i in Games.query.all():
-            i.game_number = count
-            count += 1
+        bye_team = Teams.BYE
+        bye_team.image_url = 'https://api.squarers.club/teams/image?name=bye'
+        bye_team.image_url = 'https://api.squarers.club/teams/image?name=bye&big=true'
         db.session.commit()
