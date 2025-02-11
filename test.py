@@ -1,5 +1,6 @@
 import csv
 import random
+from itertools import count
 from math import floor
 
 from database import db
@@ -130,9 +131,17 @@ def delete_eighth_tournament():
     db.session.commit()
 
 
+def reassign_game_numbers():
+    count = 1
+    for game in Games.query.all():
+        if game.is_bye:
+            game.game_number = -1
+        else:
+            game.game_number = count
+            count += 1
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-        bye_team = Teams.BYE
-        bye_team.image_url = 'https://api.squarers.club/teams/image?name=bye'
-        bye_team.image_url = 'https://api.squarers.club/teams/image?name=bye&big=true'
-        db.session.commit()
+        reassign_game_numbers()

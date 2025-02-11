@@ -64,6 +64,8 @@ This endpoint is open to the public
     - True if the stats of each player should be included
 - includePreviousCards: bool (official only)
     - True if the cards each team has previously received should be included
+- includeByes: bool
+    - True if byes should be returned
 
 #### Return Structure
 
