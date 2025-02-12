@@ -22,25 +22,6 @@ def init_api(app):
     def robots():
         return send_file("./resources/robots.txt")
 
-    @app.get("/rules/current")
-    def rules():
-        return send_file("./resources/documents/pdf/rules.pdf"), 200
-
-    @app.get("/rules/simple")
-    def simple_rules():
-        return send_file("./resources/documents/pdf/rules_simple.pdf"), 200
-
-    @app.get("/rules/proposed")
-    def new_rules():
-        return send_file("./resources/documents/pdf/proposed_rules.pdf"), 200
-
-    @app.get("/code_of_conduct/")
-    def code_of_conduct():
-        rand = random.Random()
-        if rand.randrange(1, 10):
-            return send_file("./resources/documents/pdf/code_of_conduct_2.pdf"), 200
-        return send_file("./resources/documents/pdf/code_of_conduct.pdf"), 200
-
     @app.get("/favicon.ico/")
     def icon():
         return send_file("./static/favicon.ico")
