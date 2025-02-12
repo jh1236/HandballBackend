@@ -680,9 +680,10 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
     if is_bye and teams[0].id == 1:
         teams = list(reversed(teams))
 
+    game_number = Games.get_latest_game_number() + 1 if not is_bye else -1
     g = Games(tournament_id=tournament_id, team_one_id=teams[0].id, team_two_id=teams[1].id,
               official_id=official, court=court, is_final=is_final, round=round_number, ranked=ranked, is_bye=is_bye,
-              someone_has_won=is_bye, game_number=Games.get_latest_game_number() + 1)
+              someone_has_won=is_bye, game_number=game_number)
     if is_bye:
         g.noteable_status = "Bye"
         g.admin_status = "Bye"

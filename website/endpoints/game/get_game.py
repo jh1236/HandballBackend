@@ -78,6 +78,7 @@ def add_get_game_endpoints(app):
         user = fetch_user()
         is_admin = user and user.is_admin
         tournament_searchable = request.args.get('tournament', None, type=str)
+        include_byes = request.args.get('includeByes', False, type=bool)
         limit = request.args.get('limit', -1, type=int)
         team_searchable = request.args.getlist('team', type=str)
         player_searchable = request.args.getlist('player', type=str)
@@ -88,6 +89,8 @@ def add_get_game_endpoints(app):
         return_tournament = request.args.get('returnTournament', False, type=bool)
         games = Games.query
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
+        if not include_byes:
+            games = games.filter(Games.is_bye == False)  # '== False' as sqlalchemy overrides the __eq__ operator
         if tournament_searchable:
             tid = tournament.id
             games = games.filter(Games.tournament_id == tid)
@@ -132,7 +135,8 @@ def add_get_game_endpoints(app):
         tid = tournament.id
         return_tournament = request.args.get('returnTournament', False, type=bool)
         if max_rounds > 0:
-            last_round = Games.query.filter(Games.tournament_id == tid).order_by(Games.round.desc()).first().round - max_rounds
+            last_round = Games.query.filter(Games.tournament_id == tid).order_by(
+                Games.round.desc()).first().round - max_rounds
         else:
             last_round = 0
         fixtures = defaultdict(list)
