@@ -144,4 +144,4 @@ def reassign_game_numbers():
 
 if __name__ == '__main__':
     with app.app_context():
-        reassign_game_numbers()
+        sync_all_games()

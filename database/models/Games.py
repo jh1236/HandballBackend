@@ -1,12 +1,15 @@
 """Defines the comments object and provides functions to get and manipulate one"""
 import time
 import typing
+from functools import reduce
+
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql.operators import exists
 
 from database import db
 
 if typing.TYPE_CHECKING:
     pass
-
 
 # create table main.games
 # (
@@ -46,6 +49,17 @@ if typing.TYPE_CHECKING:
 # adminStatus       TEXT,
 # noteableStatus    TEXT
 # );
+
+
+NO_ACTION_REQUIRED = [
+    'Resolved',
+    'In Progress',
+    'Official',
+    'Ended',
+    'Waiting For Start',
+    'Forfeit',
+    'Bye'
+]
 
 
 class Games(db.Model):
@@ -134,12 +148,6 @@ class Games(db.Model):
         return Games.query.order_by(Games.game_number.desc()).limit(1).first().game_number
 
     @property
-    def teams_protested(self):
-        from database.models import GameEvents
-        events = GameEvents.query.filter(GameEvents.game_id == self.id, GameEvents.event_type == 'Protest').all()
-        return events
-
-    @property
     def formatted_start_time(self):
         if self.start_time < 0: return "??"
         return time.strftime("%d/%m/%y (%H:%M)", time.localtime(self.start_time))
@@ -149,10 +157,26 @@ class Games(db.Model):
         if self.start_time < 0: return "??"
         return time.strftime("(%H:%M:%S)", time.localtime(self.length))
 
-    @property
+    @hybrid_property
     def losing_team_id(self):
         # cheeky maths hack
         return self.team_one_id + self.team_two_id - self.winning_team_id
+
+    @hybrid_property
+    def requires_action(self):
+        return self.admin_status not in NO_ACTION_REQUIRED
+
+    @requires_action.expression
+    def requires_action(cls):
+        return cls.admin_status.in_(NO_ACTION_REQUIRED) == False
+
+    @hybrid_property
+    def is_noteable(self):
+        return self.noteable_status not in NO_ACTION_REQUIRED
+
+    @is_noteable.expression
+    def is_noteable(cls):
+        return cls.noteable_status.in_(NO_ACTION_REQUIRED) == False
 
     def reset(self):
         self.started = False
@@ -168,7 +192,7 @@ class Games(db.Model):
         self.notes = None
         self.winning_team_id = None
 
-    @property
+    @hybrid_property
     def rounds(self):
         return self.team_one_score + self.team_two_score
 
@@ -226,8 +250,6 @@ class Games(db.Model):
             "started": self.started,
             "someoneHasWon": self.someone_has_won,
             "ended": self.ended,
-            "protested": self.protested,
-            "resolved": self.resolved,
             "ranked": self.ranked,
             "bestPlayer": self.best_player.as_dict() if self.best_player else None,
             "official": self.official.as_dict(tournament=self.tournament) if self.official else None,
@@ -248,7 +270,7 @@ class Games(db.Model):
             "timeoutExpirationTime": 1000 * get_timeout_time(self.id),
             "isOfficialTimeout": is_official_timeout(self.id),
         }
-        if official_view and include_prev_cards:
+        if (admin_view or official_view) and include_prev_cards:
             from database.models.GameEvents import GameEvents
             card_events = GameEvents.query.filter(
                 (GameEvents.event_type == "Warning") | (GameEvents.event_type.like("% Card")),
@@ -268,23 +290,28 @@ class Games(db.Model):
             team_two_protest = GameEvents.query.filter(GameEvents.game_id == self.id,
                                                        GameEvents.event_type == 'Protest',
                                                        GameEvents.team_id == self.team_two_id).first()
+            team_one_notes = [i.notes for i in rating_events if i.team_id == self.team_one_id][
+                0] if rating_events else None
+            team_two_notes = [i.notes for i in rating_events if i.team_id == self.team_two_id][
+                0] if rating_events else None
             d["admin"] = {
+                "markedForReview": self.marked_for_review,
+                "requiresAction": self.requires_action,
                 "noteableStatus": self.noteable_status,
-                "notes": self.notes,
+                "notes": self.notes if self.notes and self.notes.strip() else None,
                 "teamOneRating": [i.details for i in rating_events if i.team_id == self.team_one_id][
                     0] if rating_events else 3,
                 "teamTwoRating": [i.details for i in rating_events if i.team_id == self.team_two_id][
                     0] if rating_events else 3,
-                "teamOneNotes": [i.notes for i in rating_events if i.team_id == self.team_one_id][
-                    0] if rating_events else None,
-                "teamTwoNotes": [i.notes for i in rating_events if i.team_id == self.team_two_id][
-                    0] if rating_events else None,
+                "teamOneNotes": team_one_notes if team_one_notes and team_one_notes.strip() else None,
+                "teamTwoNotes": team_two_notes if team_two_notes and team_two_notes.strip() else None,
                 "teamOneProtest": team_one_protest.notes if team_one_protest else None,
                 "teamTwoProtest": team_two_protest.notes if team_two_protest else None,
                 "cards": [i.as_dict(include_game=False, card_details=True) for i in
                           GameEvents.query.filter(GameEvents.game_id == self.id,
                                                   (GameEvents.event_type == 'Warning') | (
-                                                      GameEvents.event_type.like('% Card'))).all()]
+                                                      GameEvents.event_type.like('% Card'))).all()],
+                "resolved": self.resolved,
             }
         if include_game_events:
             from database.models import GameEvents

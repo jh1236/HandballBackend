@@ -53,7 +53,8 @@ if admin:
     teamOneNotes: "str",
     teamTwoNotes: "str",
     teamOneProtest: "str",
-    teamTwoProtest: "str"
+    teamTwoProtest: "str",
+    markedForReview: "bool"
   }
 }
 ```

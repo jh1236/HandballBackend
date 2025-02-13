@@ -473,7 +473,8 @@ def change_code(game_id):
         game = Games.query.filter(Games.id == game_id).first()
     if game is None:
         return 1
-    ge = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
+    ge = GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.event_type != 'Warning').order_by(
+        GameEvents.id.desc()).first()
     return (game_id if not ge else ge.id +
                                    (get_serve_timer(game_id) > 0))
 
@@ -539,6 +540,8 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
         game.admin_status = 'Marked For Review'
     elif any(i.yellow_cards for i in players):
         game.admin_status = 'Yellow Card Awarded'
+    elif any(i == 1 for i in [team_one_rating, team_two_rating]):
+        game.admin_status = 'Unsportsmanlike Conduct'
     elif forfeit:
         game.admin_status = 'Forfeit'
     else:
@@ -552,11 +555,11 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
 
     if game.ranked and not game.is_final:  # the game is unranked, so doing elo stuff is silly
         team_one = PlayerGameStats.query.filter(
-            (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0) | (game.admin_status == 'Forfeit'),
+            bool(forfeit) or (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0),
             PlayerGameStats.team_id == game.team_one_id,
             PlayerGameStats.game_id == game.id).all()
         team_two = PlayerGameStats.query.filter(
-            (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0) | (game.admin_status == 'Forfeit'),
+            bool(forfeit) or (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0),
             PlayerGameStats.team_id == game.team_two_id,
             PlayerGameStats.game_id == game.id).all()
         teams = [team_one, team_two]
@@ -792,8 +795,11 @@ def is_official_timeout(game_id):
 
 
 def resolve_game(game_id):
+    game = Games.query.filter(Games.id == game_id).first()
+    if not game.requires_action:
+        raise ValueError("Game does not require action!")
     _add_to_game(game_id, "Resolve", None, None)
-    Games.query.filter(Games.id == game_id).first().admin_status = "Resolved"
+    game.admin_status = "Resolved"
     db.session.commit()
 
 

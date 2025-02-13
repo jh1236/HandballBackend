@@ -170,7 +170,7 @@ class Teams(db.Model):
     def image(self, tournament=None, big=False):
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
-            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 if big:
@@ -202,7 +202,7 @@ class Teams(db.Model):
         }
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
-            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
@@ -215,7 +215,7 @@ class Teams(db.Model):
             from database.models.GameEvents import GameEvents
             from database.models.Games import Games
             game = Games.query.filter(Games.id == game_id).first()
-            tt = TournamentTeams.query.filter(TournamentTeams.id == game.tournament_id,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == game.tournament_id,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]

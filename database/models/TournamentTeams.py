@@ -26,6 +26,7 @@ class TournamentTeams(db.Model):
     team_id = db.Column(db.Integer(), db.ForeignKey("teams.id"), nullable=False)
     image_url = db.Column(db.Text())
     big_image_url = db.Column(db.Text())
+    team_color = db.Column(db.Text())
     name = db.Column(db.Text())
     pool = db.Column(db.Integer())
 

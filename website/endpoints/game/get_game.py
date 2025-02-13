@@ -4,7 +4,7 @@ from flask import request, jsonify
 
 from database.models import Games, Tournaments, Teams, PlayerGameStats, People, Officials
 from structure import manage_game
-from utils.permissions import fetch_user
+from utils.permissions import fetch_user, umpire_manager_only
 from utils.util import fixture_sorter
 
 
@@ -45,7 +45,7 @@ def add_get_game_endpoints(app):
         }
         """
         user = fetch_user()
-        is_admin = user and user.is_admin
+        is_admin = user and user.is_umpire_manager
         is_official = user and user.is_official
         game = Games.query.filter(Games.game_number == id).first()
         include_game_events = request.args.get('includeGameEvents', None, type=bool)
@@ -58,6 +58,30 @@ def add_get_game_endpoints(app):
             "game": game.as_dict(include_game_events=include_game_events, include_stats=include_stats,
                                  admin_view=is_admin, official_view=is_official, make_nice=format_data),
         }
+        return out
+
+    @app.get('/api/games/noteable')
+    @umpire_manager_only
+    def get_noteable_games():
+        tournament_searchable = request.args.get('tournament', None, type=str)
+        tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
+        include_game_events = request.args.get('includeGameEvents', False, type=bool)
+        limit = request.args.get('limit', -1, type=int)
+        include_player_stats = request.args.get('includePlayerStats', False, type=bool)
+        return_tournament = request.args.get('returnTournament', False, type=bool)
+        user = fetch_user()
+        is_admin = user and user.is_umpire_manager
+        query = Games.query
+        if tournament:
+            query = query.filter(Games.tournament_id == tournament.id)
+        query = query.filter(Games.is_noteable)
+        if limit > 0:
+            query.limit(limit)
+
+        out = {"games": [i.as_dict(include_game_events=include_game_events, include_stats=include_player_stats,
+                                   admin_view=is_admin) for i in query.all()]}
+        if return_tournament and tournament_searchable:
+            out["tournament"] = tournament.as_dict()
         return out
 
     @app.route('/api/games', methods=['GET'])
@@ -76,7 +100,7 @@ def add_get_game_endpoints(app):
         }
         """
         user = fetch_user()
-        is_admin = user and user.is_admin
+        is_admin = user and user.is_umpire_manager
         tournament_searchable = request.args.get('tournament', None, type=str)
         include_byes = request.args.get('includeByes', False, type=bool)
         limit = request.args.get('limit', -1, type=int)
@@ -126,7 +150,7 @@ def add_get_game_endpoints(app):
         }
         """
         user = fetch_user()
-        is_admin = user and user.is_admin
+        is_admin = user and user.is_umpire_manager
         tournament_searchable = request.args.get('tournament', type=str)
         separate_finals = request.args.get('separateFinals', type=bool)
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()

@@ -29,7 +29,7 @@ def add_get_teams_endpoints(app):
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
         tournament_id = None if not tournament else tournament.id
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         if tournament_searchable:
             q = q.join(TournamentTeams, TournamentTeams.team_id == Teams.id).filter(
                 TournamentTeams.tournament_id == tournament_id)
@@ -53,7 +53,7 @@ def add_get_teams_endpoints(app):
         }
         """
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         tournament_searchable = request.args.get("tournament", None)
         make_nice = request.args.get('formatData', False, type=bool)
         return_tournament = request.args.get('returnTournament', False, type=bool)
@@ -79,7 +79,7 @@ def add_get_teams_endpoints(app):
         }
         """
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         tournament_searchable = request.args.get('tournament', None, type=str)
         include_stats = request.args.get('includeStats', False, type=bool)
         make_nice = request.args.get('formatData', False, type=bool)

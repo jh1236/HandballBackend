@@ -2,6 +2,8 @@
 import time
 from collections import defaultdict
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from database import db
 
 # create table main.people
@@ -272,12 +274,16 @@ class People(db.Model):
         return bool(PlayerGameStats.query.filter(PlayerGameStats.player_id == self.id,
                                                  PlayerGameStats.tournament_id == tournament_id).first())
 
-    @property
+    @hybrid_property
     def is_admin(self):
         return self.permission_level == 5
 
-    @property
+    @hybrid_property
     def is_official(self):
+        return self.permission_level >= 2
+
+    @hybrid_property
+    def is_umpire_manager(self):
         return self.permission_level >= 2
 
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None,

@@ -3,7 +3,7 @@ from flask import request, jsonify
 from database.models import Games
 from structure import manage_game
 from utils.logging_handler import logger
-from utils.permissions import officials_only, admin_only, fetch_user
+from utils.permissions import officials_only, admin_only, fetch_user, umpire_manager_only
 
 
 def add_edit_game_endpoints(app):
@@ -87,7 +87,7 @@ def add_edit_game_endpoints(app):
         return "", 204
 
     @app.post("/api/games/update/pardon")
-    @admin_only
+    @umpire_manager_only
     def pardon():
         """
         SCHEMA:
@@ -127,7 +127,7 @@ def add_edit_game_endpoints(app):
         team_two_notes = request.json.get("teamTwoNotes", '')
         protest_team_one = request.json.get("protestTeamOne", None)
         protest_team_two = request.json.get("protestTeamTwo", None)
-        marked_for_review = request.json.get("markedForReview", False)
+        marked_for_review = request.json.get("markedForReview", False) == 'true'
         manage_game.end_game(game_id, best, team_one_rating, team_two_rating, overall_notes, protest_team_one,
                              protest_team_two, team_one_notes, team_two_notes, marked_for_review)
         return "", 204
@@ -232,7 +232,7 @@ def add_edit_game_endpoints(app):
         """
         logger.info(f"Request for undo: {request.json}")
         game_id = Games.game_number_to_id(int(request.json["id"]))
-        override = fetch_user().is_admin
+        override = fetch_user().is_umpire_manager
         manage_game.undo(game_id, override)
         return "", 204
 
@@ -247,7 +247,7 @@ def add_edit_game_endpoints(app):
         """
         logger.info(f"Request for delete: {request.json}")
         game_id = Games.game_number_to_id(int(request.json["id"]))
-        override = fetch_user().is_admin
+        override = fetch_user().is_umpire_manager
         manage_game.delete(game_id, override)
         return "", 204
 
@@ -276,7 +276,7 @@ def add_edit_game_endpoints(app):
         return "", 204
 
     @app.post("/api/games/update/resolve")
-    @admin_only
+    @umpire_manager_only
     def resolve():
         """
         SCHEMA:
@@ -284,7 +284,7 @@ def add_edit_game_endpoints(app):
             id: <int> = id of the game to resolve
         }
         """
-        logger.info(f"Request for end: {request.json}")
+        logger.info(f"Request for resolve: {request.json}")
         game_id = Games.game_number_to_id(int(request.json["id"]))
         manage_game.resolve_game(game_id)
         return "", 204
@@ -305,7 +305,8 @@ def add_edit_game_endpoints(app):
         }
         """
         logger.info(request.json)
-        gid = manage_game.create_game(request.json["tournament"], request.json.get("teamOne", ''), request.json.get("teamTwo", ''),
+        gid = manage_game.create_game(request.json["tournament"], request.json.get("teamOne", ''),
+                                      request.json.get("teamTwo", ''),
                                       request.json["official"], request.json.get("playersOne", None),
                                       request.json.get("playersTwo", None))
         return jsonify({"id": gid})

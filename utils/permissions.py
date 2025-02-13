@@ -105,6 +105,20 @@ def admin_only(func):
     inner.__name__ = func.__name__  # changing name of inner function so flask acts nicely <3
     return inner
 
+def umpire_manager_only(func):
+    def inner(*args, **kwargs):
+
+        user = fetch_user()
+        if not user:
+            return "This page requires authentication.", 401
+        if user.is_umpire_manager:
+            return func(*args, **kwargs)
+
+        return "Insufficient Permissions", 401
+
+    inner.__name__ = func.__name__  # changing name of inner function so flask acts nicely <3
+    return inner
+
 
 def officials_only(func):
     def inner(*args, **kwargs):
