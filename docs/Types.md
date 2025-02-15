@@ -75,6 +75,7 @@ if include_player_stats: (default False)
 
 ```json lines
 {
+  id: "int",
   eventType: "str",
   firstTeam: "bool",
   player: "Player",
