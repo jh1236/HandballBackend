@@ -159,7 +159,9 @@ class Teams(db.Model):
         if include_stats:
             from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True,official_view=True)} for
+                        "rating": notes[i].details if i in notes else 3,
+                        "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True, official_view=True)}
+                    for
                     i in
                     relevant_ids}
         else:
@@ -227,8 +229,12 @@ class Teams(db.Model):
                 GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
                 (GameEvents.event_type == 'Score')).order_by(
                 GameEvents.id.desc()).first()
+            start_event = GameEvents.query.filter(GameEvents.game_id == game_id,
+                                                  GameEvents.event_type == 'Start').first()
             if not last_time_served:
-                d["servedFromLeft"] = Config().diby_serve
+                if not start_event:
+                    d["servedFromLeft"] = False  # this value is nonsensical - we dont know who is serving
+                d["servedFromLeft"] = start_event.team_to_serve_id != self.id if Config().diby_serve else False
             else:
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:
