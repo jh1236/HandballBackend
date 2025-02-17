@@ -234,7 +234,8 @@ class Teams(db.Model):
             if not last_time_served:
                 if not start_event:
                     d["servedFromLeft"] = False  # this value is nonsensical - we dont know who is serving
-                d["servedFromLeft"] = start_event.team_to_serve_id != self.id if Config().diby_serve else False
+                else:
+                    d["servedFromLeft"] = start_event.team_to_serve_id != self.id if Config().diby_serve else False
             else:
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:
