@@ -226,8 +226,8 @@ class Teams(db.Model):
                     "teamColorAsRGBABecauseDigbyIsLazy"]
                 d["name"] = tt.name if tt.name else d["name"]
             last_time_served = GameEvents.query.filter(
-                GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
-                (GameEvents.event_type == 'Score')).order_by(
+                GameEvents.game_id == game_id, GameEvents.team_to_serve_id == self.id,
+                (GameEvents.event_type == 'Score') | (GameEvents.event_type == 'Start')).order_by(
                 GameEvents.id.desc()).first()
             start_event = GameEvents.query.filter(GameEvents.game_id == game_id,
                                                   GameEvents.event_type == 'Start').first()
