@@ -159,7 +159,9 @@ class Teams(db.Model):
         if include_stats:
             from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True,official_view=True)} for
+                        "rating": notes[i].details if i in notes else 3,
+                        "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True, official_view=True)}
+                    for
                     i in
                     relevant_ids}
         else:
@@ -224,8 +226,8 @@ class Teams(db.Model):
                     "teamColorAsRGBABecauseDigbyIsLazy"]
                 d["name"] = tt.name if tt.name else d["name"]
             last_time_served = GameEvents.query.filter(
-                GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
-                (GameEvents.event_type == 'Score')).order_by(
+                GameEvents.game_id == game_id, GameEvents.team_to_serve_id == self.id,
+                (GameEvents.event_type == 'Score') | (GameEvents.event_type == 'Start')).order_by(
                 GameEvents.id.desc()).first()
             if not last_time_served:
                 d["servedFromLeft"] = Config().diby_serve
