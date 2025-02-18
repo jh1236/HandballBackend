@@ -57,7 +57,6 @@ def sync(game_id):
             i.team_two_left, i.team_two_right]
         match i.event_type:
             case "Score":
-                prev_event = events[c - 1].event_type
                 fault = False
                 if player is not None:
                     player.points_scored += 1
@@ -76,11 +75,19 @@ def sync(game_id):
                                                     None])[0]
                     if receiving_player:
                         receiving_pgs = pgs_from_game_and_player(game_id, receiving_player.id)
-                        if receiving_pgs and receiving_pgs.player_id and (
-                                i.notes != 'Penalty' or prev_event == 'Ace'):
+                        if receiving_pgs and receiving_pgs.player_id and i.notes != 'Penalty':
                             receiving_pgs.serves_received += 1
-                            if prev_event != 'Ace':
+                            if i.notes != 'Ace':
                                 receiving_pgs.serves_returned += 1
+                    if i.notes == 'Ace':
+                        player.aces_scored += 1
+                        player_who_served = [j for j in all_players if j.player_id == i.player_who_served_id][0]
+                        if player_who_served.player_id == i.player_to_serve_id:
+                            ace_streak += 1
+                            if player_who_served.ace_streak < ace_streak:
+                                player_who_served.ace_streak = ace_streak
+                        else:
+                            ace_streak = 0
                     if player_who_served.player_id == i.player_to_serve_id:
                         streak += 1
                         if player_who_served.serve_streak < streak:
@@ -103,15 +110,7 @@ def sync(game_id):
 
             case "Pardon":
                 player.card_time_remaining = 0
-            case "Ace":
-                player.aces_scored += 1
-                player_who_served = [j for j in all_players if j.player_id == i.player_who_served_id][0]
-                if player_who_served.player_id == i.player_to_serve_id:
-                    ace_streak += 1
-                    if player_who_served.ace_streak < ace_streak:
-                        player_who_served.ace_streak = ace_streak
-                else:
-                    ace_streak = 0
+
             case "Fault":
                 player.faults += 1
                 player.served_points += 1
@@ -412,8 +411,7 @@ def ace(game_id):
     last_game_event = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
     left_player = bool(
         last_game_event.player_to_serve_id == last_game_event.team_one_left_id if first_team else last_game_event.team_two_left_id)
-    _add_to_game(game_id, "Ace", first_team, left_player)
-    _score_point(game_id, first_team, left_player, penalty=True)
+    _score_point(game_id, first_team, left_player, notes='Ace')
     db.session.commit()
 
 

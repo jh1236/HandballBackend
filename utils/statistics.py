@@ -15,5 +15,5 @@ def probability(other, me):
 
 def calc_elo(elo, elo_other, first_won):
     pa = probability(elo_other, elo)
-    ra = K * (first_won - pa)
-    return ra
+    delta_ra = K * (first_won - pa)
+    return delta_ra
