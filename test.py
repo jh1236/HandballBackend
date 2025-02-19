@@ -115,7 +115,7 @@ def eight_suss_championship():
                                   True,
                                   True,
                                   True,
-                                  teams=[97, 112, 113, 114, 95, 7, 116, 117, 118, 119, 20],
+                                  teams=[97, 112, 113, 114, 95, 7, 116, 73, 118, 119, 20, 123],
                                   officials=[1, 2, 4, 6, 12, 14, 10])
 
 
@@ -144,4 +144,5 @@ def reassign_game_numbers():
 
 if __name__ == '__main__':
     with app.app_context():
-        sync_all_games()
+        delete_eighth_tournament()
+        eight_suss_championship()

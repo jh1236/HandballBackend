@@ -344,7 +344,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     if game_has_started(game_id):
         raise ValueError("Game is Already Started!")
     game = Games.query.filter(Games.id == game_id).first()
-    team_one_id, team_two_id = game.team_one, game.team_two
+    team_one_id, team_two_id = game.team_one_id, game.team_two_id
 
     if team_one is None:
         team_one = [i.player_id for i in PlayerGameStats.query.filter(
@@ -352,7 +352,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     else:
         team_one = [People.query.filter(People.searchable_name == i).first().id for i in team_one]
     if team_two is None:
-        team_two = [i.searchable_name for i in PlayerGameStats.query.filter(
+        team_two = [i.player_id for i in PlayerGameStats.query.filter(
             (PlayerGameStats.game_id == game.id) & (PlayerGameStats.team_id == team_two_id)).all()]
     else:
         team_two = [People.query.filter(People.searchable_name == i).first().id for i in team_two]
@@ -364,7 +364,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     game.status = 'In Progress'
     game.admin_status = 'In Progress'
     game.noteable_status = 'In Progress'
-    game.iga_side = iga
+    game.iga_side_id = iga
     game.start_time = time.time()
     if official:
         person_id = People.query.filter(People.searchable_name == official).first().id

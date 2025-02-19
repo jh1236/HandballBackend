@@ -8,7 +8,8 @@ def add_endpoints(app):
     @app.get("/api/image")
     def image():
         team = request.args.get("name", type=str)
-        return send_file(f"./resources/images/{team}.png", mimetype="image/png")
+        big = request.args.get("big", type=bool)
+        return send_file(f"./resources/images{'/big' if big else ''}/{team}.png", mimetype="image/png")
 
     # TODO: THIS IS VERY UNSECURE!!
     @app.get("/api/request")

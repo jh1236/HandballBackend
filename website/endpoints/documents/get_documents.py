@@ -2,11 +2,11 @@ from flask import send_file
 
 
 def add_document_endpoints(app):
-    @app.get("/api/document/current_rules")
+    @app.get("/api/documents/rules")
     def rules():
         return send_file("./resources/documents/pdf/rules.pdf"), 200
 
-    @app.get("/api/document/simplified_rules")
+    @app.get("/api/documents/simplified_rules")
     def simple_rules():
         return send_file("./resources/documents/pdf/rules_simple.pdf"), 200
 

@@ -80,13 +80,14 @@ def add_tourney_endpoints(app):
         }
         """
         tournament = request.args.get("name", type=str)
+        big = request.args.get("big", type=bool)
         if os.path.isfile(f"./resources/images/tournaments/{tournament}.png"):
             return send_file(
-                f"./resources/images/tournaments/{tournament}.png", mimetype="image/png"
+                f"./resources/images{'/big' if big else ''}/tournaments/{tournament}.png", mimetype="image/png"
             )
         else:
             return send_file(
-                f"./resources/images/teams/blank.png", mimetype="image/png"
+                f"./resources/images{'/big' if big else ''}/teams/blank.png", mimetype="image/png"
             )
 
     @app.post("/api/tournaments/serveStyle")
