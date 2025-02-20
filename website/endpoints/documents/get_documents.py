@@ -16,4 +16,4 @@ def add_document_endpoints(app):
 
     @app.get("/api/documents/tournament_regulations/")
     def code_of_conduct():
-        return send_file("./resources/documents/pdf/code_of_conduct.pdf"), 200
+        return send_file("./resources/documents/pdf/tournament_regulations.pdf"), 200
