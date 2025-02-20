@@ -24,7 +24,7 @@ def add_get_player_endpoints(app):
         return_tournament = request.args.get('returnTournament', False, type=bool)
         include_stats = request.args.get("includeStats", False, type=bool)
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         q = PlayerGameStats.query
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
         if tournament_searchable:
@@ -56,7 +56,7 @@ def add_get_player_endpoints(app):
         include_court_stats = request.args.get('includeCourtStats', False, type=bool)
         game = request.args.get("game", None, type=int)
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         if game:
             return PlayerGameStats.query.join(People, PlayerGameStats.player_id == People.id).filter(
                 PlayerGameStats.game_id == game, People.searchable_name == searchable).first().as_dict()
@@ -85,7 +85,7 @@ def add_get_player_endpoints(app):
         return_tournament = request.args.get('returnTournament', False, type=bool)
         game = request.args.get("game", None, type=int)
         user = fetch_user()
-        admin = user and user.is_admin
+        admin = user and user.is_umpire_manager
         tournament_searchable = request.args.get("tournament", None)
         tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament_searchable).first()
         include_unranked = False

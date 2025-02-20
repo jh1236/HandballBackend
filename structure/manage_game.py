@@ -57,7 +57,6 @@ def sync(game_id):
             i.team_two_left, i.team_two_right]
         match i.event_type:
             case "Score":
-                prev_event = events[c - 1].event_type
                 fault = False
                 if player is not None:
                     player.points_scored += 1
@@ -76,11 +75,19 @@ def sync(game_id):
                                                     None])[0]
                     if receiving_player:
                         receiving_pgs = pgs_from_game_and_player(game_id, receiving_player.id)
-                        if receiving_pgs and receiving_pgs.player_id and (
-                                i.notes != 'Penalty' or prev_event == 'Ace'):
+                        if receiving_pgs and receiving_pgs.player_id and i.notes != 'Penalty':
                             receiving_pgs.serves_received += 1
-                            if prev_event != 'Ace':
+                            if i.notes != 'Ace':
                                 receiving_pgs.serves_returned += 1
+                    if i.notes == 'Ace':
+                        player.aces_scored += 1
+                        player_who_served = [j for j in all_players if j.player_id == i.player_who_served_id][0]
+                        if player_who_served.player_id == i.player_to_serve_id:
+                            ace_streak += 1
+                            if player_who_served.ace_streak < ace_streak:
+                                player_who_served.ace_streak = ace_streak
+                        else:
+                            ace_streak = 0
                     if player_who_served.player_id == i.player_to_serve_id:
                         streak += 1
                         if player_who_served.serve_streak < streak:
@@ -103,15 +110,7 @@ def sync(game_id):
 
             case "Pardon":
                 player.card_time_remaining = 0
-            case "Ace":
-                player.aces_scored += 1
-                player_who_served = [j for j in all_players if j.player_id == i.player_who_served_id][0]
-                if player_who_served.player_id == i.player_to_serve_id:
-                    ace_streak += 1
-                    if player_who_served.ace_streak < ace_streak:
-                        player_who_served.ace_streak = ace_streak
-                else:
-                    ace_streak = 0
+
             case "Fault":
                 player.faults += 1
                 player.served_points += 1
@@ -345,7 +344,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     if game_has_started(game_id):
         raise ValueError("Game is Already Started!")
     game = Games.query.filter(Games.id == game_id).first()
-    team_one_id, team_two_id = game.team_one, game.team_two
+    team_one_id, team_two_id = game.team_one_id, game.team_two_id
 
     if team_one is None:
         team_one = [i.player_id for i in PlayerGameStats.query.filter(
@@ -353,7 +352,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     else:
         team_one = [People.query.filter(People.searchable_name == i).first().id for i in team_one]
     if team_two is None:
-        team_two = [i.searchable_name for i in PlayerGameStats.query.filter(
+        team_two = [i.player_id for i in PlayerGameStats.query.filter(
             (PlayerGameStats.game_id == game.id) & (PlayerGameStats.team_id == team_two_id)).all()]
     else:
         team_two = [People.query.filter(People.searchable_name == i).first().id for i in team_two]
@@ -365,7 +364,7 @@ def start_game(game_id, swap_service, team_one, team_two, team_one_iga, official
     game.status = 'In Progress'
     game.admin_status = 'In Progress'
     game.noteable_status = 'In Progress'
-    game.iga_side = iga
+    game.iga_side_id = iga
     game.start_time = time.time()
     if official:
         person_id = People.query.filter(People.searchable_name == official).first().id
@@ -412,8 +411,7 @@ def ace(game_id):
     last_game_event = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
     left_player = bool(
         last_game_event.player_to_serve_id == last_game_event.team_one_left_id if first_team else last_game_event.team_two_left_id)
-    _add_to_game(game_id, "Ace", first_team, left_player)
-    _score_point(game_id, first_team, left_player, penalty=True)
+    _score_point(game_id, first_team, left_player, notes='Ace')
     db.session.commit()
 
 
@@ -473,7 +471,8 @@ def change_code(game_id):
         game = Games.query.filter(Games.id == game_id).first()
     if game is None:
         return 1
-    ge = GameEvents.query.filter(GameEvents.game_id == game_id).order_by(GameEvents.id.desc()).first()
+    ge = GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.event_type != 'Warning').order_by(
+        GameEvents.id.desc()).first()
     return (game_id if not ge else ge.id +
                                    (get_serve_timer(game_id) > 0))
 
@@ -539,6 +538,8 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
         game.admin_status = 'Marked For Review'
     elif any(i.yellow_cards for i in players):
         game.admin_status = 'Yellow Card Awarded'
+    elif any(i == 1 for i in [team_one_rating, team_two_rating]):
+        game.admin_status = 'Unsportsmanlike Conduct'
     elif forfeit:
         game.admin_status = 'Forfeit'
     else:
@@ -552,11 +553,11 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
 
     if game.ranked and not game.is_final:  # the game is unranked, so doing elo stuff is silly
         team_one = PlayerGameStats.query.filter(
-            (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0) | (game.admin_status == 'Forfeit'),
+            bool(forfeit) or (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0),
             PlayerGameStats.team_id == game.team_one_id,
             PlayerGameStats.game_id == game.id).all()
         team_two = PlayerGameStats.query.filter(
-            (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0) | (game.admin_status == 'Forfeit'),
+            bool(forfeit) or (PlayerGameStats.rounds_on_court + PlayerGameStats.rounds_carded > 0),
             PlayerGameStats.team_id == game.team_two_id,
             PlayerGameStats.game_id == game.id).all()
         teams = [team_one, team_two]
@@ -680,9 +681,10 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
     if is_bye and teams[0].id == 1:
         teams = list(reversed(teams))
 
+    game_number = Games.get_latest_game_number() + 1 if not is_bye else -1
     g = Games(tournament_id=tournament_id, team_one_id=teams[0].id, team_two_id=teams[1].id,
               official_id=official, court=court, is_final=is_final, round=round_number, ranked=ranked, is_bye=is_bye,
-              someone_has_won=is_bye, game_number=Games.get_latest_game_number() + 1)
+              someone_has_won=is_bye, game_number=game_number)
     if is_bye:
         g.noteable_status = "Bye"
         g.admin_status = "Bye"
@@ -791,8 +793,11 @@ def is_official_timeout(game_id):
 
 
 def resolve_game(game_id):
+    game = Games.query.filter(Games.id == game_id).first()
+    if not game.requires_action:
+        raise ValueError("Game does not require action!")
     _add_to_game(game_id, "Resolve", None, None)
-    Games.query.filter(Games.id == game_id).first().admin_status = "Resolved"
+    game.admin_status = "Resolved"
     db.session.commit()
 
 

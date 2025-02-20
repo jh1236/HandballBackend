@@ -159,7 +159,9 @@ class Teams(db.Model):
         if include_stats:
             from database.models import Games
             return {i: {"notes": notes[i].notes if i in notes else '', "cards": cards[i],
-                        "rating": notes[i].details if i in notes else 3, "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True,official_view=True)} for
+                        "rating": notes[i].details if i in notes else 3,
+                        "game": Games.query.filter(Games.id == i).first().as_dict(admin_view=True, official_view=True)}
+                    for
                     i in
                     relevant_ids}
         else:
@@ -170,7 +172,7 @@ class Teams(db.Model):
     def image(self, tournament=None, big=False):
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
-            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 if big:
@@ -180,7 +182,7 @@ class Teams(db.Model):
         return self.big_image_url if big and self.big_image_url else self.image_url
 
     def as_dict(self, include_stats=False, tournament=None, include_player_stats=None, make_nice=False, game_id=None,
-                admin_view=False, single=False):
+                admin_view=False, single=False, official_view=False):
         include_player_stats = include_stats if include_player_stats is None else include_player_stats
         d = {
             "name": self.name,
@@ -191,18 +193,21 @@ class Teams(db.Model):
             "teamColorAsRGBABecauseDigbyIsLazy": hex_to_rgba(self.team_color),
             "captain": self.captain.as_dict(include_stats=include_player_stats,
                                             tournament=tournament, game_id=game_id,
-                                            make_nice=make_nice) if self.captain else None,
+                                            make_nice=make_nice, official_view=official_view,
+                                            include_prev_cards=True) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
                                                    game_id=game_id,
-                                                   make_nice=make_nice) if self.non_captain_id else None,
+                                                   make_nice=make_nice, official_view=official_view,
+                                                   include_prev_cards=True) if self.non_captain_id else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
                                                   tournament=tournament, game_id=game_id,
-                                                  make_nice=make_nice) if self.substitute_id else None,
+                                                  make_nice=make_nice, official_view=official_view,
+                                                  include_prev_cards=True) if self.substitute_id else None,
         }
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
-            tt = TournamentTeams.query.filter(TournamentTeams.id == tournament,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
@@ -215,7 +220,7 @@ class Teams(db.Model):
             from database.models.GameEvents import GameEvents
             from database.models.Games import Games
             game = Games.query.filter(Games.id == game_id).first()
-            tt = TournamentTeams.query.filter(TournamentTeams.id == game.tournament_id,
+            tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == game.tournament_id,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
@@ -227,8 +232,13 @@ class Teams(db.Model):
                 GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
                 (GameEvents.event_type == 'Score')).order_by(
                 GameEvents.id.desc()).first()
+            start_event = GameEvents.query.filter(GameEvents.game_id == game_id,
+                                                  GameEvents.event_type == 'Start').first()
             if not last_time_served:
-                d["servedFromLeft"] = Config().diby_serve
+                if not start_event:
+                    d["servedFromLeft"] = False  # this value is nonsensical - we dont know who is serving
+                else:
+                    d["servedFromLeft"] = start_event.team_to_serve_id != self.id if Config().diby_serve else False
             else:
                 d["servedFromLeft"] = last_time_served.side_served == "Left"
         if include_stats:

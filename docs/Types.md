@@ -53,7 +53,8 @@ if admin:
     teamOneNotes: "str",
     teamTwoNotes: "str",
     teamOneProtest: "str",
-    teamTwoProtest: "str"
+    teamTwoProtest: "str",
+    markedForReview: "bool"
   }
 }
 ```
@@ -74,6 +75,7 @@ if include_player_stats: (default False)
 
 ```json lines
 {
+  id: "int",
   eventType: "str",
   firstTeam: "bool",
   player: "Player",

@@ -4,7 +4,6 @@ import time
 from database import db
 
 
-
 # create table main.officials
 # (
 #     id          INTEGER
@@ -47,7 +46,7 @@ class Officials(db.Model):
         }
         q = db.session.query(PlayerGameStats).join(Games, Games.id == PlayerGameStats.game_id).filter(
             Games.official_id == self.id)
-        if tournament :
+        if tournament:
             if isinstance(tournament, str):
                 tournament = Tournaments.query.filter(Tournaments.searchable_name == tournament).first()
             if isinstance(tournament, int):
@@ -73,4 +72,5 @@ class Officials(db.Model):
         return stats
 
     def as_dict(self, tournament=None):
-        return self.person.as_dict(include_stats=False) | {"stats": self.stats(tournament=tournament)}
+        return self.person.as_dict(include_stats=False, tournament=tournament) | {
+            "stats": self.stats(tournament=tournament)}

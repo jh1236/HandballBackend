@@ -64,6 +64,8 @@ This endpoint is open to the public
     - True if the stats of each player should be included
 - includePreviousCards: bool (official only)
     - True if the cards each team has previously received should be included
+- includeByes: bool
+    - True if byes should be returned
 
 #### Return Structure
 
@@ -99,6 +101,41 @@ This endpoint is open to the public
     - True if the stats of each player should be included
 - returnTournament: bool (Optional)
     - If the tournament is to be returned in the response
+- includeByes: bool (Optional)
+    - If bye games should be returned.
+- limit: int (Optional)
+    - The maximum amount of games to return
+
+#### Return Structure
+
+- games: list\[Game(includeGameEvents=includeGameEvents)\]
+- tournament: Tournament
+    - The tournament that was passed in
+
+<hr>
+
+### /api/games/noteable
+
+#### Description
+
+Returns the list of games matching the given criteria
+
+#### Permissions:
+
+This endpoint is open to the public
+
+#### Arguments:
+
+- tournament: str (Optional)
+    - The searchable name of the tournament to take games from
+- includeGameEvents (bool) (Optional) (**admin** only)
+    - True if the events of the games should be included
+- includePlayerStats (bool) (Optional)(**admin** only)
+    - True if the stats of each player should be included
+- returnTournament: bool (Optional)
+    - If the tournament is to be returned in the response
+- limit: int (Optional)
+    - The maximum amount of games to return 
 
 #### Return Structure
 

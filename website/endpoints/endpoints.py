@@ -5,11 +5,11 @@ from utils.logging_handler import logger
 
 
 def add_endpoints(app):
-
     @app.get("/api/image")
     def image():
         team = request.args.get("name", type=str)
-        return send_file(f"./resources/images/{team}.png", mimetype="image/png")
+        big = request.args.get("big", type=bool)
+        return send_file(f"./resources/images{'/big' if big else ''}/{team}.png", mimetype="image/png")
 
     # TODO: THIS IS VERY UNSECURE!!
     @app.get("/api/request")
@@ -50,6 +50,7 @@ def add_endpoints(app):
     from website.endpoints.players.user import add_user_endpoints
     from website.endpoints.teams.get_teams import add_get_teams_endpoints
     from website.endpoints.tournaments.tournament import add_tourney_endpoints
+    from website.endpoints.documents.get_documents import add_document_endpoints
 
     add_tourney_endpoints(app)
     add_edit_game_endpoints(app)
@@ -58,3 +59,4 @@ def add_endpoints(app):
     add_get_teams_endpoints(app)
     add_get_player_endpoints(app)
     add_get_official_endpoints(app)
+    add_document_endpoints(app)

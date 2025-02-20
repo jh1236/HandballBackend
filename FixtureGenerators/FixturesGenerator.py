@@ -58,20 +58,20 @@ class FixturesGenerator:
     def end_tournament(self,
                        note="Thank you for participating in the tournament! We look forward to seeing you next time"):
         """i wanted to automate this but i couldn't get it to work, either with SQLAlchemy or sqlite"""
-
+        from database.models import \
+            Tournaments  # WHAT THE FUCK?! i dont know what is going on here, but this fixes it?!
         tournament = Tournaments.query.filter(Tournaments.id == self.tournament_id).first()
         tournament.finished = True
         tournament.notes = note
         db.session.commit()
 
     def add_umpires(self):
-        from database.models import Tournaments # WHAT THE FUCK?! i dont know what is going on here, but this fixes it?!
+        from database.models import \
+            Tournaments  # WHAT THE FUCK?! i dont know what is going on here, but this fixes it?!
         games_query = Games.query.filter(Games.tournament_id == self.tournament_id, Games.is_bye == False).order_by(
             Games.id).all()
         players = PlayerGameStats.query.join(Games, Games.id == PlayerGameStats.game_id).filter(
             PlayerGameStats.tournament_id == self.tournament_id, Games.is_bye == False).all()
-        logger.fatal(Tournaments.__dict__)
-        logger.fatal(Games.__dict__)
         tourney = Tournaments.query.filter(Tournaments.id == self.tournament_id).first()
         officials = TournamentOfficials.query.filter(TournamentOfficials.tournament_id == self.tournament_id).all()
 
@@ -96,7 +96,6 @@ class FixturesGenerator:
                             it.court_one_umpired,
                         ),
                     )
-                    print([(i.official.person.name, i.games_umpired,) for i in court_one_officials])
                     court_two_officials: list[TournamentOfficials] = sorted(
                         officials,
                         key=lambda it: (
@@ -142,7 +141,6 @@ class FixturesGenerator:
                             it.games_scored
                         ),
                     )
-                    print(f"{[(i.official.person_id, i.official.proficiency) for i in scorer]}")
                     for o in scorer:
                         if o.official_id in [k.official_id for k in games if k]:
                             # the official is umpiring this round
@@ -172,9 +170,11 @@ def get_type_from_name(name: str, tournament: int) -> FixturesGenerator:
     from FixtureGenerators.RoundRobin import RoundRobin
     from FixtureGenerators.Swiss import Swiss
     from FixtureGenerators.TopThreeFinals import TopThreeFinals
+    from FixtureGenerators.PooledFinals import PooledFinals
     return {
         "BasicFinals": BasicFinals(tournament),
         "Pooled": Pooled(tournament),
+        "PooledFinals": PooledFinals(tournament),
         "RoundRobin": RoundRobin(tournament),
         "OneRoundEditable": OneRound(tournament),
         "Swiss": Swiss(tournament),

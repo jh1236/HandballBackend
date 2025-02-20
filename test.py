@@ -1,5 +1,6 @@
 import csv
 import random
+from itertools import count
 from math import floor
 
 from database import db
@@ -114,7 +115,7 @@ def eight_suss_championship():
                                   True,
                                   True,
                                   True,
-                                  teams=[97, 112, 113, 114, 95, 7, 116, 117, 118, 119, 20],
+                                  teams=[97, 112, 113, 114, 95, 7, 116, 73, 118, 119, 19, 123],
                                   officials=[1, 2, 4, 6, 12, 14, 10])
 
 
@@ -130,10 +131,18 @@ def delete_eighth_tournament():
     db.session.commit()
 
 
+def reassign_game_numbers():
+    count = 1
+    for game in Games.query.all():
+        if game.is_bye:
+            game.game_number = -1
+        else:
+            game.game_number = count
+            count += 1
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-        count = 1
-        for i in Games.query.all():
-            i.game_number = count
-            count += 1
-        db.session.commit()
+        delete_eighth_tournament()
+        eight_suss_championship()

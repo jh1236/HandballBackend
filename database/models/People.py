@@ -2,6 +2,8 @@
 import time
 from collections import defaultdict
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from database import db
 
 # create table main.people
@@ -59,12 +61,14 @@ class People(db.Model):
     token_timeout = db.Column(db.Integer())
     permission_level = db.Column(db.Integer(), nullable=False, default=False)
 
-    def image(self, tournament=None, big=False):
+    def image(self, tournament=None, big=False, default="https://api.squarers.club/image?name=umpire"):
         from database.models import Teams
         from database.models import TournamentTeams
         if self.image_url:
             return self.image_url
         if tournament:
+            if not isinstance(tournament, int):
+                tournament = tournament.id
             t = Teams.query.join(TournamentTeams, TournamentTeams.team_id == Teams.id).filter(
                 (Teams.captain_id == self.id) | (Teams.non_captain_id == self.id) | (
                         Teams.substitute_id == self.id), TournamentTeams.tournament_id == tournament).order_by(
@@ -74,7 +78,7 @@ class People(db.Model):
             t = Teams.query.filter((Teams.captain_id == self.id) | (Teams.non_captain_id == self.id) | (
                     Teams.substitute_id == self.id)).order_by(Teams.image_url.like('/api/teams/image?%').desc(),
                                                               Teams.id).first()
-        return t.image(tournament, big) if t else "/api/teams/image?name=bye"
+        return t.image(tournament, big) if t else default
 
     def elo(self, last_game=None):
         from database.models import EloChange
@@ -272,22 +276,27 @@ class People(db.Model):
         return bool(PlayerGameStats.query.filter(PlayerGameStats.player_id == self.id,
                                                  PlayerGameStats.tournament_id == tournament_id).first())
 
-    @property
+    @hybrid_property
     def is_admin(self):
         return self.permission_level == 5
 
-    @property
+    @hybrid_property
     def is_official(self):
         return self.permission_level >= 2
 
+    @hybrid_property
+    def is_umpire_manager(self):
+        return self.permission_level >= 2
+
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None,
-                include_court_stats=False, single=False):
+                include_court_stats=False, single=False, official_view=False, include_prev_cards=False):
         from database.models import PlayerGameStats
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
                                                PlayerGameStats.player_id == self.id).first()
             if pgs:
-                return pgs.as_dict(include_game=False, include_stats=include_stats)
+                return pgs.as_dict(include_game=False, include_stats=include_stats, official_view=official_view,
+                                   include_prev_cards=include_prev_cards)
         img = self.image(tournament=tournament)
         big_img = self.image(tournament=tournament, big=True)
         d = {
@@ -306,6 +315,12 @@ class People(db.Model):
             game_filter = (lambda a: a.filter(PlayerGameStats.tournament_id == tournament)) if tournament else None
             d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view,
                                     include_court_stats=include_court_stats, include_unranked=include_unranked)
+        if (admin_view or official_view) and include_prev_cards and tournament:
+            from database.models import GameEvents
+            cards: list[GameEvents] = GameEvents.query.filter(GameEvents.tournament_id == self.tournament_id,
+                                                              GameEvents.player_id == self.id,
+                                                              GameEvents.is_card == True).all()
+            d["prevCards"] = [i.as_dict(include_game=False, include_player=False, card_details=True) for i in cards]
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin,

@@ -7,12 +7,12 @@ from flask import send_file
 from database import db
 from database.models import Tournaments, Games, Teams
 from utils.logging_handler import logger
-from utils.permissions import admin_only
+from utils.permissions import admin_only, umpire_manager_only
 
 
 def add_tourney_endpoints(app):
     @app.post("/api/tournaments/note")
-    @admin_only
+    @umpire_manager_only
     def note():
         """
         SCHEMA:
@@ -80,17 +80,18 @@ def add_tourney_endpoints(app):
         }
         """
         tournament = request.args.get("name", type=str)
+        big = request.args.get("big", type=bool)
         if os.path.isfile(f"./resources/images/tournaments/{tournament}.png"):
             return send_file(
-                f"./resources/images/tournaments/{tournament}.png", mimetype="image/png"
+                f"./resources/images{'/big' if big else ''}/tournaments/{tournament}.png", mimetype="image/png"
             )
         else:
             return send_file(
-                f"./resources/images/teams/blank.png", mimetype="image/png"
+                f"./resources/images{'/big' if big else ''}/teams/blank.png", mimetype="image/png"
             )
 
     @app.post("/api/tournaments/serveStyle")
-    @admin_only
+    @umpire_manager_only
     def serve_style():
         """
         WARNING: DO NOT CHANGE WHILE A GAME IS IN PROGRESS
