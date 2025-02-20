@@ -12,7 +12,7 @@ class Pooled(FixturesGenerator):
     def _begin_tournament(self, tournament_id):
         tournament = Tournaments.query.filter(Tournaments.id == tournament_id).first()
         teams = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament_id).all()
-        teams = sorted(teams, key=lambda x: x.team.elo())
+        teams = sorted(teams, key=lambda x: (x.team.elo() != 1500, -x.team.elo()))
         pool = 0
         for i in teams:
             i.pool = 1 + pool

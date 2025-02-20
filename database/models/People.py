@@ -289,13 +289,14 @@ class People(db.Model):
         return self.permission_level >= 2
 
     def as_dict(self, include_stats=False, tournament=None, admin_view=False, make_nice=False, game_id=None,
-                include_court_stats=False, single=False):
+                include_court_stats=False, single=False, official_view=False, include_prev_cards=False):
         from database.models import PlayerGameStats
         if game_id:
             pgs = PlayerGameStats.query.filter(PlayerGameStats.game_id == game_id,
                                                PlayerGameStats.player_id == self.id).first()
             if pgs:
-                return pgs.as_dict(include_game=False, include_stats=include_stats)
+                return pgs.as_dict(include_game=False, include_stats=include_stats, official_view=official_view,
+                                   include_prev_cards=include_prev_cards)
         img = self.image(tournament=tournament)
         big_img = self.image(tournament=tournament, big=True)
         d = {
@@ -314,6 +315,12 @@ class People(db.Model):
             game_filter = (lambda a: a.filter(PlayerGameStats.tournament_id == tournament)) if tournament else None
             d["stats"] = self.stats(game_filter, make_nice=make_nice, admin=admin_view,
                                     include_court_stats=include_court_stats, include_unranked=include_unranked)
+        if (admin_view or official_view) and include_prev_cards and tournament:
+            from database.models import GameEvents
+            cards: list[GameEvents] = GameEvents.query.filter(GameEvents.tournament_id == self.tournament_id,
+                                                              GameEvents.player_id == self.id,
+                                                              GameEvents.is_card == True).all()
+            d["prevCards"] = [i.as_dict(include_game=False, include_player=False, card_details=True) for i in cards]
         if admin_view:
             d |= {
                 "isAdmin": self.is_admin,

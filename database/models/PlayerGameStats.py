@@ -163,8 +163,10 @@ class PlayerGameStats(db.Model):
     def row_by_name(cls, name):
         return cls.rows[name]
 
-    def as_dict(self, include_game=True, make_nice=False, admin_view=False, include_stats=False):
+    def as_dict(self, include_game=True, make_nice=False, admin_view=False, official_view=False, include_stats=False,
+                include_prev_cards=False):
         from database.models.EloChange import EloChange
+        from database.models.GameEvents import GameEvents
         elo_delta = EloChange.query.filter(EloChange.game_id == self.game_id,
                                            EloChange.player_id == self.player_id).first()
         d = {
@@ -176,7 +178,11 @@ class PlayerGameStats(db.Model):
             "startSide": self.start_side,
         }
         if admin_view:
-            d["Rating"] = self.rating or 3
+            d["rating"] = self.rating or 3
+        if include_prev_cards and (admin_view or official_view):
+            cards: list[GameEvents] = GameEvents.query.filter(GameEvents.tournament_id == self.tournament_id,
+                                                              GameEvents.player_id == self.player_id, GameEvents.is_card == True).all()
+            d["prevCards"] = [i.as_dict(include_game=False, include_player=False, card_details=True) for i in cards]
         if include_stats:
             stats = {
                 "Rounds on Court": self.rounds_on_court,

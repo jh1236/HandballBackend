@@ -168,7 +168,7 @@ class Games(db.Model):
 
     @requires_action.expression
     def requires_action(cls):
-        return cls.admin_status.in_(NO_ACTION_REQUIRED) == False
+        return cls.admin_status.in_(NO_ACTION_REQUIRED)
 
     @hybrid_property
     def is_noteable(self):
@@ -233,15 +233,15 @@ class Games(db.Model):
         }
 
     def as_dict(self, admin_view=False, include_game_events=False, include_stats=False, official_view=False,
-                include_prev_cards=False, make_nice=False):
+                make_nice=False):
         from structure.manage_game import change_code, get_timeout_time, is_official_timeout
         d = {
             "id": self.game_number,
             "tournament": self.tournament.as_dict(),
             "teamOne": self.team_one.as_dict(game_id=self.id, include_stats=include_stats,
-                                             make_nice=make_nice, admin_view=admin_view),
+                                             make_nice=make_nice, admin_view=admin_view, official_view=official_view),
             "teamTwo": self.team_two.as_dict(game_id=self.id, include_stats=include_stats,
-                                             make_nice=make_nice, admin_view=admin_view),
+                                             make_nice=make_nice, admin_view=admin_view, official_view=official_view),
             "teamOneScore": self.team_one_score,
             "teamTwoScore": self.team_two_score,
             "teamOneTimeouts": self.team_one_timeouts,
@@ -270,16 +270,6 @@ class Games(db.Model):
             "timeoutExpirationTime": 1000 * get_timeout_time(self.id),
             "isOfficialTimeout": is_official_timeout(self.id),
         }
-        if (admin_view or official_view) and include_prev_cards:
-            from database.models.GameEvents import GameEvents
-            card_events = GameEvents.query.filter(
-                (GameEvents.event_type == "Warning") | (GameEvents.event_type.like("% Card")),
-                (GameEvents.team_id == self.team_one_id) | (GameEvents.team_id == self.team_two_id),
-                GameEvents.tournament_id == self.tournament_id, GameEvents.game_id <= self.id).all()
-            d |= {
-                "teamOneCards": [i for i in card_events if i.team_id == self.team_one_id],
-                "teamTwoCards": [i for i in card_events if i.team_id == self.team_two_id]
-            }
         if admin_view:
             from database.models import GameEvents
             rating_events = None if not self.ended else GameEvents.query.filter(

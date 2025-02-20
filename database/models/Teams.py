@@ -182,7 +182,7 @@ class Teams(db.Model):
         return self.big_image_url if big and self.big_image_url else self.image_url
 
     def as_dict(self, include_stats=False, tournament=None, include_player_stats=None, make_nice=False, game_id=None,
-                admin_view=False, single=False):
+                admin_view=False, single=False, official_view=False):
         include_player_stats = include_stats if include_player_stats is None else include_player_stats
         d = {
             "name": self.name,
@@ -193,14 +193,17 @@ class Teams(db.Model):
             "teamColorAsRGBABecauseDigbyIsLazy": hex_to_rgba(self.team_color),
             "captain": self.captain.as_dict(include_stats=include_player_stats,
                                             tournament=tournament, game_id=game_id,
-                                            make_nice=make_nice) if self.captain else None,
+                                            make_nice=make_nice, official_view=official_view,
+                                            include_prev_cards=True) if self.captain else None,
             "nonCaptain": self.non_captain.as_dict(include_stats=include_player_stats,
                                                    tournament=tournament,
                                                    game_id=game_id,
-                                                   make_nice=make_nice) if self.non_captain_id else None,
+                                                   make_nice=make_nice, official_view=official_view,
+                                                   include_prev_cards=True) if self.non_captain_id else None,
             "substitute": self.substitute.as_dict(include_stats=include_player_stats,
                                                   tournament=tournament, game_id=game_id,
-                                                  make_nice=make_nice) if self.substitute_id else None,
+                                                  make_nice=make_nice, official_view=official_view,
+                                                  include_prev_cards=True) if self.substitute_id else None,
         }
         if tournament:
             from database.models.TournamentTeams import TournamentTeams

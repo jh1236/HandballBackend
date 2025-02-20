@@ -1,6 +1,8 @@
 """Defines the comments object and provides functions to get and manipulate one"""
 import time
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from database import db
 from utils.logging_handler import logger
 
@@ -86,6 +88,14 @@ class GameEvents(db.Model):
         else:
             team_mate = self.team_two_left if self.player_id != self.team_two_left else self.team_two_right
         return team_mate if team_mate else self.player
+
+    @hybrid_property
+    def is_card(self):
+        return self.event_type == 'Warning' or self.event_type.endswith(' Card')
+
+    @is_card.expression
+    def is_card(self):
+        return (self.event_type == 'Warning') | (self.event_type.like('% Card'))
 
     def as_dict(self, include_game=True, include_player=True, card_details=False):
         d = {
