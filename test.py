@@ -146,4 +146,5 @@ if __name__ == '__main__':
     with app.app_context():
         delete_eighth_tournament()
         Teams.query.filter(Teams.id == 112).first().substitute_id = 32
+        db.session.commit()
         eight_suss_championship()
