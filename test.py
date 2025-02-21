@@ -115,8 +115,8 @@ def eight_suss_championship():
                                   True,
                                   True,
                                   True,
-                                  teams=[97, 112, 113, 114, 95, 7, 116, 73, 118, 119, 19, 123],
-                                  officials=[1, 2, 4, 6, 12, 14, 10])
+                                  teams=[97, 112, 113, 114, 95, 7, 116, 73, 118, 19, 123],
+                                  officials=[1, 2, 4, 11, 12, 14, 10])
 
 
 def delete_eighth_tournament():
