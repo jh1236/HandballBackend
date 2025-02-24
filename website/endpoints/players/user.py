@@ -3,8 +3,9 @@ import os
 from flask import request, send_file, jsonify
 
 from database import db
-from database.models import People, Tournaments, Games, PlayerGameStats, EloChange, TournamentTeams, TournamentOfficials
+from database.models import People
 from utils import permissions
+from utils.permissions import logged_in_only
 
 
 def add_user_endpoints(app):
@@ -19,15 +20,29 @@ def add_user_endpoints(app):
         """
         user_id = request.json.get("userId")
         password = request.json.get("password")
+        long_session = request.json.get("longSession", False)
         if permissions.check_password(user_id, password):
-            token = permissions.get_token(user_id, password)
+            token = permissions.get_token(user_id, password, long_session)
             user = People.query.filter_by(id=user_id).first()
             # set cookie to token
             response = jsonify({"token": token, 'username': user.name, "permissionLevel": user.permission_level})
             response.set_cookie('token', token)
             response.set_cookie('userID', user_id)
             return response
-        return "Wrong Password", 403
+        return "Incorrect Details", 403
+
+    @logged_in_only
+    @app.get("/api/logout/")
+    def logout():
+        """
+        SCHEMA:
+        {
+            userId: <int> = id of the user attempting to log in
+            password: <str> = password of the user attempting to log in
+        }
+        """
+        permissions.logout()
+        return "", 204
 
     @app.post("/api/image")
     @permissions.officials_only

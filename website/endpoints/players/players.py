@@ -33,7 +33,8 @@ def add_get_player_endpoints(app):
         if team:
             tid = Teams.query.filter(Teams.searchable_name == team).first().id
             q = q.filter(PlayerGameStats.team_id == tid)
-        players = q.group_by(PlayerGameStats.player_id).all()
+        players = q.join(People, PlayerGameStats.player_id == People.id).group_by(PlayerGameStats.player_id).order_by(
+            People.searchable_name).all()
         out = {"players": [i.player.as_dict(include_stats=include_stats, make_nice=make_nice,
                                             tournament=tournament.id if tournament else None, admin_view=admin) for
                            i in

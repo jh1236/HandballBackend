@@ -14,4 +14,3 @@ class Config(object):
         self.badminton_style_serves = True
         self.time_out_time = 30
         self.time_between_points = 20
-        self.diby_serve = True

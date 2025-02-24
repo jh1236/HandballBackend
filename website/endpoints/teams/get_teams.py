@@ -36,6 +36,7 @@ def add_get_teams_endpoints(app):
         for i in player_searchable:
             pid = People.query.filter(People.searchable_name == i).first().id
             q = q.filter((Teams.captain_id == pid) | (Teams.non_captain_id == pid) | (Teams.substitute_id == pid))
+        q = q.order_by(Teams.image_url.like('https://api.squarers.club/teams/image?name=%').desc(), Teams.searchable_name)
         out = {"teams":
                    [i.as_dict(include_stats=include_stats, include_player_stats=include_player_stats,
                               make_nice=make_nice, tournament=tournament_id, admin_view=admin) for

@@ -23,7 +23,7 @@ def add_get_official_endpoints(app):
                 TournamentOfficials.tournament_id == tid)
         else:
             tid = None
-
+        q.join(People, Officials.person_id == People.id).order_by(People.searchable_name)
         out = {"officials": [i.as_dict(tournament=tid) for i in q.all()]}
         if return_tournament and tournament_searchable:
             out["tournament"] = tournament.as_dict()

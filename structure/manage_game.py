@@ -263,7 +263,7 @@ def get_serve_details(game, team_one, team_two, team_who_served, player_who_serv
                 if next_player_to_serve == None:
                     next_player_to_serve = [i for i in serve_team if i][0]
             else:
-                next_serve_side = 'Right' if Config().diby_serve else 'Left'
+                next_serve_side = 'Right'
                 next_player_to_serve = serve_team[0]
     return next_player_to_serve, next_serve_side
 
@@ -459,6 +459,9 @@ def undo(game_id, override=False):
                                            GameEvents.event_type != 'Notes',
                                            GameEvents.event_type != 'Protest').order_by(GameEvents.id.desc()).first().id
     GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.id >= delete_after).delete()
+    EloChange.query.filter(EloChange.game_id == game_id).delete()
+    game = Games.query.filter(Games.id == game_id).first()
+    game.status = 'In Progress'
     sync(game_id)
     db.session.commit()
 
@@ -500,7 +503,7 @@ def end_timeout(game_id):
 
 def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, protest_team_one, protest_team_two,
              notes_team_one='', notes_team_two='',
-             marked_for_review=False):
+             marked_for_review=False, *, redone=False):
     if not game_is_over(game_id):
         raise ValueError("Game is not yet Over!")
     if not team_one_rating or not team_two_rating:
@@ -579,8 +582,7 @@ def end_game(game_id, best_player, team_one_rating, team_two_rating, notes, prot
                                              Games.ended == False).all()
     tournament = game.tournament
     sync(game_id)
-    logger.info(games_left_in_round)
-    if not games_left_in_round:
+    if not games_left_in_round and not redone:
         from FixtureGenerators.FixturesGenerator import get_type_from_name
         if not tournament.in_finals:
             fixtures = get_type_from_name(tournament.fixtures_type, tournament.id)
@@ -651,7 +653,7 @@ def create_game(tournament_id, team_one: int | str, team_two: int | str, officia
             else:
                 out_team = Teams.query.filter(Teams.searchable_name == team).first()
         teams.append(out_team)
-    ranked = True
+    ranked = Tournaments.query.filter(Tournaments.id == tournament_id).first().ranked
     for i in teams:
         if i.id == 1: continue
         if not TournamentTeams.query.filter(TournamentTeams.team_id == i.id,

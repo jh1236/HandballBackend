@@ -288,7 +288,7 @@ if game_id:
 
 ```json lines
 {
-  servedFromLeft: "bool",
+  servingFromLeft: "bool",
   eloDelta: "float"
 }
 ```

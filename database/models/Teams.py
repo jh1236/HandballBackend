@@ -229,18 +229,31 @@ class Teams(db.Model):
                     "teamColorAsRGBABecauseDigbyIsLazy"]
                 d["name"] = tt.name if tt.name else d["name"]
             last_time_served = GameEvents.query.filter(
-                GameEvents.game_id == game_id, GameEvents.team_who_served_id == self.id,
+                GameEvents.game_id == game_id, GameEvents.team_to_serve_id == self.id,
                 (GameEvents.event_type == 'Score')).order_by(
                 GameEvents.id.desc()).first()
+            badminton = game.tournament.badminton_serves
             start_event = GameEvents.query.filter(GameEvents.game_id == game_id,
                                                   GameEvents.event_type == 'Start').first()
             if not last_time_served:
                 if not start_event:
-                    d["servedFromLeft"] = False  # this value is nonsensical - we dont know who is serving
+                    d["servingFromLeft"] = True
                 else:
-                    d["servedFromLeft"] = start_event.team_to_serve_id != self.id if Config().diby_serve else False
+                    d["servingFromLeft"] = True if badminton else start_event.team_to_serve_id == self.id
             else:
-                d["servedFromLeft"] = last_time_served.side_served == "Left"
+                if badminton:
+                    d["servingFromLeft"] = last_time_served.side_to_serve == "Left"
+                else:
+                    last_score = GameEvents.query.filter(GameEvents.game_id == game_id,
+                                                         GameEvents.event_type == 'Score').order_by(
+                        GameEvents.id.desc()).first()
+                    if last_score.team_id == self.id:
+                        # We scored the last point: stay on the same side
+                        d["servingFromLeft"] = last_time_served.side_to_serve == "Left"
+                    else:
+                        # We lost our last point: we need to swap sides
+                        d["servingFromLeft"] = last_time_served.side_to_serve != "Left"
+
         if include_stats:
             from database.models.Games import Games
             ranked = True

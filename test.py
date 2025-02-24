@@ -1,7 +1,8 @@
 import csv
 import random
-from itertools import count
+from dataclasses import dataclass
 from math import floor
+from typing import NamedTuple
 
 from database import db
 from database.models import *
@@ -127,6 +128,7 @@ def delete_eighth_tournament():
         EloChange.query.filter(EloChange.tournament_id == t.id).delete()
         TournamentTeams.query.filter(TournamentTeams.tournament_id == t.id).delete()
         TournamentOfficials.query.filter(TournamentOfficials.tournament_id == t.id).delete()
+        GameEvents.query.filter(GameEvents.tournament_id == t.id).delete()
         Tournaments.query.filter(Tournaments.id == t.id).delete()
     db.session.commit()
 
@@ -142,9 +144,213 @@ def reassign_game_numbers():
     db.session.commit()
 
 
+def trim_tournament_ids():
+    id_map = {t.id: i for i, t in enumerate(Tournaments.query.all(), start=1)}
+    elo = EloChange.query.all()
+    game_events = GameEvents.query.all()
+    games = Games.query.all()
+    pgs = PlayerGameStats.query.all()
+    tournament_teams = TournamentTeams.query.all()
+    tournament_officials = TournamentOfficials.query.all()
+    for j in [game_events, games, elo, pgs, tournament_teams, tournament_officials]:
+        print("Fixing ")
+        for i in j:
+            if i.tournament_id not in id_map:
+                input(i)
+            i.tournament_id = id_map[i.tournament_id]
+    for i in Tournaments.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    i = None
+    for i in Tournaments.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    return i.id
+
+
+def trim_tournament_teams_ids():
+    id_map = {t.id: i for i, t in enumerate(TournamentTeams.query.all(), start=1)}
+    for i in TournamentTeams.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    i = None
+    for i in TournamentTeams.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    return i.id
+
+
+def trim_tournament_officials_ids():
+    id_map = {t.id: i for i, t in enumerate(TournamentTeams.query.all(), start=1)}
+    for i in TournamentTeams.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    i = None
+    for i in TournamentTeams.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    return i.id
+
+
+def trim_elo_ids():
+    id_map = {t.id: i for i, t in enumerate(EloChange.query.all(), start=1)}
+    for i in EloChange.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    i = None
+    for i in EloChange.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    return i.id
+
+
+def trim_pgs_ids():
+    id_map = {t.id: i for i, t in enumerate(PlayerGameStats.query.all(), start=1)}
+    for i in PlayerGameStats.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    i = None
+    for i in PlayerGameStats.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    return i.id
+
+
+def trim_game_ids():
+    games = Games.query.order_by(Games.tournament_id != 2, Games.tournament_id != 3, Games.id).all()
+    id_map = {g.id: i for i, g in enumerate(games, start=1)}
+    elo = EloChange.query.all()
+    game_events = GameEvents.query.all()
+    pgs = PlayerGameStats.query.all()
+    for j, title in [(game_events, "Game Events"), (elo, "Elo"), (pgs, "Player Game Stats")]:
+        print(f'Fixing {title}...')
+        for i in j:
+            if i.game_id not in id_map:
+                input(i)
+            i.game_id = id_map[i.game_id]
+    db.session.commit()
+    print('First Pass over game IDs...')
+    for i in Games.query.all():
+        i.id = id_map[i.id] + 100_000
+    db.session.commit()
+    print('Correcting game IDs...')
+    i = None
+    for i in Games.query.all():
+        i.id = i.id - 100_000
+    db.session.commit()
+    print('Done!')
+    return i.id
+
+
+def trim_all_db_id():
+    out = {
+        'PlayerGameStats': trim_pgs_ids(),
+        'EloChange': trim_elo_ids(),
+        'TournamentTeams': trim_tournament_teams_ids(),
+        'Tournaments': trim_tournament_ids(),
+        'Games': trim_game_ids(),
+        'TournamentOfficials': trim_tournament_officials_ids(),
+    }
+    print(out)
+
+
+def rerun_game(game_num):
+    """ONLY TO BE USED IN EXTREME CIRCUMSTANCES"""
+    GameEventDetails = NamedTuple('GameEventDetails', event_type=str, first_team=bool, left_side=bool, notes=str,
+                                  details=int, time=float)
+    game = Games.query.filter(Games.game_number == game_num).one()
+    marked_for_review = game.marked_for_review
+    best_player = game.best_player.searchable_name
+    game_id = game.id
+    protests: list[str | None] = [None, None]
+    ratings = [3, 3]
+    notes: list[str | None] = [None, None]
+    end: list[GameEventDetails | None] = [None]
+
+    def event_to_func(e: GameEventDetails):
+        fix_time = True
+        prev = GameEvents.query.order_by(GameEvents.id.desc()).first()
+        match e.event_type:
+            case 'Score':
+                if e.notes == 'Ace':
+                    manage_game.ace(game_id)
+                else:
+                    manage_game.score_point(game_id, e.first_team, e.left_side, e.notes)
+            case 'Start':
+                pass
+            case 'Fault':
+                manage_game.fault(game_id)
+            case 'Warning' | 'Green Card' | 'Yellow Card' | 'Red Card':
+                left = prev.team_one_left if e.first_team else prev.team_two_left
+                right = prev.team_one_right if e.first_team else prev.team_two_right
+                flip = False
+                correct = None
+                while correct not in ['y', 'n']:
+                    correct = input(
+                        f'{e.event_type} for {left.name if e.left_side else right.name} for {e.notes}?\t').lower()
+                    flip = correct == 'n'
+                if flip:
+                    print('Swapping Cards...')
+                manage_game.card(game_id, e.first_team, e.left_side != flip, e.event_type.replace(' Card', ''),
+                                 e.details,
+                                 e.notes)
+            case 'Resolve':
+                manage_game.resolve_game(game_id)
+            case 'Substitute':
+                manage_game.substitute(game_id, e.first_team, e.left_side)
+            case 'Forfeit':
+                manage_game.forfeit(game_id, e.first_team)
+            case 'End Timeout':
+                manage_game.end_timeout(game_id)
+            case 'Protest':
+                fix_time = False
+                protests[not e.first_team] = e.notes
+            case 'Notes':
+                fix_time = False
+                ratings[not e.first_team] = e.details
+                notes[not e.first_team] = e.notes
+            case 'End Game':
+                fix_time = False
+                end[0] = e
+        if fix_time:
+            prev.created_at = e.time
+
+    out: list[GameEventDetails] = []
+    first_team = game.team_one_id
+    events = GameEvents.query.filter(GameEvents.game_id == game_id).all()
+    print('Saving Events...')
+    for i in events:
+        out.append(GameEventDetails(i.event_type, i.team_id == first_team if i.team_id else None,
+                                    i.player_id in [i.team_one_left_id, i.team_two_left_id] if i.player_id else None,
+                                    i.notes, i.details, i.created_at))
+    GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.event_type != 'Start').delete()
+    EloChange.query.filter(EloChange.game_id == game_id).delete()
+    manage_game.sync(game_id)
+    db.session.commit()
+    print('Rerunning Events...')
+    for i in out:
+        event_to_func(i)
+    manage_game.end_game(game_id, best_player, ratings[0], ratings[1], end[0].notes or '',
+                         protests[0], protests[1], notes[0], notes[1], marked_for_review, redone=True)
+    db.session.commit()
+    print('Fixing End Times...')
+    fix_times = GameEvents.query.filter(GameEvents.game_id == game_id, GameEvents.created_at > end[0].time).all()
+    for i in fix_times:
+        i.created_at = end[0].time
+    db.session.commit()
+    print('Done!')
+
+
+def delete_orphaned_events():
+    games = [i.id for i in Games.query.all()]
+    for i in [EloChange, GameEvents, PlayerGameStats]:
+        for j in i.query.all():
+            if j.game_id not in games:
+                print(f'Deleting {j} (game {j.game_id} doesn\'t exist)')
+                i.query.filter(i.game_id == j.game_id).delete()
+    db.session.commit()
+
+
 if __name__ == '__main__':
     with app.app_context():
-        delete_eighth_tournament()
-        Teams.query.filter(Teams.id == 112).first().substitute_id = 32
-        db.session.commit()
-        eight_suss_championship()
+        reassign_game_numbers()

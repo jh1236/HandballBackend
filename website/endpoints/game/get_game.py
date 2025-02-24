@@ -77,6 +77,7 @@ def add_get_game_endpoints(app):
         query = query.filter(Games.is_noteable)
         if limit > 0:
             query.limit(limit)
+        query.order_by(Games.game_number)
 
         out = {"games": [i.as_dict(include_game_events=include_game_events, include_stats=include_player_stats,
                                    admin_view=is_admin) for i in query.all()]}

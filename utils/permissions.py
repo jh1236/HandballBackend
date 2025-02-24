@@ -8,7 +8,6 @@ from database import db
 from database.models.People import People
 
 
-
 def encrypt(password):
     salt = bcrypt.gensalt()
     pw = bytes(password, 'utf-8')
@@ -41,7 +40,7 @@ def reset_token(person_id):
     db.session.commit()
 
 
-def get_token(person_id, password):
+def get_token(person_id, password, long_session=False):
     """ args: person_id:int, password
     Returns the token if the password is correct, otherwise returns False
     If the token already exists and is not expired, it will return that token"""
@@ -52,7 +51,8 @@ def get_token(person_id, password):
             # session_token = f"WhereDidYouComeFrom.{get_time()}.WhyAreYouLookingAtMe.{secrets.token_urlsafe(16)}.PleaseImNotWearingAnyClothes"
             session_token = f"{get_time()}{secrets.token_urlsafe(16)}"
             person.session_token = session_token
-        person.token_timeout = get_time() + 60 * 60 * 24 * 7  # 1 week
+        token_lifetime = 60 * 60 * 24 * 7 if long_session else 60 * 60 * 2
+        person.token_timeout = get_time() + token_lifetime
         db.session.commit()
         return person.session_token
     return False
@@ -65,12 +65,11 @@ def check_valid_token(token):
 
 
 def logout():
-    resp = redirect("/")
-    resp.delete_cookie("token")
-    resp.delete_cookie("userID")
-    resp.delete_cookie("userKey")
-    resp.delete_cookie("userName")
-    return resp
+    user = fetch_user()
+    if user:
+        user.session_token = None
+        user.token_timeout = None
+        db.session.commit()
 
 
 def fetch_token():
@@ -80,7 +79,7 @@ def fetch_token():
     return request.cookies.get("token", None)
 
 
-def fetch_user():
+def fetch_user() -> People | None:
     if check_valid_token((token := fetch_token())):
         return People.query.filter(People.session_token == token).first()
     return None
@@ -105,6 +104,7 @@ def admin_only(func):
     inner.__name__ = func.__name__  # changing name of inner function so flask acts nicely <3
     return inner
 
+
 def umpire_manager_only(func):
     def inner(*args, **kwargs):
 
@@ -121,6 +121,19 @@ def umpire_manager_only(func):
 
 
 def officials_only(func):
+    def inner(*args, **kwargs):
+        user = fetch_user()
+        if not user:
+            return "This page requires authentication.", 401
+        if user.is_official:
+            return func(*args, **kwargs)
+        return "Insufficient Permissions", 401
+
+    inner.__name__ = func.__name__  # changing name of inner function so flask acts nicely <3
+    return inner
+
+
+def logged_in_only(func):
     def inner(*args, **kwargs):
         user = fetch_user()
         if not user:

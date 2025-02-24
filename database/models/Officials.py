@@ -60,6 +60,7 @@ class Officials(db.Model):
             stats["Cards Given"] += pgs.green_cards + pgs.yellow_cards + pgs.red_cards
             stats["Faults Called"] += pgs.faults
             if pgs.game_id > prev_game_id:
+                prev_game_id = pgs.game_id
                 stats["Games Umpired"] += 1
                 stats["Rounds Umpired"] += pgs.game.team_one_score + pgs.game.team_two_score
         q = Games.query.filter(Games.scorer_id == self.id)
