@@ -12,6 +12,8 @@ if not args.debug:
 
 logger.setLevel(args.log)
 
+MY_ADDRESS = 'https://api.squarers.club'
+
 app = flask.Flask(__name__)
 app.config["DEBUG"] = args.debug and False
 app.config["SQLALCHEMY_DATABASE_URI"] = args.database
@@ -20,7 +22,6 @@ app.config['EXIT_CODE'] = 1  # 0 = stop server, 1 = fatal error or restart, 2 = 
 
 db.init_app(app)
 app.register_blueprint(endpoints.api_blueprint)
-
 
 if __name__ == "__main__":
     with app.app_context():

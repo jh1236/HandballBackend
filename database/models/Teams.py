@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from Config import Config
 from database import db
+from start import MY_ADDRESS
 
 # create table main.teams
 # (
@@ -170,16 +171,19 @@ class Teams(db.Model):
                     relevant_ids}
 
     def image(self, tournament=None, big=False):
+        out = None
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
             tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
                 if big:
-                    return tt.big_image_url if tt.big_image_url else self.big_image_url
+                    out = tt.big_image_url if tt.big_image_url else self.big_image_url
                 else:
-                    return tt.image_url if tt.image_url else self.image_url
-        return self.big_image_url if big and self.big_image_url else self.image_url
+                    out = tt.image_url if tt.image_url else self.image_url
+        if out is None:
+            out = self.big_image_url if big and self.big_image_url else self.image_url
+        return MY_ADDRESS + out if out.startswith('/') else out
 
     def as_dict(self, include_stats=False, tournament=None, include_player_stats=None, make_nice=False, game_id=None,
                 admin_view=False, single=False, official_view=False):
@@ -210,7 +214,7 @@ class Teams(db.Model):
             tt = TournamentTeams.query.filter(TournamentTeams.tournament_id == tournament,
                                               TournamentTeams.team_id == self.id).first()
             if tt:
-                d["imageUrl"] = tt.image_url if tt.image_url else d["imageUrl"]
+                # the image function handles this for images
                 d["teamColor"] = tt.team_color if tt.image_url else d["teamColor"]
                 d["teamColorAsRGBABecauseDigbyIsLazy"] = tt.team_color if tt.image_url else d[
                     "teamColorAsRGBABecauseDigbyIsLazy"]

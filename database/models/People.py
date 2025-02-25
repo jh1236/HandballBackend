@@ -5,6 +5,7 @@ from collections import defaultdict
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from database import db
+from start import MY_ADDRESS
 
 # create table main.people
 # (
@@ -61,11 +62,12 @@ class People(db.Model):
     token_timeout = db.Column(db.Integer())
     permission_level = db.Column(db.Integer(), nullable=False, default=False)
 
-    def image(self, tournament=None, big=False, default="https://api.squarers.club/image?name=umpire"):
+    def image(self, tournament=None, big=False, default="/api/image?name=umpire"):
         from database.models import Teams
         from database.models import TournamentTeams
+        out = None
         if self.image_url:
-            return self.image_url
+            out = self.image_url
         if tournament:
             if not isinstance(tournament, int):
                 tournament = tournament.id
@@ -78,7 +80,9 @@ class People(db.Model):
             t = Teams.query.filter((Teams.captain_id == self.id) | (Teams.non_captain_id == self.id) | (
                     Teams.substitute_id == self.id)).order_by(Teams.image_url.like('/api/teams/image?%').desc(),
                                                               Teams.id).first()
-        return t.image(tournament, big) if t else default
+        if out is None:
+            out = t.image(tournament, big) if t else default
+        return MY_ADDRESS + out if out.startswith('/') else out
 
     def elo(self, last_game=None):
         from database.models import EloChange

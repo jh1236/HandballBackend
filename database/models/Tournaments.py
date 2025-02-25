@@ -5,6 +5,7 @@ import typing
 from FixtureGenerators.FixturesGenerator import get_type_from_name
 from database import db
 from database.models.TournamentTeams import TournamentTeams
+from start import MY_ADDRESS
 
 if typing.TYPE_CHECKING:
     from database.models import Teams
@@ -141,6 +142,6 @@ class Tournaments(db.Model):
             "inFinals": self.in_finals,
             "isPooled": self.is_pooled,
             "notes": self.notes,
-            "imageUrl": self.image_url if not self.image_url or not self.image_url.startswith("/") else "https://squarers.org" + self.image_url,
+            "imageUrl": self.image_url if not self.image_url or not self.image_url.startswith("/") else MY_ADDRESS + self.image_url,
             "usingBadmintonServes": self.badminton_serves,
         }
