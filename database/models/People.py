@@ -5,7 +5,6 @@ from collections import defaultdict
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from database import db
-from start import MY_ADDRESS
 
 # create table main.people
 # (
@@ -63,6 +62,7 @@ class People(db.Model):
     permission_level = db.Column(db.Integer(), nullable=False, default=False)
 
     def image(self, tournament=None, big=False, default="/api/image?name=umpire"):
+        from start import MY_ADDRESS
         from database.models import Teams
         from database.models import TournamentTeams
         out = None

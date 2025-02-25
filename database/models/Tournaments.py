@@ -5,7 +5,6 @@ import typing
 from FixtureGenerators.FixturesGenerator import get_type_from_name
 from database import db
 from database.models.TournamentTeams import TournamentTeams
-from start import MY_ADDRESS
 
 if typing.TYPE_CHECKING:
     from database.models import Teams
@@ -129,6 +128,7 @@ class Tournaments(db.Model):
         return teams
 
     def as_dict(self):
+        from start import MY_ADDRESS
         return {
             "name": self.name,
             "searchableName": self.searchable_name,
