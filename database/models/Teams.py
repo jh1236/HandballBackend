@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from Config import Config
 from database import db
-from start import MY_ADDRESS
 
 # create table main.teams
 # (
@@ -171,6 +170,7 @@ class Teams(db.Model):
                     relevant_ids}
 
     def image(self, tournament=None, big=False):
+        from start import MY_ADDRESS
         out = None
         if tournament:
             from database.models.TournamentTeams import TournamentTeams
