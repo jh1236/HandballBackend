@@ -21,7 +21,6 @@ app.config['EXIT_CODE'] = 1  # 0 = stop server, 1 = fatal error or restart, 2 = 
 db.init_app(app)
 app.register_blueprint(endpoints.api_blueprint)
 
-print([str(i) for i in app.url_map.iter_rules()])
 
 if __name__ == "__main__":
     with app.app_context():

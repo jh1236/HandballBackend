@@ -1,23 +1,16 @@
-# Set base image (host OS)
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
-# By default, listen on port 5000
-EXPOSE 5000/tcp
+ENV PYTHONUNBUFFERED=True
 
-# Set the working directory in the container
-WORKDIR /app
+ENV APP_HOME=/app
 
-# Copy the dependencies file to the working directory
-COPY requirements.txt .
+ENV PORT=5001
 
-# Install any dependencies
-RUN pip install -r requirements.txt
-
-
-# Copy the content of the local src directory to the working directory
-COPY start.py .
+WORKDIR $APP_HOME
 
 COPY . .
 
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Specify the command to run on container start
-CMD [ "python", "./start.py" ]
+CMD [ "python", "./start.py", "-p", "${PORT}"]
