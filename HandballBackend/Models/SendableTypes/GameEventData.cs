@@ -1,4 +1,8 @@
-﻿namespace HandballBackend.Models.SendableTypes;
+﻿// ReSharper disable InconsistentNaming
+// Disabled as these are sent to the frontend; we don't care too much about 
+
+
+namespace HandballBackend.Models.SendableTypes;
 
 public record GameEventData {
     public int id;
@@ -15,24 +19,25 @@ public record GameEventData {
     public PersonData? teamOneRight;
     public PersonData? teamTwoLeft;
     public PersonData? teamTwoRight;
-    public GamesData? game;
+    public GameData? game;
 
     public GameEventData(GameEvent gameEvent, bool includeGame = false) {
+        var teamOneId = gameEvent.Game.TeamOneId;
+
         id = gameEvent.Id;
         eventType = gameEvent.EventType;
-        var teamOneId = gameEvent.Game.TeamOneId;
         firstTeam = gameEvent.TeamId == teamOneId;
-        player = gameEvent.Player.toSendableData();
+        player = gameEvent.Player.ToSendableData();
         details = gameEvent.Details;
         notes = gameEvent.Notes;
         firstTeamJustServed = gameEvent.TeamWhoServedId == teamOneId;
         sideServed = gameEvent.SideServed;
         firstTeamToServe = gameEvent.TeamToServeId == teamOneId;
         sideToServe = gameEvent.SideToServe;
-        teamOneLeft = gameEvent.TeamOneLeft.toSendableData();
-        teamOneRight = gameEvent.TeamOneRight.toSendableData();
-        teamTwoLeft = gameEvent.TeamTwoLeft.toSendableData();
-        teamTwoRight = gameEvent.TeamTwoRight.toSendableData();
+        teamOneLeft = gameEvent.TeamOneLeft.ToSendableData();
+        teamOneRight = gameEvent.TeamOneRight.ToSendableData();
+        teamTwoLeft = gameEvent.TeamTwoLeft.ToSendableData();
+        teamTwoRight = gameEvent.TeamTwoRight.ToSendableData();
         if (includeGame) {
             game = gameEvent.Game.ToSendableData();
         }

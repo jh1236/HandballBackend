@@ -168,8 +168,8 @@ namespace HandballBackend.Models {
 
         public ICollection<GameEvent> Events { get; set; } = new List<GameEvent>();
 
-        public GamesData ToSendableData() {
-            return new GamesData(this);
+        public GameData ToSendableData() {
+            return new GameData(this);
         }
     }
 }

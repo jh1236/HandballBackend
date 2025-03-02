@@ -35,7 +35,7 @@ app.MapGet("/teams", () => {
 
 app.MapGet("/game", () => {
     var game = db.Games.OrderBy(v => v.GameNumber).Include(g => g.Events).Last();
-    return game;
+    return game.ToSendableData();
 }).WithName("Game").WithOpenApi();
 
 app.Run();

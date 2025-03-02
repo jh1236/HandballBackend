@@ -1,12 +1,11 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
-namespace HandballBackend.Models
-{
+namespace HandballBackend.Models {
     [Table("playerGameStats", Schema = "main")]
-    public class PlayerGameStats
-    {
+    public class PlayerGameStats {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
@@ -116,7 +115,7 @@ namespace HandballBackend.Models
 
         [Required]
         [Column("created_at")]
-        public int CreatedAt { get; set; } = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         [Required]
         [Column("is_best_player")]
@@ -131,9 +130,13 @@ namespace HandballBackend.Models
         public int ServeStreak { get; set; } = 0;
 
         [Column("side_of_court")]
-        public int? SideOfCourt { get; set; }
+        public string? SideOfCourt { get; set; }
 
         [Column("rating")]
         public int? Rating { get; set; }
+
+        public PlayerGameStatsData ToSendableData() {
+            return new PlayerGameStatsData(this);
+        }
     }
 }

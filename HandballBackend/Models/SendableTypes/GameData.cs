@@ -1,6 +1,10 @@
-﻿namespace HandballBackend.Models.SendableTypes;
+﻿// ReSharper disable InconsistentNaming
+// Disabled as these are sent to the frontend; we don't care too much about 
 
-public record GamesData {
+
+namespace HandballBackend.Models.SendableTypes;
+
+public record GameData {
     public int id;
     public TournamentData tournament;
     public TeamData teamOne;
@@ -35,11 +39,11 @@ public record GamesData {
     public bool isOfficialTimeout;
 
 
-    public GamesData(Game game, bool isAdmin) {
+    public GameData(Game game, bool isAdmin = false) {
         id = game.Id;
         tournament = game.Tournament.ToSendableData();
-        teamOne = game.TeamOne.toSendableData();
-        teamTwo = game.TeamTwo.toSendableData();
+        teamOne = game.TeamOne.ToSendableData();
+        teamTwo = game.TeamTwo.ToSendableData();
         teamOneScore = game.TeamOneScore;
         teamTwoScore = game.TeamTwoScore;
         teamOneTimeouts = game.TeamOneTimeouts;
@@ -50,9 +54,9 @@ public record GamesData {
         ended = game.Ended;
         protested = game.Protested;
         ranked = game.Ranked;
-        bestPlayer = game.BestPlayer.toSendableData();
-        official = game.Official.toSendableData();
-        scorer = game.Scorer.toSendableData();
+        bestPlayer = game.BestPlayer.ToSendableData();
+        official = game.Official.ToSendableData();
+        scorer = game.Scorer.ToSendableData();
         firstTeamIga = game.TeamOneId == game.IgaSideId;
         firstTeamToServe = game.TeamToServeId == game.TeamOneId;
         sideToServe = game.SideToServe;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
 namespace HandballBackend.Models {
     [Table("people", Schema = "main")]
@@ -32,10 +33,14 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("created_at")]
-        public int CreatedAt {get; set; } = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
+        public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         [Required]
         [Column("permission_level")]
         public int PermissionLevel { get; set; } = 0;
+
+        public PersonData ToSendableData() {
+            return new PersonData(this);
+        }
     }
 }

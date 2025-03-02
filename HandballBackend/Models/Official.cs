@@ -1,6 +1,6 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
 namespace HandballBackend.Models {
     [Table("officials", Schema = "main")]
@@ -20,9 +20,13 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("created_at")]
-        public int CreatedAt {get; set; } = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
+        public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         [ForeignKey("PersonId")]
         public Person Person { get; set; }
+
+        public OfficialData ToSendableData() {
+            return new OfficialData(this);
+        }
     }
 }
