@@ -340,7 +340,7 @@ if admin:
   inFinals: "bool",
   isPooled: "bool",
   notes: "str",
-  imageUrl: "srt",
+  imageUrl: "str",
   usingBadmintonServes: "bool",
 }
 ```

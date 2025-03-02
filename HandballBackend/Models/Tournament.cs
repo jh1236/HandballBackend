@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
 namespace HandballBackend.Models {
     [Table("tournaments", Schema = "main")]
@@ -26,27 +27,27 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("ranked")]
-        public int Ranked { get; set; }
+        public bool Ranked { get; set; }
 
         [Required]
         [Column("two_courts")]
-        public int TwoCourts { get; set; }
+        public bool TwoCourts { get; set; }
 
         [Required]
         [Column("finished")]
-        public int Finished { get; set; } = 0;
+        public bool Finished { get; set; } = false;
 
         [Required]
         [Column("in_finals")]
-        public int InFinals { get; set; } = 0;
+        public bool InFinals { get; set; } = false;
 
         [Required]
         [Column("has_scorer")]
-        public int HasScorer { get; set; } = 1;
+        public bool HasScorer { get; set; } = true;
 
         [Required]
         [Column("is_pooled")]
-        public int IsPooled { get; set; } = 0;
+        public bool IsPooled { get; set; } = false;
 
         [Column("notes", TypeName = "TEXT")]
         public string Notes { get; set; }
@@ -60,6 +61,10 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("badminton_serves")]
-        public int BadmintonServes { get; set; } = 0;
+        public bool BadmintonServes { get; set; } = false;
+        
+        public TournamentData ToSendableData() {
+            return new TournamentData(this);
+        }
     }
 }
