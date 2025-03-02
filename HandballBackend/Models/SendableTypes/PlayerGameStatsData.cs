@@ -1,18 +1,17 @@
 ﻿// ReSharper disable InconsistentNaming
 // Disabled as these are sent to the frontend; we don't care too much about 
 
-
 namespace HandballBackend.Models.SendableTypes;
 
 public record PlayerGameStatsData {
-    public TeamData team;
-    public bool isBestPlayer;
-    public int cardTime;
-    public int cardTimeRemaining;
-    public string? sideOfCourt;
-    public bool isCaptain;
-    public string? startSide;
-    public Dictionary<string, int> stats = new();
+    public readonly TeamData team;
+    public readonly bool isBestPlayer;
+    public readonly int cardTime;
+    public readonly int cardTimeRemaining;
+    public readonly string? sideOfCourt;
+    public readonly bool isCaptain;
+    public readonly string? startSide;
+    public readonly Dictionary<string, int> stats = new();
 
     public PlayerGameStatsData(PlayerGameStats pgs) {
         team = pgs.Team.ToSendableData();

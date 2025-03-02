@@ -5,21 +5,21 @@
 namespace HandballBackend.Models.SendableTypes;
 
 public record GameEventData {
-    public int id;
-    public string eventType;
-    public bool firstTeam;
-    public PersonData player;
-    public int? details;
-    public string? notes;
-    public bool firstTeamJustServed;
-    public string sideServed;
-    public bool firstTeamToServe;
-    public string sideToServe;
-    public PersonData? teamOneLeft;
-    public PersonData? teamOneRight;
-    public PersonData? teamTwoLeft;
-    public PersonData? teamTwoRight;
-    public GameData? game;
+    public readonly int id;
+    public readonly string eventType;
+    public readonly bool firstTeam;
+    public readonly PersonData player;
+    public readonly int? details;
+    public readonly string? notes;
+    public readonly bool firstTeamJustServed;
+    public readonly string sideServed;
+    public readonly bool firstTeamToServe;
+    public readonly string sideToServe;
+    public readonly PersonData? teamOneLeft;
+    public readonly PersonData? teamOneRight;
+    public readonly PersonData? teamTwoLeft;
+    public readonly PersonData? teamTwoRight;
+    public readonly GameData? game;
 
     public GameEventData(GameEvent gameEvent, bool includeGame = false) {
         var teamOneId = gameEvent.Game.TeamOneId;

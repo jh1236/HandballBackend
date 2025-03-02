@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
 namespace HandballBackend.Models {
     [Table("teams", Schema = "main")]
@@ -40,11 +41,15 @@ namespace HandballBackend.Models {
         [Column("big_image_url", TypeName = "TEXT")]
         public string? BigImageUrl { get; set; }
 
-        
+
         public Person? Captain { get; set; } = null!;
 
         public Person? NonCaptain { get; set; } = null!;
 
         public Person? Substitute { get; set; } = null!;
+
+        public TeamData ToSendableData() {
+            return new TeamData(this);
+        }
     }
 }

@@ -5,41 +5,42 @@
 namespace HandballBackend.Models.SendableTypes;
 
 public record GameData {
-    public int id;
-    public TournamentData tournament;
-    public TeamData teamOne;
-    public TeamData teamTwo;
-    public int teamOneScore;
-    public int teamTwoScore;
-    public int teamOneTimeouts;
-    public int teamTwoTimeouts;
-    public bool firstTeamWinning;
-    public bool started;
-    public bool someoneHasWon;
-    public bool ended;
-    public bool protested;
-    public bool resolved;
-    public bool ranked;
-    public PersonData bestPlayer;
-    public OfficialData? official;
-    public OfficialData? scorer;
-    public bool firstTeamIga;
-    public bool firstTeamToServe;
-    public string sideToServe;
-    public int? startTime;
-    public int? serveTimer;
-    public int? length;
-    public bool isFinal;
-    public int round;
-    public bool isBye;
-    public string status;
-    public bool faulted;
-    public int changecode;
-    public int? timeoutExpirationTime;
-    public bool isOfficialTimeout;
+    public readonly int id;
+    public readonly TournamentData tournament;
+    public readonly TeamData teamOne;
+    public readonly TeamData teamTwo;
+    public readonly int teamOneScore;
+    public readonly int teamTwoScore;
+    public readonly int teamOneTimeouts;
+    public readonly int teamTwoTimeouts;
+    public readonly bool firstTeamWinning;
+    public readonly bool started;
+    public readonly bool someoneHasWon;
+    public readonly bool ended;
+    public readonly bool protested;
+    public readonly bool resolved;
+    public readonly bool ranked;
+    public readonly PersonData bestPlayer;
+    public readonly OfficialData? official;
+    public readonly OfficialData? scorer;
+    public readonly bool firstTeamIga;
+    public readonly bool firstTeamToServe;
+    public readonly string sideToServe;
+    public readonly int? startTime;
+    public readonly int? serveTimer;
+    public readonly int? length;
+    public readonly bool isFinal;
+    public readonly int round;
+    public readonly bool isBye;
+    public readonly string status;
+    public readonly bool faulted;
+    public readonly int changecode;
+    public readonly int? timeoutExpirationTime;
+    public readonly bool isOfficialTimeout;
+    public readonly GameData? game;
 
 
-    public GameData(Game game, bool isAdmin = false) {
+    public GameData(Game game, bool isAdmin = false, bool includeGame = false) {
         id = game.Id;
         tournament = game.Tournament.ToSendableData();
         teamOne = game.TeamOne.ToSendableData();
@@ -88,5 +89,8 @@ public record GameData {
             .Where(a => a.EventType is "Timeout")
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
+        if (includeGame) {
+            this.game = game.ToSendableData();
+        }
     }
 }

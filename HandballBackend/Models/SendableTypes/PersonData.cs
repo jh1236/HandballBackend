@@ -11,10 +11,10 @@ public record PersonData {
      *  bigImageUrl: "str"
      */
 
-    public string name;
-    public string searchableName;
-    public string imageUrl;
-    public string bigImageUrl;
+    public readonly string name;
+    public readonly string searchableName;
+    public readonly string imageUrl;
+    public readonly string bigImageUrl;
 
     public PersonData(Person person) {
         name = person.Name;

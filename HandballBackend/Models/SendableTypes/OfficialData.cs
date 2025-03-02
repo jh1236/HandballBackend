@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.Models.SendableTypes;
 
 public record OfficialData : PersonData {
-    public Dictionary<string, float> stats = new();
+    public readonly Dictionary<string, float> stats = new();
 
     public OfficialData(Official official, bool includeStats = false) : base(official.Person) {
         if (!includeStats) return;
