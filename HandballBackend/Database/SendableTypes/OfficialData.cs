@@ -1,13 +1,14 @@
 ﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about 
+// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 
+using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace HandballBackend.Models.SendableTypes;
+namespace HandballBackend.Database.SendableTypes;
 
-public record OfficialData : PersonData {
-    public readonly Dictionary<string, float> stats = new();
+public class OfficialData : PersonData {
+    public Dictionary<string, float> stats { get; private set; }
 
     public OfficialData(Official official, bool includeStats = false) : base(official.Person) {
         if (!includeStats) return;
@@ -17,6 +18,7 @@ public record OfficialData : PersonData {
             .Include(g => g.Game)
             .OrderBy(g => g.GameId);
         var prevGameId = 0;
+        stats = new Dictionary<string, float>();
         foreach (var pgs in playerGameStats) {
             if (pgs.GameId > prevGameId) {
                 prevGameId = pgs.GameId;

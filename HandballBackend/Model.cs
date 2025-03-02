@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using HandballBackend.Database.Models;
 using HandballBackend.Models;
 
 namespace HandballBackend;

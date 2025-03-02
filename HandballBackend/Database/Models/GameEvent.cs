@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using HandballBackend.Models.SendableTypes;
+using HandballBackend.Database.SendableTypes;
+using HandballBackend.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace HandballBackend.Models;
+namespace HandballBackend.Database.Models;
 
 [Table("gameEvents", Schema = "main")]
-public class GameEvent {
+public class GameEvent : IHasRelevant<GameEvent> {
     [Key]
     [Column("id")]
     public int Id { get; set; }
@@ -77,18 +79,6 @@ public class GameEvent {
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
-    [ForeignKey("PlayerWhoServedId")]
-    public Person PlayerWhoServed { get; set; }
-
-    [ForeignKey("TeamWhoServedId")]
-    public Team TeamWhoServed { get; set; }
-
-    [ForeignKey("PlayerToServeId")]
-    public Person PlayerToServe { get; set; }
-
-    [ForeignKey("TeamToServeId")]
-    public Team TeamToServe { get; set; }
-
     [ForeignKey("TeamOneLeftId")]
     public Person TeamOneLeft { get; set; }
 
@@ -98,13 +88,25 @@ public class GameEvent {
     [ForeignKey("TeamTwoLeftId")]
     public Person TeamTwoLeft { get; set; }
 
-    [ForeignKey("GameId")]
-    public Game Game { get; set; } = null;
-
     [ForeignKey("TeamTwoRightId")]
     public Person TeamTwoRight { get; set; }
 
+    [ForeignKey("GameId")]
+    public Game Game { get; set; }
+
     public GameEventData ToSendableData() {
         return new GameEventData(this);
+    }
+
+    public static IQueryable<GameEvent> GetRelevant(IQueryable<GameEvent> query) {
+        return query
+            .Include(v => v.Player)
+            .Include(v => v.Tournament)
+            .Include(v => v.Team)
+            .Include(v => v.TeamOneLeft)
+            .Include(v => v.TeamOneRight)
+            .Include(v => v.TeamTwoLeft)
+            .Include(v => v.TeamTwoRight)
+            .Include(v => v.Game);
     }
 }

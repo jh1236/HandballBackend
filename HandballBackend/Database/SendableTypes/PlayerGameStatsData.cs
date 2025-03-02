@@ -1,17 +1,19 @@
 ﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about 
+// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
-namespace HandballBackend.Models.SendableTypes;
+using HandballBackend.Database.Models;
 
-public record PlayerGameStatsData {
-    public readonly TeamData team;
-    public readonly bool isBestPlayer;
-    public readonly int cardTime;
-    public readonly int cardTimeRemaining;
-    public readonly string? sideOfCourt;
-    public readonly bool isCaptain;
-    public readonly string? startSide;
-    public readonly Dictionary<string, int> stats = new();
+namespace HandballBackend.Database.SendableTypes;
+
+public class PlayerGameStatsData {
+    public TeamData team { get; private set; }
+    public bool isBestPlayer { get; private set; }
+    public int cardTime { get; private set; }
+    public int cardTimeRemaining { get; private set; }
+    public string? sideOfCourt { get; private set; }
+    public bool isCaptain { get; private set; }
+    public string? startSide { get; private set; }
+    public Dictionary<string, int> stats { get; private set; }
 
     public PlayerGameStatsData(PlayerGameStats pgs) {
         team = pgs.Team.ToSendableData();
