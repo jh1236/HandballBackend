@@ -1,4 +1,5 @@
 using HandballBackend;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,24 +20,6 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseHttpsRedirection();
 
-var summaries = new[] {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () => {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
-
 app.MapGet("/quote", () => {
         var quotes = db.QuotesOfTheDay.ToArray();
         var index = DateTime.Today.DayOfYear % quotes.Length;
@@ -46,13 +29,13 @@ app.MapGet("/quote", () => {
     .WithOpenApi();
 
 app.MapGet("/teams", () => {
-    var teams = db.Teams.ToArray();
+    var teams = db.Teams.Include(d => d.Captain).ToArray();
     return teams;
 }).WithName("Teams").WithOpenApi();
 
+app.MapGet("/game", () => {
+    var game = db.Games.OrderBy(v => v.GameNumber).Include(g => g.Events).Last();
+    return game;
+}).WithName("Game").WithOpenApi();
+
 app.Run();
-
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary) {
-    public int TemperatureF => 32 + (int) (TemperatureC / 0.5556);
-}

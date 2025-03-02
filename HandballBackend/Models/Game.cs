@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Models.SendableTypes;
 
 namespace HandballBackend.Models {
     [Table("games", Schema = "main")]
@@ -45,27 +46,27 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("started")]
-        public int Started { get; set; } = 0;
+        public bool Started { get; set; } = false;
 
         [Required]
         [Column("ended")]
-        public int Ended { get; set; } = 0;
+        public bool Ended { get; set; } = false;
 
         [Required]
         [Column("someone_has_won")]
-        public int SomeoneHasWon { get; set; } = 0;
+        public bool SomeoneHasWon { get; set; }
 
         [Required]
         [Column("protested")]
-        public int Protested { get; set; } = 0;
+        public bool Protested { get; set; }
 
         [Required]
         [Column("resolved")]
-        public int Resolved { get; set; } = 0;
+        public bool Resolved { get; set; }
 
         [Required]
         [Column("ranked")]
-        public int Ranked { get; set; } = 1;
+        public bool Ranked { get; set; } = true;
 
         [Column("best_player_id")]
         public int? BestPlayerId { get; set; }
@@ -100,7 +101,7 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("is_final")]
-        public int IsFinal { get; set; } = 0;
+        public bool IsFinal { get; set; }
 
         [Required]
         [Column("round")]
@@ -111,7 +112,7 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("is_bye")]
-        public int IsBye { get; set; } = 0;
+        public bool IsBye { get; set; }
 
         [Required]
         [Column("status", TypeName = "TEXT")]
@@ -125,7 +126,7 @@ namespace HandballBackend.Models {
         public string NoteableStatus { get; set; } = "Waiting For Start";
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         [Column("serve_timer")]
         public int? ServeTimer { get; set; }
@@ -147,9 +148,6 @@ namespace HandballBackend.Models {
         [ForeignKey("TeamTwoId")]
         public Team TeamTwo { get; set; }
 
-        [ForeignKey("WinningTeamId")]
-        public Team WinningTeam { get; set; }
-
         [ForeignKey("BestPlayerId")]
         public Person BestPlayer { get; set; }
 
@@ -167,5 +165,11 @@ namespace HandballBackend.Models {
 
         [ForeignKey("TeamToServeId")]
         public Team TeamToServe { get; set; }
+
+        public ICollection<GameEvent> Events { get; set; } = new List<GameEvent>();
+
+        public GamesData ToSendableData() {
+            return new GamesData(this);
+        }
     }
 }

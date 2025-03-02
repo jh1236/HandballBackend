@@ -20,7 +20,7 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public int CreatedAt {get; set; } = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
 
         [ForeignKey("PersonId")]
         public Person Person { get; set; }

@@ -32,7 +32,7 @@ namespace HandballBackend.Models {
 
         [Required]
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public int CreatedAt {get; set; } = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
 
         [Required]
         [Column("permission_level")]

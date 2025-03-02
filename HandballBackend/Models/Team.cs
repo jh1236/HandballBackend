@@ -18,7 +18,7 @@ namespace HandballBackend.Models {
         public string SearchableName { get; set; }
 
         [Column("image_url", TypeName = "TEXT")]
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         [Column("captain_id")]
         public int? CaptainId { get; set; }
@@ -35,18 +35,16 @@ namespace HandballBackend.Models {
         public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         [Column("team_color", TypeName = "TEXT")]
-        public string TeamColor { get; set; }
+        public string? TeamColor { get; set; }
 
         [Column("big_image_url", TypeName = "TEXT")]
-        public string BigImageUrl { get; set; }
+        public string? BigImageUrl { get; set; }
 
-        [ForeignKey("CaptainId")]
-        public Person Captain { get; set; }
+        
+        public Person? Captain { get; set; } = null!;
 
-        [ForeignKey("NonCaptainId")]
-        public Person NonCaptain { get; set; }
+        public Person? NonCaptain { get; set; } = null!;
 
-        [ForeignKey("SubstituteId")]
-        public Person Substitute { get; set; }
+        public Person? Substitute { get; set; } = null!;
     }
 }
