@@ -24,6 +24,5 @@ public class PersonData {
         if (!generateStats) return;
         
         var db = new HandballContext();
-        var 
     }
 }
