@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace HandballBackend.Database.Models;
 
@@ -90,7 +89,7 @@ public class Game : IHasRelevant<Game> {
     public int? TeamToServeId { get; set; }
 
     [Column("side_to_serve", TypeName = "TEXT")]
-    public string SideToServe { get; set; }
+    public string? SideToServe { get; set; }
 
     [Column("start_time")]
     public int? StartTime { get; set; }
@@ -111,7 +110,7 @@ public class Game : IHasRelevant<Game> {
     public int Round { get; set; }
 
     [Column("notes", TypeName = "TEXT")]
-    public string Notes { get; set; }
+    public string? Notes { get; set; }
 
     [Required]
     [Column("is_bye")]
@@ -162,6 +161,8 @@ public class Game : IHasRelevant<Game> {
 
     public ICollection<GameEvent> Events { get; set; } = new List<GameEvent>();
 
+    public ICollection<PlayerGameStats> Players { get; set; } = new List<PlayerGameStats>();
+
     public GameData ToSendableData() {
         return new GameData(this);
     }
@@ -175,7 +176,7 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.TeamTwo.NonCaptain)
             .Include(x => x.TeamTwo.Substitute)
             .Include(x => x.Tournament)
-            .Include(x => x.BestPlayer)
+            // .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)
             .Include(x => x.Scorer.Person);
     }

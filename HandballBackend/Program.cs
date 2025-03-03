@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
@@ -30,32 +31,28 @@ app.MapGet("/quote", () => {
     .WithName("Get QOTD")
     .WithOpenApi();
 
-app.MapGet("/teams", () => {
-    var teams = db.Teams.Where(a => a.Id != 1)
-        .Include(v => v.Captain)
-        .Include(v => v.NonCaptain)
-        .Include(v => v.Substitute)
-        .Select(t => t.ToSendableData())
-        .ToArray();
-    return teams;
-}).WithName("Teams").WithOpenApi();
 
 app.MapGet("/api/games/", (int? id) => {
     if (id == null) {
-        return Results.BadRequest("The 'id' query parameter is required.");
+        var allGames = db.Games
+            .IncludeRelevant()
+            .Take(20)
+            .Select(a => a.ToSendableData()).ToArray();
+        return Results.Ok(allGames);
     }
 
     var game = db.Games.Where(v => v.GameNumber == id)
         .Take(1)
         .IncludeRelevant()
-        .FirstOrDefault();
+        .Select(a => a.ToSendableData());
+
     if (game is null) {
         return Results.NotFound("Game not found.");
     }
 
-    return Results.Ok(game.ToSendableData());
+    return Results.Ok(game);
 }).WithName("Game").WithOpenApi();
 
-EvilTests.EvilTest(500);
+app.MapControllers();
 
 app.Run();

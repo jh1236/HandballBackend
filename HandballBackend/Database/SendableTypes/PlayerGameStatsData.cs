@@ -17,7 +17,7 @@ public class PlayerGameStatsData {
 
     public PlayerGameStatsData(PlayerGameStats pgs) {
         team = pgs.Team.ToSendableData();
-        isBestPlayer = pgs.Game.BestPlayerId == pgs.PlayerId;
+        // isBestPlayer = pgs.Game.BestPlayerId == pgs.PlayerId;
         cardTime = pgs.CardTime;
         cardTimeRemaining = pgs.CardTimeRemaining;
         sideOfCourt = pgs.SideOfCourt;

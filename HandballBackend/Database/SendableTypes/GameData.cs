@@ -8,9 +8,9 @@ namespace HandballBackend.Database.SendableTypes;
 
 public class GameData {
     public int id { get; private set; }
-    public TournamentData? tournament { get; private set; }
-    public TeamData? teamOne { get; private set; }
-    public TeamData? teamTwo { get; private set; }
+    public TournamentData tournament { get; private set; }
+    public TeamData teamOne { get; private set; }
+    public TeamData teamTwo { get; private set; }
     public int teamOneScore { get; private set; }
     public int teamTwoScore { get; private set; }
     public int teamOneTimeouts { get; private set; }
@@ -39,8 +39,6 @@ public class GameData {
     public int changecode { get; private set; }
     public int? timeoutExpirationTime { get; private set; }
     public bool isOfficialTimeout { get; private set; }
-    public GameData? game { get; private set; }
-
 
     public GameData(Game game, bool isAdmin = false, bool includeGame = false) {
         id = game.Id;
@@ -91,8 +89,5 @@ public class GameData {
             .Where(a => a.EventType is "Timeout")
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
-        if (includeGame) {
-            this.game = game.ToSendableData();
-        }
     }
 }

@@ -19,6 +19,8 @@ public class TeamData {
     public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; private set; }
     public float elo { get; private set; }
 
+    public Dictionary<string, float>? stats { get; private set; }
+
     private static int[] GenerateRgba(string backgroundColor) {
         var color = ColorTranslator.FromHtml(backgroundColor);
         int r = Convert.ToInt16(color.R);
@@ -27,16 +29,57 @@ public class TeamData {
         return [r, g, b, 255];
     }
 
-    public TeamData(Team team) {
+    public TeamData(Team team, Tournament? tournament = null, bool generateStats = false,
+        bool generatePlayerStats = false) {
         name = team.Name;
         searchableName = team.SearchableName;
         imageUrl = team.ImageUrl;
         bigImageUrl = team.BigImageUrl;
-        captain = team.Captain?.ToSendableData();
-        nonCaptain = team.NonCaptain?.ToSendableData();
-        substitute = team.Substitute?.ToSendableData();
-        teamColor = team?.TeamColor;
+        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats);
+        nonCaptain = team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats);
+        substitute = team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats);
+        teamColor = team.TeamColor;
         teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
         elo = 1500.0f;
+
+        if (!generateStats) return;
+
+        stats = new Dictionary<string, float> {
+            {"Games Played", 0},
+            {"Games Won", 0},
+            {"Games Lost", 0},
+            {"Timeouts Called", 0},
+            {"Points Scored", 0},
+            {"Points Against", 0},
+            {"Green Cards", 0},
+            {"Yellow Cards", 0},
+            {"Red Cards", 0},
+            {"Faults", 0},
+            {"Double Faults", 0},
+        };
+        var gameId = 0;
+        foreach (var pgs in team.PlayerGameStats.Where(pgs =>
+                     pgs.Game.Ranked && (tournament == null || pgs.TournamentId == tournament.Id)) ?? []) {
+            if (gameId < pgs.GameId) {
+                gameId = pgs.GameId;
+                stats["Games Played"] += pgs.Game.Ended ? 1 : 0;
+                stats["Games Won"] += pgs.Game.Ended && pgs.Game.WinningTeamId == team.Id ? 1 : 0;
+                stats["Games Lost"] += pgs.Game.Ended && pgs.Game.WinningTeamId != team.Id ? 1 : 0;
+                stats["Timeouts Called"] +=
+                    (pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamOneTimeouts : pgs.Game.TeamTwoTimeouts);
+                stats["Points Against"] =
+                    (pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamTwoScore : pgs.Game.TeamOneScore);
+            }
+
+            stats["Green Cards"] += pgs.GreenCards;
+            stats["Yellow Cards"] += pgs.YellowCards;
+            stats["Red Cards"] += pgs.RedCards;
+            stats["Faults"] += pgs.Faults;
+            stats["Double Faults"] += pgs.DoubleFaults;
+            stats["Points Scored"] += pgs.PointsScored;
+        }
+
+        stats["Point Difference"] = stats["Points Scored"] - stats["Points Against"];
+        stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1);
     }
 }

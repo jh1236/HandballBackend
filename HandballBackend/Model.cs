@@ -21,6 +21,28 @@ public class HandballContext : DbContext {
 
     public const string DbPath = "./resources/database.db";
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        base.OnModelCreating(modelBuilder);
+
+        // Configure the one-to-many relationship between Team and PlayerGameStats
+        modelBuilder.Entity<PlayerGameStats>()
+            .HasOne(pgs => pgs.Team)
+            .WithMany(t => t.PlayerGameStats)
+            .HasForeignKey(pgs => pgs.TeamId);
+
+        // Configure other relationships if needed
+        modelBuilder.Entity<PlayerGameStats>()
+            .HasOne(pgs => pgs.Opponent)
+            .WithMany()
+            .HasForeignKey(pgs => pgs.OpponentId);
+
+        // Configure other relationships if needed
+        modelBuilder.Entity<PlayerGameStats>()
+            .HasOne(pgs => pgs.Player)
+            .WithMany(player => player.PlayerGameStats)
+            .HasForeignKey(pgs => pgs.OpponentId);
+    }
+
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)

@@ -2,11 +2,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
 [Table("teams", Schema = "main")]
-public class Team {
+public class Team : IHasRelevant<Team> {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -48,7 +49,16 @@ public class Team {
 
     public Person? Substitute { get; set; } = null!;
 
-    public TeamData ToSendableData() {
-        return new TeamData(this);
+    public List<PlayerGameStats> PlayerGameStats { get; set; } = [];
+
+    public TeamData ToSendableData(Tournament? tournament = null, bool generateStats = false,
+        bool generatePlayerStats = false) {
+        return new TeamData(this, tournament, generateStats, generatePlayerStats);
+    }
+
+    public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
+        return query.Include(t => t.Captain)
+            .Include(t => t.NonCaptain)
+            .Include(t => t.Substitute);
     }
 }

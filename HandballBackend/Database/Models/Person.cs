@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 
 namespace HandballBackend.Models;
@@ -40,7 +41,9 @@ public class Person {
     [Column("permission_level")]
     public int PermissionLevel { get; set; } = 0;
 
-    public PersonData ToSendableData() {
-        return new PersonData(this);
+    public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
+
+    public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false) {
+        return new PersonData(this, tournament, generateStats);
     }
 }
