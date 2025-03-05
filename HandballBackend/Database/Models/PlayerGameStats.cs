@@ -31,7 +31,7 @@ public class PlayerGameStats {
     [Required]
     [Column("tournament_id")]
     public int TournamentId { get; set; }
-    
+
     [Required]
     [Column("rounds_on_court")]
     public int RoundsOnCourt { get; set; } = 0;
@@ -135,8 +135,8 @@ public class PlayerGameStats {
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
-    
-    public PlayerGameStatsData ToSendableData() {
-        return new PlayerGameStatsData(this);
+
+    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false) {
+        return new GamePlayerData(this, includeStats, formatData);
     }
 }

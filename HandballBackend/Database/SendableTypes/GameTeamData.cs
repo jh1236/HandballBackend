@@ -9,7 +9,6 @@ public class GameTeamData : TeamData {
         Team team,
         Game game,
         bool generateStats = false,
-        bool generatePlayerStats = false,
         bool formatData = false) : base(team) {
         var startGame = game.Events.FirstOrDefault(a => a.EventType == "Start");
         var lastTimeServed = game.Events
@@ -17,25 +16,28 @@ public class GameTeamData : TeamData {
             .FirstOrDefault(a => a.EventType == "Score" && a.TeamToServeId == team.Id);
         if (startGame is null) {
             servingFromLeft = true;
-        }
-        else if (game.Tournament.BadmintonServes) {
+        } else if (game.Tournament.BadmintonServes) {
             if (lastTimeServed is not null) {
                 servingFromLeft = lastTimeServed.SideToServe == "Left";
-            }
-            else {
+            } else {
                 servingFromLeft = true;
             }
-        }
-        else {
+        } else {
             if (lastTimeServed is not null) {
                 var lastScore = game.Events
                     .OrderByDescending(a => a.Id)
                     .FirstOrDefault(a => a.EventType == "Score");
-            }
-            else {
+            } else {
                 servingFromLeft = startGame.TeamToServeId == team.Id;
             }
         }
+
+        captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
+            ?.ToSendableData(generateStats, formatData);
+        nonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
+            ?.ToSendableData(generateStats, formatData);
+        substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
+            ?.ToSendableData(generateStats, formatData);
 
         if (!generateStats) return;
 

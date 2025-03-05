@@ -10,18 +10,15 @@ namespace HandballBackend.Database.SendableTypes;
 public class GameEventData {
     public int id { get; private set; }
     public string eventType { get; private set; }
-    public bool firstTeam { get; private set; }
-    public PersonData player { get; private set; }
+    public bool? firstTeam { get; private set; }
+    public PersonData? player { get; private set; }
     public int? details { get; private set; }
     public string? notes { get; private set; }
-    public bool firstTeamJustServed { get; private set; }
-    public string sideServed { get; private set; }
+    public bool? firstTeamJustServed { get; private set; }
+    public string? sideServed { get; private set; }
     public bool firstTeamToServe { get; private set; }
     public string sideToServe { get; private set; }
-    public PersonData? teamOneLeft { get; private set; }
-    public PersonData? teamOneRight { get; private set; }
-    public PersonData? teamTwoLeft { get; private set; }
-    public PersonData? teamTwoRight { get; private set; }
+
     public GameData? game { get; private set; }
 
     public GameEventData(GameEvent gameEvent, bool includeGame = false) {
@@ -30,17 +27,13 @@ public class GameEventData {
         id = gameEvent.Id;
         eventType = gameEvent.EventType;
         firstTeam = gameEvent.TeamId == teamOneId;
-        player = gameEvent.Player.ToSendableData();
+        player = gameEvent.Player?.ToSendableData();
         details = gameEvent.Details;
         notes = gameEvent.Notes;
         firstTeamJustServed = gameEvent.TeamWhoServedId == teamOneId;
         sideServed = gameEvent.SideServed;
         firstTeamToServe = gameEvent.TeamToServeId == teamOneId;
         sideToServe = gameEvent.SideToServe;
-        teamOneLeft = gameEvent.TeamOneLeft.ToSendableData();
-        teamOneRight = gameEvent.TeamOneRight.ToSendableData();
-        teamTwoLeft = gameEvent.TeamTwoLeft.ToSendableData();
-        teamTwoRight = gameEvent.TeamTwoRight.ToSendableData();
         if (includeGame) {
             game = gameEvent.Game.ToSendableData();
         }

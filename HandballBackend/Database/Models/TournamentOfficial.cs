@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
 [Table("tournamentOfficials", Schema = "main")]
-public class TournamentOfficial {
+public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -35,4 +36,10 @@ public class TournamentOfficial {
 
     [ForeignKey("OfficialId")]
     public Official Official { get; set; }
+
+    public static IQueryable<TournamentOfficial> GetRelevant(IQueryable<TournamentOfficial> query) {
+        return query
+            .Include(to => to.Tournament)
+            .Include(to => to.Official.Person);
+    }
 }

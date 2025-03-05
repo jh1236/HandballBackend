@@ -163,8 +163,13 @@ public class Game : IHasRelevant<Game> {
 
     public ICollection<PlayerGameStats> Players { get; set; } = new List<PlayerGameStats>();
 
-    public GameData ToSendableData() {
-        return new GameData(this);
+    public GameData ToSendableData(
+        bool includeGameEvents = false,
+        bool includeStats = false,
+        bool formatData = false,
+        bool isAdmin = false
+    ) {
+        return new GameData(this,includeGameEvents, includeStats, formatData, isAdmin);
     }
 
     public static IQueryable<Game> GetRelevant(IQueryable<Game> query) {
