@@ -27,7 +27,7 @@ public class Official {
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
-    public OfficialData ToSendableData() {
+    public OfficialData ToSendableData( Tournament? tournament = null, bool includeStats = false) {
         return new OfficialData(this);
     }
 }
