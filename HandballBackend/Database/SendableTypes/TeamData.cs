@@ -88,6 +88,10 @@ public class TeamData {
 
         if (!formatData) return;
 
+        FormatData();
+    }
+
+    public void FormatData() {
         foreach (var stat in stats.Keys) {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
