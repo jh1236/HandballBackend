@@ -52,12 +52,13 @@ public class Team : IHasRelevant<Team> {
     public List<PlayerGameStats> PlayerGameStats { get; set; } = [];
 
     public TeamData ToSendableData(Tournament? tournament = null, bool generateStats = false,
-        bool generatePlayerStats = false) {
-        return new TeamData(this, tournament, generateStats, generatePlayerStats);
+        bool generatePlayerStats = false, bool formatData = false) {
+        return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
-        return query.Include(t => t.Captain)
+        return query
+            .Include(t => t.Captain)
             .Include(t => t.NonCaptain)
             .Include(t => t.Substitute);
     }

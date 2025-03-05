@@ -40,6 +40,7 @@ public class GameData {
     public int? timeoutExpirationTime { get; private set; }
     public bool isOfficialTimeout { get; private set; }
 
+
     public GameData(Game game, bool isAdmin = false, bool includeGame = false) {
         id = game.Id;
         tournament = game.Tournament?.ToSendableData();

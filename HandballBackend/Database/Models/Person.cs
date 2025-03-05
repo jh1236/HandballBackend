@@ -22,28 +22,29 @@ public class Person {
     public string SearchableName { get; set; }
 
     [Column("password", TypeName = "TEXT")]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     [Column("image_url", TypeName = "TEXT")]
-    public string ImageUrl { get; set; }
+    public string? ImageUrl { get; set; }
 
     [Column("session_token", TypeName = "TEXT")]
-    public string SessionToken { get; set; }
+    public string? SessionToken { get; set; }
 
     [Column("token_timeout")]
     public int? TokenTimeout { get; set; }
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public int? CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     [Required]
     [Column("permission_level")]
-    public int PermissionLevel { get; set; } = 0;
+    public int? PermissionLevel { get; set; } = 0;
 
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
-    public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false) {
-        return new PersonData(this, tournament, generateStats);
+    public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
+        bool formatData = false) {
+        return new PersonData(this, tournament, generateStats, team, formatData);
     }
 }

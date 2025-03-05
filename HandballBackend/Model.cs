@@ -36,11 +36,6 @@ public class HandballContext : DbContext {
             .WithMany()
             .HasForeignKey(pgs => pgs.OpponentId);
 
-        // Configure other relationships if needed
-        modelBuilder.Entity<PlayerGameStats>()
-            .HasOne(pgs => pgs.Player)
-            .WithMany(player => player.PlayerGameStats)
-            .HasForeignKey(pgs => pgs.OpponentId);
     }
 
     // The following configures EF to create a Sqlite database file in the

@@ -19,7 +19,7 @@ public class TeamData {
     public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; private set; }
     public float elo { get; private set; }
 
-    public Dictionary<string, float>? stats { get; private set; }
+    public Dictionary<string, dynamic>? stats { get; private set; }
 
     private static int[] GenerateRgba(string backgroundColor) {
         var color = ColorTranslator.FromHtml(backgroundColor);
@@ -29,33 +29,37 @@ public class TeamData {
         return [r, g, b, 255];
     }
 
+    private static readonly string[] PercentageColumns = [
+        "Percentage"
+    ];
+
     public TeamData(Team team, Tournament? tournament = null, bool generateStats = false,
-        bool generatePlayerStats = false) {
+        bool generatePlayerStats = false, bool formatData = false) {
         name = team.Name;
         searchableName = team.SearchableName;
         imageUrl = team.ImageUrl;
         bigImageUrl = team.BigImageUrl;
-        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats);
-        nonCaptain = team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats);
-        substitute = team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats);
+        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
+        nonCaptain = team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
+        substitute = team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
         teamColor = team.TeamColor;
         teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
         elo = 1500.0f;
 
         if (!generateStats) return;
 
-        stats = new Dictionary<string, float> {
-            {"Games Played", 0},
-            {"Games Won", 0},
-            {"Games Lost", 0},
-            {"Timeouts Called", 0},
-            {"Points Scored", 0},
-            {"Points Against", 0},
-            {"Green Cards", 0},
-            {"Yellow Cards", 0},
-            {"Red Cards", 0},
-            {"Faults", 0},
-            {"Double Faults", 0},
+        stats = new Dictionary<string, dynamic> {
+            {"Games Played", 0.0},
+            {"Games Won", 0.0},
+            {"Games Lost", 0.0},
+            {"Timeouts Called", 0.0},
+            {"Points Scored", 0.0},
+            {"Points Against", 0.0},
+            {"Green Cards", 0.0},
+            {"Yellow Cards", 0.0},
+            {"Red Cards", 0.0},
+            {"Faults", 0.0},
+            {"Double Faults", 0.0},
         };
         var gameId = 0;
         foreach (var pgs in team.PlayerGameStats.Where(pgs =>
@@ -81,5 +85,17 @@ public class TeamData {
 
         stats["Point Difference"] = stats["Points Scored"] - stats["Points Against"];
         stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1);
+
+        if (!formatData) return;
+
+        foreach (var stat in stats.Keys) {
+            if (stats[stat] == null) continue;
+            if (PercentageColumns.Contains(stat)) {
+                stats[stat] = 100.0 * Math.Round((double) stats[stat], 2) + "%";
+            }
+            else {
+                stats[stat] = Math.Round((double) stats[stat], 2).ToString();
+            }
+        }
     }
 }

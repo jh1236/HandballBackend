@@ -176,7 +176,7 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.TeamTwo.NonCaptain)
             .Include(x => x.TeamTwo.Substitute)
             .Include(x => x.Tournament)
-            // .Include(x => x.BestPlayer)
+            .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)
             .Include(x => x.Scorer.Person);
     }

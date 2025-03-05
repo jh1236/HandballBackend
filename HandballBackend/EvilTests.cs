@@ -1,14 +1,14 @@
 ﻿using HandballBackend.Database;
+using HandballBackend.Database.Models;
 
 namespace HandballBackend;
 
 static class EvilTests {
     public static void EvilTest(int number) {
         var db = new HandballContext();
-        var game = db.Games.Where(v => v.GameNumber == number)
-            .Take(1)
-            .IncludeRelevant()
-            .FirstOrDefault();
-        Console.WriteLine(game);
+        IQueryable<Team> query = db.Teams;
+        query = Team.GetRelevant(query);
+        query = query.IncludeRelevant();
+        Console.WriteLine(query.ToArray());
     }
 }
