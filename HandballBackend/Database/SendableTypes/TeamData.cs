@@ -9,17 +9,17 @@ namespace HandballBackend.Database.SendableTypes;
 
 public class TeamData {
     public string name { get; private set; }
-    public string searchableName { get; private set; }
-    public string? imageUrl { get; private set; }
-    public string? bigImageUrl { get; private set; }
-    public PersonData? captain { get; private set; }
-    public PersonData? nonCaptain { get; private set; }
-    public PersonData? substitute { get; private set; }
-    public string? teamColor { get; private set; }
-    public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; private set; }
+    public string searchableName { get; protected set; }
+    public string? imageUrl { get; protected set; }
+    public string? bigImageUrl { get; protected set; }
+    public PersonData? captain { get; protected set; }
+    public PersonData? nonCaptain { get; protected set; }
+    public PersonData? substitute { get; protected set; }
+    public string? teamColor { get; protected set; }
+    public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; protected set; }
     public float elo { get; private set; }
 
-    public Dictionary<string, dynamic>? stats { get; private set; }
+    public Dictionary<string, dynamic>? stats { get; protected set; }
 
     private static int[] GenerateRgba(string backgroundColor) {
         var color = ColorTranslator.FromHtml(backgroundColor);
@@ -39,9 +39,11 @@ public class TeamData {
         searchableName = team.SearchableName;
         imageUrl = team.ImageUrl;
         bigImageUrl = team.BigImageUrl;
-        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
-        nonCaptain = team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
-        substitute = team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team);
+        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
+        nonCaptain =
+            team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
+        substitute =
+            team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
         teamColor = team.TeamColor;
         teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
         elo = 1500.0f;
@@ -70,9 +72,9 @@ public class TeamData {
                 stats["Games Won"] += pgs.Game.Ended && pgs.Game.WinningTeamId == team.Id ? 1 : 0;
                 stats["Games Lost"] += pgs.Game.Ended && pgs.Game.WinningTeamId != team.Id ? 1 : 0;
                 stats["Timeouts Called"] +=
-                    (pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamOneTimeouts : pgs.Game.TeamTwoTimeouts);
+                    pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamOneTimeouts : pgs.Game.TeamTwoTimeouts;
                 stats["Points Against"] =
-                    (pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamTwoScore : pgs.Game.TeamOneScore);
+                    pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamTwoScore : pgs.Game.TeamOneScore;
             }
 
             stats["Green Cards"] += pgs.GreenCards;

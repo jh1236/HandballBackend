@@ -21,12 +21,7 @@ public class PlayersController : ControllerBase {
         [FromQuery] bool returnTournament = true
     ) {
         var db = new HandballContext();
-        var tourney = db.Tournaments.FirstOrDefault(t => t.SearchableName == tournament);
-        if (tournament is null && returnTournament) {
-            return BadRequest("Cannot Return tournament when not specified");
-        }
-
-        if (tournament is not null && tourney is null) {
+        if (Utilities.TournamentOrElse(db, tournament, out var tourney)) {
             return BadRequest("Invalid tournament");
         }
 
@@ -59,10 +54,10 @@ public class PlayersController : ControllerBase {
     ) {
         var db = new HandballContext();
         IQueryable<Person> query;
-        Tournament? tourney = null;
         Team? teamObj = null;
-        if (tournament is null && returnTournament) {
-            return BadRequest("Cannot Return tournament when not specified");
+
+        if (Utilities.TournamentOrElse(db, tournament, out var tourney)) {
+            return BadRequest("Invalid tournament");
         }
 
         if (team is not null) {
@@ -72,19 +67,13 @@ public class PlayersController : ControllerBase {
             }
         }
 
-        if (tournament is not null) {
-            tourney = db.Tournaments.FirstOrDefault(t => t.SearchableName == tournament);
-            if (tourney is null) {
-                return BadRequest("Invalid tournament");
-            }
-
+        if (tourney is not null) {
             query = db.PlayerGameStats.Where(pgs => pgs.TournamentId == tourney.Id)
                 .Select(pgs => pgs.Player)
                 .Distinct()
                 .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game);
-        }
-        else {
+        } else {
             query = db.People
                 .Include(t => t.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game);

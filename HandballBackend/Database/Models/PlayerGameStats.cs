@@ -105,7 +105,7 @@ public class PlayerGameStats {
 
     [Required]
     [Column("is_best_player")]
-    public int IsBestPlayer { get; set; } = 0;
+    public bool IsBestPlayer { get; set; } = false;
 
     [Required]
     [Column("ace_streak")]

@@ -169,6 +169,7 @@ public class Game : IHasRelevant<Game> {
 
     public static IQueryable<Game> GetRelevant(IQueryable<Game> query) {
         return query
+            .Include(x => x.Tournament)
             .Include(x => x.TeamOne.Captain)
             .Include(x => x.TeamOne.NonCaptain)
             .Include(x => x.TeamOne.Substitute)
@@ -178,6 +179,7 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.Tournament)
             .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)
-            .Include(x => x.Scorer.Person);
+            .Include(x => x.Scorer.Person)
+            .Include(x => x.Players);
     }
 }

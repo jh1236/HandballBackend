@@ -20,8 +20,8 @@ public class TeamsController : ControllerBase {
         [FromQuery] bool formatData = false,
         [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
-        var tourney = db.Tournaments.FirstOrDefault(t => t.SearchableName == tournament);
-        if (tournament is not null && tourney is null) {
+
+        if (Utilities.TournamentOrElse(db, tournament, out var tourney)) {
             return BadRequest("Invalid tournament");
         }
 
@@ -30,12 +30,18 @@ public class TeamsController : ControllerBase {
             .IncludeRelevant()
             .Include(t => t.PlayerGameStats)
             .ThenInclude(pgs => pgs.Game)
-            .Select(t => t.ToSendableData(tourney, true, true, formatData)).FirstOrDefault();
+            .FirstOrDefault();
         if (team is null) {
             return NotFound();
         }
 
-        var output = Utilities.WrapInDictionary("team", team);
+        var teamData = team.ToSendableData(tourney, true, true, formatData);
+
+        foreach (var (key, value) in teamData.stats) {
+            Console.WriteLine($"{key}: {value}");
+        }
+
+        var output = Utilities.WrapInDictionary("team", teamData);
         if (returnTournament && tourney is not null) {
             output["tournament"] = tourney.ToSendableData();
         }
@@ -54,13 +60,11 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         IQueryable<Team> query;
-        Tournament? tourney = null;
-        if (tournament is not null) {
-            tourney = db.Tournaments.FirstOrDefault(a => a.SearchableName == tournament);
-            if (tourney is null) {
-                return BadRequest("Invalid tournament");
-            }
+        if (Utilities.TournamentOrElse(db, tournament, out var tourney)) {
+            return BadRequest("Invalid tournament");
+        }
 
+        if (tourney is not null) {
             IQueryable<TournamentTeam> innerQuery = db.TournamentTeams
                 .Where(t => t.TournamentId == tourney.Id)
                 .Include(t => t.Team.Captain)
@@ -73,8 +77,7 @@ public class TeamsController : ControllerBase {
             }
 
             query = innerQuery.Select(t => t.Team);
-        }
-        else {
+        } else {
             //Not null captain removes bye team
             query = db.Teams.IncludeRelevant();
 
@@ -117,19 +120,16 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         IQueryable<Team> query;
-        Tournament? tourney = null;
         TeamData[]? ladder = null;
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
-        if (tournament is not null) {
-            tourney = db.Tournaments.FirstOrDefault(a => a.SearchableName == tournament);
-            if (tourney is null) {
-                return BadRequest("Invalid tournament");
-            }
-
-            (ladder, poolOne, poolTwo) = LadderHelper.SortLadder(db, tourney);
+        if (Utilities.TournamentOrElse(db, tournament, out var tourney)) {
+            return BadRequest("Invalid tournament");
         }
-        else {
+
+        if (tourney is not null) {
+            (ladder, poolOne, poolTwo) = LadderHelper.SortLadder(db, tourney);
+        } else {
             //Not null captain removes bye team
             query = db.Teams.IncludeRelevant()
                 .Include(t => t.PlayerGameStats)
