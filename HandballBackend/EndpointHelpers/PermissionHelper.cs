@@ -5,16 +5,20 @@ namespace HandballBackend.EndpointHelpers;
 
 using BCrypt.Net;
 
-public enum PermissionType {
+public enum PermissionType
+{
     LoggedIn,
     Umpire,
     UmpireManager,
     Admin,
 }
 
-public static class PermissionHelper {
-    private static int PermissionTypeToInt(PermissionType permissionType) {
-        return permissionType switch {
+public static class PermissionHelper
+{
+    private static int PermissionTypeToInt(PermissionType permissionType)
+    {
+        return permissionType switch
+        {
             PermissionType.LoggedIn => 0,
             PermissionType.Umpire => 2,
             PermissionType.UmpireManager => 4,
@@ -23,29 +27,35 @@ public static class PermissionHelper {
         };
     }
 
-    private static bool PersonOrElse(HandballContext db, int personId, out Person person) {
+    private static bool PersonOrElse(HandballContext db, int personId, out Person person)
+    {
         person = db.People.Find(personId);
         return person is not null;
     }
 
-    private static int Time() {
-        return (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    private static int Time()
+    {
+        return (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 
-    private static string GenerateToken() {
+    private static string GenerateToken()
+    {
         return Guid.NewGuid().ToString("N");
     }
 
-    private static string Encrypt(string password) {
+    private static string Encrypt(string password)
+    {
         var salt = BCrypt.GenerateSalt(12);
         var pwd = BCrypt.HashPassword(password, salt);
         return pwd;
     }
 
 
-    private static bool CheckPassword(int personId, string checkPassword) {
+    private static bool CheckPassword(int personId, string checkPassword)
+    {
         var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
+        if (!PersonOrElse(db, personId, out var person))
+        {
             return false;
         }
 
@@ -54,18 +64,22 @@ public static class PermissionHelper {
     }
 
 
-    private static bool CheckToken(int personId, string token) {
+    private static bool CheckToken(int personId, string token)
+    {
         var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
+        if (!PersonOrElse(db, personId, out var person))
+        {
             throw new KeyNotFoundException($"Person with id {personId} not found");
         }
 
         return person.SessionToken == token;
     }
 
-    private static void ResetTokenForPerson(int personId) {
+    private static void ResetTokenForPerson(int personId)
+    {
         var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
+        if (!PersonOrElse(db, personId, out var person))
+        {
             throw new KeyNotFoundException($"Person with id {personId} not found");
         }
 
@@ -75,16 +89,19 @@ public static class PermissionHelper {
     }
 
 
-    private static string? GetToken() {
+    private static string? GetToken()
+    {
         // Access the current HTTP context
         var httpContext = new HttpContextAccessor().HttpContext;
-        if (httpContext == null) {
+        if (httpContext == null)
+        {
             return null;
         }
 
         // Get the Authorization header
         var authHeader = httpContext.Request.Headers.Authorization.ToString();
-        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ")) {
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+        {
             return null;
         }
 
@@ -92,9 +109,11 @@ public static class PermissionHelper {
         return authHeader["Bearer ".Length..].Trim();
     }
 
-    private static Person? GetPersonFromToken(string? token) {
+    private static Person? GetPersonFromToken(string? token)
+    {
         var db = new HandballContext();
-        if (token == null) {
+        if (token == null)
+        {
             return null;
         }
 
@@ -102,7 +121,8 @@ public static class PermissionHelper {
 
         if (person == null) return null;
 
-        if (person.TokenTimeout < Time()) {
+        if (person.TokenTimeout < Time())
+        {
             ResetTokenForPerson(person.Id);
             return null;
         }
@@ -110,20 +130,24 @@ public static class PermissionHelper {
         return person;
     }
 
-    public static Person? GetUser() {
+    public static Person? GetUser()
+    {
         return GetPersonFromToken(GetToken());
     }
 
-    public static bool HasPermission(PermissionType permission) {
+    public static bool HasPermission(PermissionType permission)
+    {
         var perms = PermissionTypeToInt(permission);
         var user = GetUser();
         if (user == null) return false;
         return user.PermissionLevel >= perms;
     }
 
-    public static void SetPassword(int personId, string password) {
+    public static void SetPassword(int personId, string password)
+    {
         var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
+        if (!PersonOrElse(db, personId, out var person))
+        {
             throw new KeyNotFoundException($"Person with id {personId} not found");
         }
 
@@ -131,36 +155,50 @@ public static class PermissionHelper {
         db.SaveChanges();
     }
 
-    public static Person? Login(int personId, string password, bool longSession = false) {
+    public static Person? Login(int personId, string password, bool longSession = false)
+    {
         var pwCheck = CheckPassword(personId, password);
         var db = new HandballContext();
-        if (!pwCheck) {
+        if (!pwCheck)
+        {
             return null;
         }
 
-        if (!PersonOrElse(db, personId, out var person)) {
+        if (!PersonOrElse(db, personId, out var person))
+        {
             return null;
         }
 
-        var ret = GenerateToken();
-        person.SessionToken = ret;
-        if (longSession) {
-            person.TokenTimeout = Time() + 60 * 60 * 24 * 7; //One week long token
-        } else {
-            person.TokenTimeout = Time() + 60 * 60 * 2; //Two hour token
+        if (person.SessionToken is null || person.TokenTimeout < Time() + 60 * 60)  //an hour
+        {
+            //our old token either didn't exist, wasn't valid or was about to expire.  New One!!
+
+            var ret = GenerateToken();
+            person.SessionToken = ret;
+            if (longSession)
+            {
+                person.TokenTimeout = Time() + 60 * 60 * 24 * 7; //One week long token
+            }
+            else
+            {
+                person.TokenTimeout = Time() + 60 * 60 * 12; //Twelve hour token
+            }
+
+            db.SaveChanges();
         }
 
-        db.SaveChanges();
         return person;
     }
-    
-    public static void Logout() {
+
+    public static void Logout()
+    {
         var personId = GetUser()?.Id;
-        if (personId is null) {
+        if (personId is null)
+        {
             throw new KeyNotFoundException("You're not logged in ya nonce");
             return;
         }
 
-        ResetTokenForPerson((int) personId);
+        ResetTokenForPerson((int)personId);
     }
 }
