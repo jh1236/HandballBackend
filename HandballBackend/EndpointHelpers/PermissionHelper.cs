@@ -63,6 +63,18 @@ public static class PermissionHelper {
         return person.SessionToken == token;
     }
 
+    private static void ResetTokenForPerson(int personId) {
+        var db = new HandballContext();
+        if (!PersonOrElse(db, personId, out var person)) {
+            throw new KeyNotFoundException($"Person with id {personId} not found");
+        }
+
+        person.SessionToken = null;
+        person.TokenTimeout = null;
+        db.SaveChanges();
+    }
+
+
     private static string? GetToken() {
         // Access the current HTTP context
         var httpContext = new HttpContextAccessor().HttpContext;
@@ -141,15 +153,14 @@ public static class PermissionHelper {
         db.SaveChanges();
         return person;
     }
-
-    public static void ResetTokenForPerson(int personId) {
-        var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
-            throw new KeyNotFoundException($"Person with id {personId} not found");
+    
+    public static void Logout() {
+        var personId = GetUser()?.Id;
+        if (personId is null) {
+            throw new KeyNotFoundException("You're not logged in ya nonce");
+            return;
         }
 
-        person.SessionToken = null;
-        person.TokenTimeout = null;
-        db.SaveChanges();
+        ResetTokenForPerson((int) personId);
     }
 }
