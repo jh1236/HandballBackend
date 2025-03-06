@@ -53,16 +53,6 @@ public static class PermissionHelper {
         return BCrypt.Verify(checkPassword, realPassword);
     }
 
-    private static void ResetTokenForPerson(int personId) {
-        var db = new HandballContext();
-        if (!PersonOrElse(db, personId, out var person)) {
-            throw new KeyNotFoundException($"Person with id {personId} not found");
-        }
-
-        person.SessionToken = null;
-        person.TokenTimeout = null;
-        db.SaveChanges();
-    }
 
     private static bool CheckToken(int personId, string token) {
         var db = new HandballContext();
@@ -150,5 +140,16 @@ public static class PermissionHelper {
 
         db.SaveChanges();
         return person;
+    }
+
+    public static void ResetTokenForPerson(int personId) {
+        var db = new HandballContext();
+        if (!PersonOrElse(db, personId, out var person)) {
+            throw new KeyNotFoundException($"Person with id {personId} not found");
+        }
+
+        person.SessionToken = null;
+        person.TokenTimeout = null;
+        db.SaveChanges();
     }
 }
