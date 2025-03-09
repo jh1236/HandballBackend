@@ -17,7 +17,6 @@ public class GamesController : ControllerBase {
         [FromQuery(Name = "id")] int gameNumber
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
         var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).First();
 
         return Utilities.WrapInDictionary("changeCode", query.Id);

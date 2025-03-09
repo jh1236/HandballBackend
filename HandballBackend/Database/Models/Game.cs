@@ -186,6 +186,7 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)
             .Include(x => x.Scorer.Person)
-            .Include(x => x.Players);
+            .Include(x => x.Players)
+            .ThenInclude(pgs => pgs.Player);
     }
 }
