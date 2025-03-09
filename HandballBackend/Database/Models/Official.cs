@@ -2,11 +2,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
 [Table("officials", Schema = "main")]
-public class Official {
+public class Official : IHasRelevant<Official> {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -27,7 +28,11 @@ public class Official {
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
-    public OfficialData ToSendableData() {
+    public OfficialData ToSendableData( Tournament? tournament = null, bool includeStats = false) {
         return new OfficialData(this);
+    }
+
+    public static IQueryable<Official> GetRelevant(IQueryable<Official> query) {
+        return query.Include(o => o.Person);
     }
 }

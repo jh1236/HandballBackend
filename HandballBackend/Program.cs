@@ -23,36 +23,6 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseHttpsRedirection();
 
-app.MapGet("/quote", () => {
-        var quotes = db.QuotesOfTheDay.ToArray();
-        var index = DateTime.Today.DayOfYear % quotes.Length;
-        return quotes[index].ToSendableData();
-    })
-    .WithName("Get QOTD")
-    .WithOpenApi();
-
-
-app.MapGet("/api/games/", (int? id) => {
-    if (id == null) {
-        var allGames = db.Games
-            .IncludeRelevant()
-            .Take(20)
-            .Select(a => a.ToSendableData()).ToArray();
-        return Results.Ok(allGames);
-    }
-
-    var game = db.Games.Where(v => v.GameNumber == id)
-        .Take(1)
-        .IncludeRelevant()
-        .Select(a => a.ToSendableData());
-
-    if (game is null) {
-        return Results.NotFound("Game not found.");
-    }
-
-    return Results.Ok(game);
-}).WithName("Game").WithOpenApi();
-
 app.MapControllers();
 
 app.Run();

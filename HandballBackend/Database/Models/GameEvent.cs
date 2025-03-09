@@ -80,22 +80,22 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public Tournament Tournament { get; set; }
 
     [ForeignKey("TeamOneLeftId")]
-    public Person TeamOneLeft { get; set; }
+    public Person? TeamOneLeft { get; set; }
 
     [ForeignKey("TeamOneRightId")]
-    public Person TeamOneRight { get; set; }
+    public Person? TeamOneRight { get; set; }
 
     [ForeignKey("TeamTwoLeftId")]
-    public Person TeamTwoLeft { get; set; }
+    public Person? TeamTwoLeft { get; set; }
 
     [ForeignKey("TeamTwoRightId")]
-    public Person TeamTwoRight { get; set; }
+    public Person? TeamTwoRight { get; set; }
 
     [ForeignKey("GameId")]
     public Game Game { get; set; }
 
-    public GameEventData ToSendableData() {
-        return new GameEventData(this);
+    public GameEventData ToSendableData(bool includeGame = false) {
+        return new GameEventData(this, includeGame);
     }
 
     public static IQueryable<GameEvent> GetRelevant(IQueryable<GameEvent> query) {

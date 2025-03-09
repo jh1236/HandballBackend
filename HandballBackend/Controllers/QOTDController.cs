@@ -11,7 +11,7 @@ public class QOTDController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<QuoteOfTheDayData> GetQOTD() {
         var db = new HandballContext();
-        int today = DateTime.Today.DayOfYear;
+        var today = DateTime.Today.DayOfYear;
         var quotes = db.QuotesOfTheDay
             .ToArray();
         var quote = quotes[today % quotes.Length];

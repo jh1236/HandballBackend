@@ -1,9 +1,10 @@
 ﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
+using HandballBackend.EndpointHelpers;
 
 namespace HandballBackend;
 
-static class EvilTests {
+internal static class EvilTests {
     public static void EvilTest(int number) {
         var db = new HandballContext();
         IQueryable<Team> query = db.Teams;

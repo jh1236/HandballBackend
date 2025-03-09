@@ -56,6 +56,11 @@ public class Team : IHasRelevant<Team> {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
+    public GameTeamData ToGameSendableData(Game game, bool generateStats = false,
+        bool formatData = false) {
+        return new GameTeamData(this, game, generateStats, formatData);
+    }
+
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
         return query
             .Include(t => t.Captain)

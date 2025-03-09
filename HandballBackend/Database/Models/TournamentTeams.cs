@@ -26,16 +26,16 @@ public class TournamentTeam {
     public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     [Column("name", TypeName = "TEXT")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [Column("image_url", TypeName = "TEXT")]
-    public string ImageUrl { get; set; }
+    public string? ImageUrl { get; set; }
 
     [Column("team_color", TypeName = "TEXT")]
-    public string TeamColor { get; set; }
+    public string? TeamColor { get; set; }
 
     [Column("big_image_url", TypeName = "TEXT")]
-    public string BigImageUrl { get; set; }
+    public string? BigImageUrl { get; set; }
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }

@@ -39,7 +39,7 @@ public class Person {
 
     [Required]
     [Column("permission_level")]
-    public int? PermissionLevel { get; set; } = 0;
+    public int PermissionLevel { get; set; } = 0;
 
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 

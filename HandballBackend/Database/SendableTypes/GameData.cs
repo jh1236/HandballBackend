@@ -9,8 +9,8 @@ namespace HandballBackend.Database.SendableTypes;
 public class GameData {
     public int id { get; private set; }
     public TournamentData tournament { get; private set; }
-    public TeamData teamOne { get; private set; }
-    public TeamData teamTwo { get; private set; }
+    public GameTeamData teamOne { get; private set; }
+    public GameTeamData teamTwo { get; private set; }
     public int teamOneScore { get; private set; }
     public int teamTwoScore { get; private set; }
     public int teamOneTimeouts { get; private set; }
@@ -40,12 +40,20 @@ public class GameData {
     public int? timeoutExpirationTime { get; private set; }
     public bool isOfficialTimeout { get; private set; }
 
+    public GameEventData[]? events { get; private set; } = null;
 
-    public GameData(Game game, bool isAdmin = false, bool includeGame = false) {
+
+    public GameData(
+        Game game,
+        bool includeGameEvents = false,
+        bool includeStats = false,
+        bool formatData = false,
+        bool isAdmin = false
+    ) {
         id = game.Id;
         tournament = game.Tournament?.ToSendableData();
-        teamOne = game.TeamOne?.ToSendableData();
-        teamTwo = game.TeamTwo?.ToSendableData();
+        teamOne = game.TeamOne?.ToGameSendableData(game, includeStats, formatData);
+        teamTwo = game.TeamTwo?.ToGameSendableData(game, includeStats, formatData);
         teamOneScore = game.TeamOneScore;
         teamTwoScore = game.TeamTwoScore;
         teamOneTimeouts = game.TeamOneTimeouts;
@@ -90,5 +98,8 @@ public class GameData {
             .Where(a => a.EventType is "Timeout")
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
+
+        if (!includeGameEvents) return;
+        events = game.Events.Select(a => a.ToSendableData(false)).ToArray();
     }
 }

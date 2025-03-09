@@ -8,10 +8,10 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.Database.SendableTypes;
 
 public class PersonData {
-    public string name { get; private set; }
-    public string searchableName { get; private set; }
-    public string imageUrl { get; private set; }
-    public string bigImageUrl { get; private set; }
+    public string name { get; protected set; }
+    public string searchableName { get; protected set; }
+    public string imageUrl { get; protected set; }
+    public string bigImageUrl { get; protected set; }
 
     private static readonly string[] PercentageColumns = [
         "Percentage of Points Scored",
@@ -21,7 +21,7 @@ public class PersonData {
         "Serve Return Rate"
     ];
 
-    public Dictionary<string, dynamic>? stats { get; private set; }
+    public Dictionary<string, dynamic>? stats { get; protected set; }
 
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
@@ -81,7 +81,7 @@ public class PersonData {
             var game = pgs.Game;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
-            stats["B&F Votes"] += pgs.IsBestPlayer;
+            stats["B&F Votes"] += pgs.IsBestPlayer ? 1 : 0;
             stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
             stats["Games Played"] += game.Ended ? 1 : 0;
@@ -122,8 +122,14 @@ public class PersonData {
             servedPointsWon / Math.Max(stats["Points Served"], 1);
         stats["Serve Return Rate"] = stats["Serves Returned"] / Math.Max(stats["Serves Received"], 1);
         stats["Votes per 100 games"] = 100.0f * stats["B&F Votes"] / gamesPlayed;
+        
         if (!format) return;
-        foreach (var stat in stats.Keys) {
+        
+        FormatData();
+    }
+
+    protected void FormatData() {
+        foreach (var stat in stats!.Keys) {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = Math.Round(100.0 * (double) stats[stat], 2) + "%";
