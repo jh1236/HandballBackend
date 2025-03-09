@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
@@ -19,7 +20,7 @@ public class OfficialsController : ControllerBase {
         var db = new HandballContext();
         OfficialData[]? officials;
 
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid Tournament");
         }
 
@@ -56,13 +57,13 @@ public class OfficialsController : ControllerBase {
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        var official = db.Officials
+        var official = db.Officials.IncludeRelevant()
             .FirstOrDefault(o => o.Person.SearchableName == searchable);
         if (official is null) {
             return NotFound("Invalid Name");
         }
 
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("invalid Tournament");
         }
 

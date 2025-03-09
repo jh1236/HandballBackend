@@ -1,8 +1,10 @@
 ﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
+using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Controllers;
@@ -10,6 +12,17 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class GamesController : ControllerBase {
+    [HttpGet("change_code")]
+    public ActionResult<Dictionary<string, dynamic?>> GetChangeCode(
+        [FromQuery(Name = "id")] int gameNumber
+    ) {
+        var db = new HandballContext();
+        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).First();
+
+        return Utilities.WrapInDictionary("changeCode", query.Id);
+    }
+
     [HttpGet("{gameNumber:int}")]
     public ActionResult<Dictionary<string, dynamic?>> GetSingleGame(
         int gameNumber,
@@ -19,10 +32,8 @@ public class GamesController : ControllerBase {
     ) {
         var db = new HandballContext();
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
-        var query = db.Games.IncludeRelevant();
-        if (includeGameEvents) {
-            query = query.Include(g => g.Events);
-        }
+        var query = db.Games.IncludeRelevant().Include(g => g.Events);
+
 
         var game = query.FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
@@ -30,7 +41,7 @@ public class GamesController : ControllerBase {
         }
 
         return Utilities.WrapInDictionary("game",
-            game.ToSendableData(includeGameEvents, includeStats, formatData, isAdmin));
+            game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin));
     }
 
     [HttpGet]
@@ -97,7 +108,8 @@ public class GamesController : ControllerBase {
             query = query.Include(g => g.Events);
         }
 
-        var games = query.Select(g => g.ToSendableData(includeGameEvents, includeStats, formatData, isAdmin)).ToArray();
+        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
+            .ToArray();
 
         var output = Utilities.WrapInDictionary("games", games);
         if (returnTournament) {
@@ -109,5 +121,82 @@ public class GamesController : ControllerBase {
         }
 
         return output;
+    }
+
+
+    [HttpGet("fixtures")]
+    public ActionResult<Dictionary<string, dynamic?>> GetFixtures(
+        [BindRequired, FromQuery(Name = "tournament")]
+        string tournamentSearchable,
+        [FromQuery] bool returnTournament = false,
+        [FromQuery] bool seperateFinals = false,
+        [FromQuery] int maxRounds = -1
+    ) {
+        var db = new HandballContext();
+        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        Console.WriteLine(tournamentSearchable);
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+            return BadRequest("Invalid tournament");
+        }
+
+
+        IQueryable<Game> query = db.Games.Where(g => g.TournamentId == tournament!.Id).IncludeRelevant()
+            ;
+
+        query = query.OrderBy(g => g.Id);
+
+
+        var games = query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArray();
+
+        List<FixturesRound> fixtures = [];
+
+        foreach (var game in games) {
+            var roundIndex = game.round - 1;
+            while (fixtures.Count < roundIndex) {
+                // creates all before the current round
+                fixtures.Add(new FixturesRound());
+            }
+
+            if (fixtures.Count == roundIndex) {
+                //create the current round
+                fixtures.Add(new FixturesRound([game], game.isFinal));
+            } else {
+                fixtures[game.round - 1].games.Add(game);
+            }
+        }
+
+        foreach (var round in fixtures) {
+            round.Sort();
+        }
+
+        if (maxRounds > 0) {
+            fixtures = fixtures.TakeLast(maxRounds).ToList();
+        }
+
+        var output = Utilities.WrapInDictionary("fixtures", fixtures);
+
+        if (seperateFinals) {
+            output["fixtures"] = fixtures.Where(f => !f.final).ToArray();
+            output["finals"] = fixtures.Where(f => f.final).ToArray();
+        }
+
+        if (returnTournament) {
+            if (tournament is null) {
+                return BadRequest("Cannot return null tournament");
+            }
+
+            output["tournament"] = tournament.ToSendableData();
+        }
+
+        return output;
+    }
+}
+
+internal class FixturesRound(List<GameData>? games = null, bool isFinal = false) {
+    public List<GameData> games { get; set; } = games == null ? [] : games;
+    public bool final { get; set; } = isFinal;
+
+    public void Sort() {
+        games = FixturesHelper.SortFixtures(games);
     }
 }

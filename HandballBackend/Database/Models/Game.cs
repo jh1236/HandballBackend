@@ -135,7 +135,7 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("marked_for_review")]
-    public int MarkedForReview { get; set; } = 0;
+    public bool MarkedForReview { get; set; } = false;
 
     [Required]
     [Column("game_number")]
@@ -164,12 +164,13 @@ public class Game : IHasRelevant<Game> {
     public ICollection<PlayerGameStats> Players { get; set; } = new List<PlayerGameStats>();
 
     public GameData ToSendableData(
+        bool includeTournament = false,
         bool includeGameEvents = false,
         bool includeStats = false,
         bool formatData = false,
         bool isAdmin = false
     ) {
-        return new GameData(this,includeGameEvents, includeStats, formatData, isAdmin);
+        return new GameData(this,includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
     }
 
     public static IQueryable<Game> GetRelevant(IQueryable<Game> query) {

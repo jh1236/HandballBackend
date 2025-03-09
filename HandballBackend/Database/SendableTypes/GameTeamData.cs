@@ -1,9 +1,17 @@
-﻿using HandballBackend.Database.Models;
+﻿// ReSharper disable InconsistentNaming
+// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
+
+
+using HandballBackend.Database.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 
 public class GameTeamData : TeamData {
-    private bool servingFromLeft = true;
+    public bool servingFromLeft { get; private set; } = true;
+
+    public new GamePlayerData? captain { get; set; }
+    public new GamePlayerData? nonCaptain { get; set; }
+    public new GamePlayerData? substitute { get; set; }
 
     public GameTeamData(
         Team team,
@@ -39,11 +47,18 @@ public class GameTeamData : TeamData {
         substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
             ?.ToSendableData(generateStats, formatData);
 
+
         if (!generateStats) return;
 
         stats = new Dictionary<string, dynamic> {
             ["Timeouts Called"] = game.TeamOneId == team.Id ? game.TeamOneTimeouts : game.TeamTwoTimeouts,
-            ["Points Against"] = game.TeamOneId == team.Id ? game.TeamTwoScore : game.TeamOneScore
+            ["Points Against"] = game.TeamOneId == team.Id ? game.TeamTwoScore : game.TeamOneScore,
+            ["Green Cards"] = 0.0,
+            ["Yellow Cards"] = 0.0,
+            ["Red Cards"] = 0.0,
+            ["Faults"] = 0.0,
+            ["Double Faults"] = 0.0,
+            ["Points Scored"] = 0.0
         };
 
 

@@ -38,7 +38,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public int? Details { get; set; }
 
     [Column("notes", TypeName = "TEXT")]
-    public string Notes { get; set; }
+    public string? Notes { get; set; }
 
     [Column("player_who_served_id")]
     public int? PlayerWhoServedId { get; set; }
@@ -93,6 +93,9 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [ForeignKey("GameId")]
     public Game Game { get; set; }
+
+    [NotMapped]
+    public bool IsCard => EventType == "Warning" || EventType.EndsWith("Card");
 
     public GameEventData ToSendableData(bool includeGame = false) {
         return new GameEventData(this, includeGame);

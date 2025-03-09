@@ -3,6 +3,7 @@
 
 using HandballBackend.Database.Models;
 using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -20,7 +21,7 @@ public class TournamentData {
     public bool inFinals { get; private set; }
     public bool isPooled { get; private set; }
     public string notes { get; private set; }
-    public string imageURL { get; private set; }
+    public string ImageUrl { get; private set; }
     public bool usingBadmintonServes { get; private set; }
 
     public TournamentData(Tournament tournament, bool isAdmin = false) {
@@ -35,7 +36,7 @@ public class TournamentData {
         inFinals = tournament.InFinals;
         isPooled = tournament.IsPooled;
         notes = tournament.Notes;
-        imageURL = tournament.ImageUrl;
+        ImageUrl = Utilities.FixImageUrl(tournament.ImageUrl);
         usingBadmintonServes = tournament.BadmintonServes;
     }
 }

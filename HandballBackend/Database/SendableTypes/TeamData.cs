@@ -4,6 +4,7 @@
 using System.Drawing;
 using HandballBackend.Database.Models;
 using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -37,8 +38,8 @@ public class TeamData {
         bool generatePlayerStats = false, bool formatData = false) {
         name = team.Name;
         searchableName = team.SearchableName;
-        imageUrl = team.ImageUrl;
-        bigImageUrl = team.BigImageUrl;
+        imageUrl = Utilities.FixImageUrl(team.ImageUrl);
+        bigImageUrl = Utilities.FixImageUrl(team.BigImageUrl);
         captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
         nonCaptain =
             team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
@@ -65,7 +66,8 @@ public class TeamData {
         };
         var gameId = 0;
         foreach (var pgs in team.PlayerGameStats.Where(pgs =>
-                     pgs.Game.Ranked && (tournament == null || pgs.TournamentId == tournament.Id)) ?? []) {
+                     (tournament == null || pgs.TournamentId == tournament.Id)) ?? []) {
+            if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
             if (gameId < pgs.GameId) {
                 gameId = pgs.GameId;
                 stats["Games Played"] += pgs.Game.Ended ? 1 : 0;
@@ -98,8 +100,7 @@ public class TeamData {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = 100.0 * Math.Round((double) stats[stat], 2) + "%";
-            }
-            else {
+            } else {
                 stats[stat] = Math.Round((double) stats[stat], 2).ToString();
             }
         }

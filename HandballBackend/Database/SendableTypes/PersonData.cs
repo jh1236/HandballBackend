@@ -3,6 +3,7 @@
 
 using HandballBackend.Database.Models;
 using HandballBackend.Models;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.SendableTypes;
@@ -28,8 +29,8 @@ public class PersonData {
         bool format = false) {
         name = person.Name;
         searchableName = person.SearchableName;
-        imageUrl = person.ImageUrl;
-        bigImageUrl = person.ImageUrl; //TODO: fix this later
+        imageUrl = imageUrl = Utilities.FixImageUrl(person.ImageUrl);
+        bigImageUrl = Utilities.FixImageUrl(person.ImageUrl); //TODO: fix this later
 
         if (!generateStats) return;
 
@@ -77,7 +78,7 @@ public class PersonData {
         foreach (var pgs in person.PlayerGameStats ?? []) {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
-            if (!pgs.Game.Ranked) continue;
+            if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
             var game = pgs.Game;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
@@ -122,9 +123,9 @@ public class PersonData {
             servedPointsWon / Math.Max(stats["Points Served"], 1);
         stats["Serve Return Rate"] = stats["Serves Returned"] / Math.Max(stats["Serves Received"], 1);
         stats["Votes per 100 games"] = 100.0f * stats["B&F Votes"] / gamesPlayed;
-        
+
         if (!format) return;
-        
+
         FormatData();
     }
 
@@ -133,8 +134,7 @@ public class PersonData {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = Math.Round(100.0 * (double) stats[stat], 2) + "%";
-            }
-            else {
+            } else if (stats[stat] is double or float) {
                 stats[stat] = Math.Round((double) stats[stat], 2).ToString();
             }
         }

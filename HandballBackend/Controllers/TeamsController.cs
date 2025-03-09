@@ -21,7 +21,7 @@ public class TeamsController : ControllerBase {
         [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
 
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
@@ -64,7 +64,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         IQueryable<Team> query;
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
@@ -104,7 +104,10 @@ public class TeamsController : ControllerBase {
             }
         }
 
-        var teams = query.OrderBy(t => t.SearchableName)
+        var teams = query
+            .OrderBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
+            .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
+            .ThenBy(t => t.SearchableName)
             .Select(t => t.ToSendableData(tournament, includeStats, includePlayerStats, formatData)).ToArray();
         var output = Utilities.WrapInDictionary("teams", teams);
         if (returnTournament) {
@@ -122,7 +125,6 @@ public class TeamsController : ControllerBase {
     [HttpGet("ladder")]
     public ActionResult<Dictionary<string, dynamic?>> GetLadder(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
-        [FromQuery] bool includeStats = false,
         [FromQuery] bool formatData = false,
         [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
@@ -130,20 +132,18 @@ public class TeamsController : ControllerBase {
         TeamData[]? ladder = null;
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
         if (tournament is not null) {
-            (ladder, poolOne, poolTwo) = LadderHelper.SortLadder(db, tournament);
+            (ladder, poolOne, poolTwo) = LadderHelper.GetTournamentLadder(db, tournament);
         } else {
             //Not null captain removes bye team
-            IQueryable<Team> query = db.Teams.IncludeRelevant()
+            var query = db.Teams.IncludeRelevant()
                 .Include(t => t.PlayerGameStats)
-                .ThenInclude(pgs => pgs.Game);
-
-
-            query = query.Where(t => t.Captain != null);
+                .ThenInclude(pgs => pgs.Game)
+                .Where(t => t.Captain != null);
 
             ladder = LadderHelper.SortTeams(null, query.ToArray());
         }

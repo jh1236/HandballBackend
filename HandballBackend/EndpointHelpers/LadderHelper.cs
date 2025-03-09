@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.EndpointHelpers;
 
 public static class LadderHelper {
-    public static (TeamData[]?, TeamData[]?, TeamData[]?) SortLadder(HandballContext db, Tournament tournament) {
+    public static (TeamData[]?, TeamData[]?, TeamData[]?) GetTournamentLadder(HandballContext db, Tournament tournament) {
         var innerQuery = db.TournamentTeams
             .Where(t => t.TournamentId == tournament.Id)
             .Include(t => t.Team.Captain)

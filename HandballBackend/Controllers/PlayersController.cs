@@ -16,12 +16,12 @@ public class PlayersController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<Dictionary<string, dynamic?>> GetSingle(
         string searchable,
-        [FromQuery] bool formatData = true,
+        [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
-        [FromQuery] bool returnTournament = true
+        [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
@@ -50,17 +50,17 @@ public class PlayersController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public ActionResult<Dictionary<string, dynamic?>> GetMulti(
-        [FromQuery] bool formatData = true,
+        [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] string? team = null,
-        [FromQuery] bool returnTournament = true,
-        [FromQuery] bool includeStats = true
+        [FromQuery] bool returnTournament = false,
+        [FromQuery] bool includeStats = false
     ) {
         var db = new HandballContext();
         IQueryable<Person> query;
         Team? teamObj = null;
 
-        if (Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
