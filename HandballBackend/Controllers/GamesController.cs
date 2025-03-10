@@ -20,7 +20,7 @@ public class GamesController : ControllerBase {
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
         var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).First();
 
-        return Utilities.WrapInDictionary("changeCode", query.Id);
+        return Utilities.WrapInDictionary("code", query.Id);
     }
 
     [HttpGet("{gameNumber:int}")]
