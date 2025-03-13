@@ -4,6 +4,7 @@
 
 using HandballBackend.Database.Models;
 using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -25,7 +26,7 @@ public class GameEventData {
         var teamOneId = gameEvent.Game.TeamOneId;
 
         id = gameEvent.Id;
-        eventType = gameEvent.EventType;
+        eventType = Utilities.SplitCamelCase(gameEvent.EventType.ToString());
         firstTeam = gameEvent.TeamId == teamOneId;
         player = gameEvent.Player?.ToSendableData();
         details = gameEvent.Details;

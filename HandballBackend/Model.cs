@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using HandballBackend.Database.Models;
 using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend;
 
@@ -20,7 +21,7 @@ public class HandballContext : DbContext {
     public DbSet<TournamentTeam> TournamentTeams { get; set; }
 
     public const string DbPath = "./resources/database.db";
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
 
@@ -35,7 +36,12 @@ public class HandballContext : DbContext {
             .HasOne(pgs => pgs.Opponent)
             .WithMany()
             .HasForeignKey(pgs => pgs.OpponentId);
-
+        modelBuilder
+            .Entity<GameEvent>()
+            .Property(e => e.EventType)
+            .HasConversion(
+                v => Utilities.SplitCamelCase(v.ToString()),
+                v => (GameEventType) Enum.Parse(typeof(GameEventType), v.Replace(" ", "")));
     }
 
     // The following configures EF to create a Sqlite database file in the

@@ -139,4 +139,24 @@ public class PlayerGameStats {
     public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false) {
         return new GamePlayerData(this, includeStats, formatData);
     }
+
+    public void ResetStats() {
+        RoundsOnCourt = 0;
+        RoundsCarded = 0;
+        PointsScored = 0;
+        AcesScored = 0;
+        Faults = 0;
+        DoubleFaults = 0;
+        ServedPoints = 0;
+        ServedPointsWon = 0;
+        ServesReceived = 0;
+        ServesReturned = 0;
+        Warnings = 0;
+        GreenCards = 0;
+        YellowCards = 0;
+        RedCards = 0;
+        CardTime = 0;
+        CardTimeRemaining = 0;
+        IsBestPlayer = false;
+    }
 }

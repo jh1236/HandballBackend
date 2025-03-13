@@ -18,10 +18,10 @@ public class GameTeamData : TeamData {
         Game game,
         bool generateStats = false,
         bool formatData = false) : base(team) {
-        var startGame = game.Events.FirstOrDefault(a => a.EventType == "Start");
+        var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)
-            .FirstOrDefault(a => a.EventType == "Score" && a.TeamToServeId == team.Id);
+            .FirstOrDefault(a => a.EventType == GameEventType.Score && a.TeamToServeId == team.Id);
         if (startGame is null) {
             servingFromLeft = true;
         } else if (game.Tournament.BadmintonServes) {
@@ -34,7 +34,7 @@ public class GameTeamData : TeamData {
             if (lastTimeServed is not null) {
                 var lastScore = game.Events
                     .OrderByDescending(a => a.Id)
-                    .FirstOrDefault(a => a.EventType == "Score");
+                    .FirstOrDefault(a => a.EventType == GameEventType.Score);
             } else {
                 servingFromLeft = startGame.TeamToServeId == team.Id;
             }

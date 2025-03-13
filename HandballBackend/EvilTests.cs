@@ -12,4 +12,12 @@ internal static class EvilTests {
         query = query.IncludeRelevant();
         Console.WriteLine(query.ToArray());
     }
+
+    public static void MalevolentTest() {
+        bool[] l = [
+            false, false, true, true
+        ];
+
+        Console.WriteLine(l.OrderBy(a => a).ToList()[0]);
+    }
 }

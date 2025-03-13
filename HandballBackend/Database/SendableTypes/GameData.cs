@@ -25,8 +25,8 @@ public class AdminGameData {
     public bool resolved { get; set; }
 
     public AdminGameData(Game game) {
-        var teamNotes = game.Events.Where(a => a.EventType is "Note").ToArray();
-        var protests = game.Events.Where(a => a.EventType is "Protest").ToArray();
+        var teamNotes = game.Events.Where(a => a.EventType is GameEventType.Notes).ToArray();
+        var protests = game.Events.Where(a => a.EventType is GameEventType.Protest).ToArray();
         var cardEvemts = game.Events.Where(a => a.IsCard);
         markedForReview = game.MarkedForReview;
         requiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
@@ -136,16 +136,16 @@ public class GameData {
         isBye = game.IsBye;
         status = isAdmin ? game.Status : game.AdminStatus;
         faulted = game.Events
-            .Where(a => a.EventType is "Fault" or "Score")
+            .Where(a => a.EventType is GameEventType.Fault or GameEventType.Score)
             .OrderBy(a => a.Id)
-            .Select(a => a.EventType == "Fault")
+            .Select(a => a.EventType == GameEventType.Fault)
             .LastOrDefault(false);
         changeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
         timeoutExpirationTime = game.Events
-            .Where(a => a.EventType is "Timeout" or "End Timeout")
+            .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
             .OrderBy(a => a.Id)
             .Select(a =>
-                    a.EventType == "Timeout"
+                    a.EventType == GameEventType.Timeout
                         ? a.TeamId is null // the event is a timeout
                             ? a.CreatedAt // the event is an official timeout
                             : a.CreatedAt + Config.TimeoutTime * 1000 // the event is a normal timeout
@@ -153,7 +153,7 @@ public class GameData {
             )
             .LastOrDefault(-1);
         isOfficialTimeout = game.Events
-            .Where(a => a.EventType is "Timeout")
+            .Where(a => a.EventType is GameEventType.Timeout)
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
         court = game.Court;

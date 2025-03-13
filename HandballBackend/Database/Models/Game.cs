@@ -170,7 +170,25 @@ public class Game : IHasRelevant<Game> {
         bool formatData = false,
         bool isAdmin = false
     ) {
-        return new GameData(this,includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
+        return new GameData(this, includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
+    }
+
+    public void Reset() {
+        Started = false;
+        SomeoneHasWon = false;
+        Ended = false;
+        Protested = false;
+        Resolved = false;
+        BestPlayerId = null;
+        TeamOneScore = 0;
+        TeamTwoScore = 0;
+        TeamOneTimeouts = 0;
+        TeamTwoTimeouts = 0;
+        Notes = null;
+        WinningTeamId = null;
+        Status = "Waiting For Start";
+        AdminStatus = "Waiting For Start";
+        NoteableStatus = "Waiting For Start";
     }
 
     public static IQueryable<Game> GetRelevant(IQueryable<Game> query) {

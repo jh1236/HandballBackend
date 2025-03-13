@@ -6,6 +6,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
+public enum GameEventType {
+    Start,
+    EndGame,
+    Score,
+    Fault,
+    Timeout,
+    EndTimeout,
+    Forfeit,
+    Warning,
+    GreenCard,
+    YellowCard,
+    RedCard,
+    Substitute,
+    Notes,
+    Protest,
+    Resolve,
+}
+
 [Table("gameEvents", Schema = "main")]
 public class GameEvent : IHasRelevant<GameEvent> {
     [Key]
@@ -28,7 +46,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [Required]
     [Column("event_type", TypeName = "TEXT")]
-    public string EventType { get; set; }
+    public GameEventType EventType { get; set; }
 
     [Required]
     [Column("created_at")]
@@ -95,7 +113,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public Game Game { get; set; }
 
     [NotMapped]
-    public bool IsCard => EventType == "Warning" || EventType.EndsWith("Card");
+    public bool IsCard => EventType == GameEventType.Warning || EventType.ToString().EndsWith("Card");
 
     public GameEventData ToSendableData(bool includeGame = false) {
         return new GameEventData(this, includeGame);
