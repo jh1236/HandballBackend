@@ -1,6 +1,5 @@
 ﻿using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

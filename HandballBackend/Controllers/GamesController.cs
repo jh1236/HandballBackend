@@ -31,7 +31,10 @@ public class GamesController : ControllerBase {
     ) {
         var db = new HandballContext();
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
-        var query = db.Games.IncludeRelevant().Include(g => g.Events);
+        var query = db.Games.IncludeRelevant()
+            .Include(g => g.Events)
+            .Include(g => g.Players)
+            .ThenInclude(pgs => pgs.Player.Events);
 
 
         var game = query.FirstOrDefault(g => g.GameNumber == gameNumber);

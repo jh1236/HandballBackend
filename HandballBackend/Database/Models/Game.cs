@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
@@ -128,7 +128,7 @@ public class Game : IHasRelevant<Game> {
     public string NoteableStatus { get; set; } = "Waiting For Start";
 
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("serve_timer")]
     public int? ServeTimer { get; set; }

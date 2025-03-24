@@ -17,7 +17,8 @@ public class GameTeamData : TeamData {
         Team team,
         Game game,
         bool generateStats = false,
-        bool formatData = false) : base(team) {
+        bool formatData = false,
+        bool isAdmin = false) : base(team) {
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)
@@ -35,6 +36,9 @@ public class GameTeamData : TeamData {
                 var lastScore = game.Events
                     .OrderByDescending(a => a.Id)
                     .FirstOrDefault(a => a.EventType == GameEventType.Score);
+                servingFromLeft = lastScore.TeamToServeId == team.Id
+                    ? lastScore.SideToServe == "Left"
+                    : lastScore.SideToServe != "Left";
             } else {
                 servingFromLeft = startGame.TeamToServeId == team.Id;
             }

@@ -8,9 +8,9 @@ namespace HandballBackend.Controllers;
 [Route("/api/[controller]")]
 public class AuthController : ControllerBase {
     public class LoginRequest {
-        public required int UserID { get; set; }
-        public required string Password { get; set; }
-        public bool LongSession { get; set; } = false;
+        public required int userID { get; set; }
+        public required string password { get; set; }
+        public bool longSession { get; set; } = false;
     }
 
     [HttpPost("login")]
@@ -18,9 +18,9 @@ public class AuthController : ControllerBase {
     public ActionResult<Dictionary<string, dynamic>> Login(
         [FromBody] LoginRequest loginRequest
     ) {
-        var userId = loginRequest.UserID;
-        var password = loginRequest.Password;
-        var longSession = loginRequest.LongSession;
+        var userId = loginRequest.userID;
+        var password = loginRequest.password;
+        var longSession = loginRequest.longSession;
 
         var user = PermissionHelper.Login(userId, password, longSession);
         if (user?.SessionToken is null) {

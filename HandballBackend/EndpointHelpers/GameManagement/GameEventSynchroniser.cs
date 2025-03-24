@@ -3,7 +3,7 @@
 namespace HandballBackend.EndpointHelpers.GameManagement;
 
 internal static class GameEventSynchroniser {
-    private static void SyncGame(HandballContext db, Game game) {
+    public static void SyncGame(HandballContext db, Game game) {
         game.Reset();
         var carryOverCards = game.TournamentId >= 8;
         foreach (var pgs in game.Players) {
@@ -35,21 +35,11 @@ internal static class GameEventSynchroniser {
                     SyncFault(game, gameEvent);
                     break;
                 case GameEventType.Timeout:
-                    if (isFirstTeam) {
-                        game.TeamOneTimeouts += 1;
-                    } else {
-                        game.TeamTwoTimeouts += 1;
-                    }
-
+                    SyncTimeout(game, gameEvent);
                     break;
 
                 case GameEventType.Forfeit:
-                    if (isFirstTeam) {
-                        game.TeamTwoScore = Math.Min(Math.Max(game.TeamOneScore + 2, 11), 18);
-                    } else {
-                        game.TeamOneScore = Math.Min(Math.Max(game.TeamTwoScore + 2, 11), 18);
-                    }
-
+                    SyncForfeit(game, gameEvent);
                     break;
                 case GameEventType.Warning:
                     player.Warnings += 1;
@@ -229,6 +219,22 @@ internal static class GameEventSynchroniser {
             } else {
                 pgs.StartSide = "Substitute";
             }
+        }
+    }
+
+    public static void SyncTimeout(Game game, GameEvent gameEvent) {
+        if (gameEvent.TeamId == game.TeamOneId) {
+            game.TeamOneTimeouts += 1;
+        } else {
+            game.TeamTwoTimeouts += 1;
+        }
+    }
+
+    public static void SyncForfeit(Game game, GameEvent gameEvent) {
+        if (gameEvent.TeamToServeId == game.TeamOneId) {
+            game.TeamTwoScore = Math.Min(Math.Max(game.TeamOneScore + 2, 11), 18);
+        } else {
+            game.TeamOneScore = Math.Min(Math.Max(game.TeamTwoScore + 2, 11), 18);
         }
     }
 }

@@ -110,8 +110,8 @@ public class GameData {
     ) {
         id = game.GameNumber;
         tournament = includeTournament ? game.Tournament?.ToSendableData() : null;
-        teamOne = game.TeamOne?.ToGameSendableData(game, includeStats, formatData);
-        teamTwo = game.TeamTwo?.ToGameSendableData(game, includeStats, formatData);
+        teamOne = game.TeamOne?.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        teamTwo = game.TeamTwo?.ToGameSendableData(game, includeStats, formatData, isAdmin);
         teamOneScore = game.TeamOneScore;
         teamTwoScore = game.TeamTwoScore;
         teamOneTimeouts = game.TeamOneTimeouts;
