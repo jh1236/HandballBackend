@@ -3,7 +3,6 @@
 
 
 using HandballBackend.Database.Models;
-using HandballBackend.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 

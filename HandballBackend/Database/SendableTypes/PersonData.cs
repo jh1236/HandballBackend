@@ -2,7 +2,6 @@
 // Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 using HandballBackend.Database.Models;
-using HandballBackend.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 

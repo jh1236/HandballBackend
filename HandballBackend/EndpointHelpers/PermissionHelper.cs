@@ -1,5 +1,6 @@
 ﻿using System.Text;
-using HandballBackend.Models;
+using HandballBackend.Database.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.EndpointHelpers;
 
@@ -35,7 +36,7 @@ public static class PermissionHelper
 
     private static int Time()
     {
-        return (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        return Utilities.GetUnixSeconds();
     }
 
     private static string GenerateToken()

@@ -27,10 +27,12 @@ public class OfficialsController : ControllerBase {
         if (tournament is not null) {
             officials = db.TournamentOfficials
                 .Where(a => a.TournamentId == tournament.Id)
+                .IncludeRelevant()
                 .Select(to => to.Official.ToSendableData(tournament, false))
                 .ToArray();
         } else {
             officials = db.Officials
+                .IncludeRelevant()
                 .Select(o => o.ToSendableData(null, false))
                 .ToArray();
         }

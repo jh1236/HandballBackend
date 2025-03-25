@@ -10,12 +10,25 @@ public static partial class Utilities {
         return new Dictionary<string, dynamic?> {{key, objectToWrap}};
     }
 
+    public static int GetUnixSeconds() {
+        return (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    }
+
     public static string FixImageUrl(string? urlIn) {
         if (urlIn is null) {
             return Config.MY_ADDRESS + "/api/image?name=blank";
         }
 
         return urlIn.StartsWith('/') ? Config.MY_ADDRESS + urlIn : urlIn;
+    }
+
+    public static string ToSearchable(string input) {
+        var rgx = SearchableNameRegex();
+        var str = input.ToLower().Replace(" ", "_");
+        if (str.StartsWith("the_")) {
+            str = str[4..];
+        }
+        return rgx.Replace(str, "");
     }
 
     public static bool TournamentOrElse(HandballContext db, string? searchable, out Tournament? tournament) {
@@ -34,4 +47,7 @@ public static partial class Utilities {
 
     [GeneratedRegex("([A-Z])", RegexOptions.Compiled)]
     private static partial System.Text.RegularExpressions.Regex SplitCamelCase();
+
+    [GeneratedRegex("^[a-zA-Z0-9_]+$", RegexOptions.Compiled)]
+    private static partial Regex SearchableNameRegex();
 }

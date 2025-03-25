@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
@@ -29,7 +30,7 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }

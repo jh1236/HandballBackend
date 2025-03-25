@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
 
@@ -58,7 +59,7 @@ public class Tournament {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("badminton_serves")]

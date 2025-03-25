@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
 
@@ -101,7 +101,7 @@ public class PlayerGameStats {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("is_best_player")]
