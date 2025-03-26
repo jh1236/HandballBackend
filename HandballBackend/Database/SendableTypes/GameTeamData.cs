@@ -33,12 +33,7 @@ public class GameTeamData : TeamData {
             }
         } else {
             if (lastTimeServed is not null) {
-                var lastScore = game.Events
-                    .OrderByDescending(a => a.Id)
-                    .FirstOrDefault(a => a.EventType == GameEventType.Score);
-                servingFromLeft = lastScore.TeamToServeId == team.Id
-                    ? lastScore.SideToServe == "Left"
-                    : lastScore.SideToServe != "Left";
+                servingFromLeft = (lastTimeServed.SideToServe == "Left");
             } else {
                 servingFromLeft = startGame.TeamToServeId == team.Id;
             }

@@ -1,9 +1,13 @@
-﻿using HandballBackend.Database.Models;
+﻿using HandballBackend.Database;
+using HandballBackend.Database.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.EndpointHelpers.GameManagement;
 
 internal static class GameEventSynchroniser {
-    public static void SyncGame(HandballContext db, Game game) {
+    public static void SyncGame(HandballContext db, int gameNumber) {
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).SingleOrDefault(g => g.GameNumber == gameNumber);
+        if (game is null) throw new InvalidOperationException($"Game {gameNumber} not found");
         game.Reset();
         var carryOverCards = game.TournamentId >= 8;
         foreach (var pgs in game.Players) {
@@ -17,7 +21,6 @@ internal static class GameEventSynchroniser {
         }
 
         foreach (var gameEvent in game.Events) {
-            var isFirstTeam = gameEvent.TeamId == game.TeamOneId;
             var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId);
 
             switch (gameEvent.EventType) {
@@ -82,7 +85,7 @@ internal static class GameEventSynchroniser {
             }
         }
 
-        var lastEvent = game.Events.OrderByDescending(gE => gE.Id).First();
+        var lastEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault();
         foreach (var pgs in game.Players) {
             if (lastEvent == null) {
                 pgs.SideOfCourt = pgs.StartSide;
@@ -95,9 +98,10 @@ internal static class GameEventSynchroniser {
             }
         }
 
-        var highScore = Math.Max(game.TeamOneScore, game.TeamTwoScore);
-        if (highScore > 11 && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)) {
-            game.SomeoneHasWon = true;
+        if (lastEvent != null) {
+            game.TeamToServeId = lastEvent.TeamToServeId;
+            game.SideToServe = lastEvent.SideToServe;
+            game.PlayerToServeId = lastEvent.PlayerToServeId;
         }
     }
 
@@ -123,7 +127,7 @@ internal static class GameEventSynchroniser {
             .TakeWhile(ge => ge.PlayerToServeId == player?.PlayerId).Count();
         var aceStreak = game.Events.OrderByDescending(ge => ge.Id)
             .TakeWhile(gE => gE.PlayerToServeId == player?.PlayerId && gE.Notes == "Ace").Count();
-        ;
+
         var nonServingTeam = playersOnCourt.Where(pgs => gameEvent.TeamWhoServedId != pgs.TeamId).OrderBy(pgs =>
                 pgs.PlayerId != gameEvent.TeamOneLeftId && pgs.PlayerId != gameEvent.TeamTwoLeftId)
             .Select(PlayerGameStats? (pgs) => pgs)
@@ -185,6 +189,11 @@ internal static class GameEventSynchroniser {
             game.TeamTwoScore += 1;
         }
 
+        game.TeamToServeId = gameEvent.TeamToServeId;
+        game.PlayerToServeId = gameEvent.PlayerToServeId;
+        game.SideToServe = gameEvent.SideToServe;
+
+
         foreach (var pgs in playersOnCourt) {
             if (pgs.CardTimeRemaining == 0) {
                 pgs.RoundsOnCourt += 1;
@@ -194,6 +203,11 @@ internal static class GameEventSynchroniser {
                     pgs.CardTimeRemaining -= 1;
                 }
             }
+        }
+
+        var highScore = Math.Max(game.TeamOneScore, game.TeamTwoScore);
+        if (highScore >= 11 && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)) {
+            game.SomeoneHasWon = true;
         }
     }
 

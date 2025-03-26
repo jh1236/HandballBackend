@@ -1,10 +1,9 @@
 ﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
-using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
-namespace HandballBackend.EndpointHelpers;
+namespace HandballBackend.EndpointHelpers.GameManagement;
 
 public static class GameManager {
     private static readonly string[] SIDES = ["Left", "Right", "Substitute"];
@@ -29,8 +28,8 @@ public static class GameManager {
 
     private static GameEvent SetUpGameEvent(Game game, GameEventType type, bool? firstTeam, int? playerId,
         string? notes = null, int? details = null) {
-        int? teamId = firstTeam != null ? firstTeam.Value ? game.TeamOneId : game.TeamTwoId : null;
-        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        int? teamId = firstTeam != null ? (firstTeam.Value ? game.TeamOneId : game.TeamTwoId) : null;
+        var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var player = game.Players.FirstOrDefault(pgs => pgs.PlayerId == playerId);
         var newEvent = new GameEvent {
             TeamId = teamId,
@@ -56,10 +55,11 @@ public static class GameManager {
     }
 
 
-    private static void AddPointToGame(HandballContext db, Game game, bool firstTeam, int? playerId,
+    private static void AddPointToGame(HandballContext db, int gameNumber, bool firstTeam, int? playerId,
         bool penalty = false, string? notes = null) {
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).SingleOrDefault(g => g.GameNumber == gameNumber);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
-        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes);
         if (teamId == prevEvent.TeamToServeId) {
             //We won this point and the last point
@@ -85,10 +85,12 @@ public static class GameManager {
             }
         } else {
             // this is our first win of the service, so we need to make changes accordingly
-            var lastService = game.Events.Where(gE => gE.TeamToServeId == teamId).OrderBy(gE => gE.Id).FirstOrDefault();
+            var lastService = game.Events.Where(gE => gE.TeamToServeId == teamId).OrderByDescending(gE => gE.Id)
+                .FirstOrDefault();
             // default side is the only difference between badminton and normal serves; the second team starts on the 
             // right if using badminton.
             var defaultSide = game.Tournament.BadmintonServes ? "Left" : "Right";
+            newEvent.TeamToServeId = teamId;
             newEvent.SideToServe = (lastService?.SideToServe ?? defaultSide) == "Left" ? "Right" : "Left";
             newEvent.PlayerToServeId = game.Players
                 .First(pgs => pgs.TeamId == teamId && pgs.SideOfCourt == newEvent.SideToServe).PlayerId;
@@ -158,7 +160,7 @@ public static class GameManager {
         }
 
         var servingTeamId = swapService ? game.TeamTwoId : game.TeamOneId;
-        var servingPlayer = swapService ? teamOneIds[0] : teamTwoIds[0];
+        var servingPlayer = swapService ? teamTwoIds[0] : teamOneIds[0];
         teamOneIds.Add(teamOneIds.Last());
         teamTwoIds.Add(teamTwoIds.Last());
 
@@ -196,7 +198,7 @@ public static class GameManager {
             player = leftPlayer ? gameEvent.TeamTwoLeftId : gameEvent.TeamTwoRightId;
         }
 
-        AddPointToGame(db, game, firstTeam, player, notes: scoreMethod);
+        AddPointToGame(db, gameNumber, firstTeam, player, notes: scoreMethod);
         db.SaveChanges();
     }
 
@@ -210,7 +212,7 @@ public static class GameManager {
         }
 
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable);
-        AddPointToGame(db, game, firstTeam, player.PlayerId, notes: scoreMethod);
+        AddPointToGame(db, gameNumber, firstTeam, player.PlayerId, notes: scoreMethod);
         db.SaveChanges();
     }
 
@@ -221,7 +223,7 @@ public static class GameManager {
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
         var firstTeam = gameEvent.TeamToServeId == game.TeamOneId;
-        AddPointToGame(db, game, firstTeam, gameEvent.PlayerToServeId, notes: "Ace");
+        AddPointToGame(db, gameNumber, firstTeam, gameEvent.PlayerToServeId, notes: "Ace");
         db.SaveChanges();
     }
 
@@ -230,10 +232,17 @@ public static class GameManager {
         var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var lastGameEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        var lastGameEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var firstTeam = lastGameEvent.TeamToServeId == game.TeamOneId;
         var gameEvent = SetUpGameEvent(game, GameEventType.Fault, firstTeam, lastGameEvent.PlayerToServeId);
+        var faulted = game.Events.Where(gE => gE.EventType is GameEventType.Fault or GameEventType.Score)
+            .OrderByDescending(gE => gE.Id)
+            .Select(gE => gE.EventType is GameEventType.Fault).FirstOrDefault(false);
         db.Add(gameEvent);
+        if (faulted) {
+            AddPointToGame(db, gameNumber, !firstTeam, null, true);
+        }
+
         GameEventSynchroniser.SyncFault(game, gameEvent);
         db.SaveChanges();
     }
@@ -303,19 +312,80 @@ public static class GameManager {
         db.SaveChanges();
     }
 
+    public static void Card(int gameId, bool firstTeam, bool leftPlayer, string color, int duration, string reason) {
+        var db = new HandballContext();
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.Id == gameId);
+        if (game == null) return;
+        if (color != "Warning" && !color.EndsWith(" Card")) {
+            color += " Card";
+        }
+
+        var type = color switch {
+            "Warning" => GameEventType.Warning,
+            "Green Card" => GameEventType.GreenCard,
+            "Yellow Card" => GameEventType.YellowCard,
+            "Red Card" => GameEventType.RedCard,
+            _ => throw new ArgumentOutOfRangeException(nameof(color), color, null)
+        };
+
+        int? player;
+        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        if (firstTeam) {
+            player = leftPlayer ? prevEvent.TeamOneLeftId : prevEvent.TeamOneRightId;
+        } else {
+            player = leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId;
+        }
+
+        var gameEvent = SetUpGameEvent(game, type, firstTeam, player, reason, duration);
+        db.Add(gameEvent);
+        var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute").ToList();
+
+        var bothCarded = players
+            .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : 12)
+            .DefaultIfEmpty(0)
+            .Min();
+
+        if (bothCarded != 0 || players.Count == 1) {
+            var myScore = game.TeamOneScore;
+            var theirScore = game.TeamTwoScore;
+
+            if (game.SomeoneHasWon) {
+                return;
+            }
+
+            if (!firstTeam) {
+                (myScore, theirScore) = (theirScore, myScore);
+            }
+
+            bothCarded = Math.Min(bothCarded, Math.Max(11 - theirScore, myScore + 2 - theirScore));
+
+            for (var i = 0; i < (players.Count == 1 ? duration : bothCarded); i++) {
+                AddPointToGame(
+                    db,
+                    gameId,
+                    !firstTeam,
+                    null,
+                    penalty: false
+                );
+            }
+        }
+
+        db.SaveChanges();
+    }
+
     public static void Undo(int gameNumber) {
         var db = new HandballContext();
         var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var smallestId = game.Events.Where(gE => gE.GameId == game.Id && !IGNORED_BY_UNDO.Contains(gE.EventType))
-            .OrderBy(gE => gE.Id).FirstOrDefault()!.Id;
+        var smallestId = game.Events.Where(gE => !IGNORED_BY_UNDO.Contains(gE.EventType))
+            .OrderByDescending(gE => gE.Id).First().Id;
         db.GameEvents.Where(gE => gE.GameId == game.Id && gE.Id >= smallestId).ExecuteDelete();
         db.SaveChanges(); // Not necessary but probably still a good idea
 
 
         db = new HandballContext();
-        GameEventSynchroniser.SyncGame(db, game);
+        GameEventSynchroniser.SyncGame(db, gameNumber);
         db.SaveChanges();
     }
 
@@ -325,34 +395,34 @@ public static class GameManager {
         var db = new HandballContext();
         var teams = new List<Team>();
         foreach (var (players, teamName) in new[] {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
-            var playerIds = players?.Select(a => db.People.FirstOrDefault(p => p.SearchableName == a)?.Id).ToList();
+            var playerIds = players?.Select(a => db.People.FirstOrDefault(p => p.Name == a)?.Id).ToList();
             Team team;
-            if (players == null) {
+            if (players == null || players.Length == 0) {
                 if (teamName == null) {
                     throw new ArgumentNullException(teams.Count == 0 ? nameof(playersTeamOne) : nameof(playersTeamTwo),
                         "You must specify either a team name or the players for the team");
                 }
 
-                team = db.Teams.IncludeRelevant().FirstOrDefault(t => t.SearchableName == teamName)!;
+                team = db.Teams.IncludeRelevant().FirstOrDefault(t => t.Name == teamName)!;
             } else {
-                team = db.Teams.IncludeRelevant()
-                    .FirstOrDefault(t =>
-                        t.CaptainId != null && //skip the bye team
-                        playerIds!.Contains(t.CaptainId) &&
-                        playerIds!.Contains(t.NonCaptainId)
-                    )!;
-            }
-
-
-            if (team == null) {
-                team = new Team {
-                    CaptainId = playerIds[0],
-                    NonCaptainId = playerIds[1],
-                    SubstituteId = null,
-                    Name = teamOneName,
-                    SearchableName = Utilities.ToSearchable(teamName)
-                };
-                db.Teams.Add(team);
+                var maybeTeam = db.Teams.IncludeRelevant().FirstOrDefault(
+                    t =>
+                        t.CaptainId != null &&
+                        players.Contains(t.Captain!.Name) &&
+                        players.Contains(t.NonCaptain!.Name)
+                );
+                if (maybeTeam == null) {
+                    team = new Team {
+                        CaptainId = playerIds![0],
+                        NonCaptainId = playerIds[1],
+                        SubstituteId = null,
+                        Name = teamName,
+                        SearchableName = Utilities.ToSearchable(teamName)
+                    };
+                    db.Teams.Add(team);
+                } else {
+                    team = maybeTeam;
+                }
             }
 
             teams.Add(team);
@@ -411,7 +481,8 @@ public static class GameManager {
             teamTwoId = 1;
         }
 
-        var gameNumber = isBye ? -1 : db.Games.Select(g => g.GameNumber).Max() + 1;
+        var gameNumber =
+            isBye ? -1 : (db.Games.OrderByDescending(g => g.GameNumber).FirstOrDefault()?.GameNumber ?? 0) + 1;
         var game = new Game {
             GameNumber = gameNumber,
             TournamentId = tournamentId,

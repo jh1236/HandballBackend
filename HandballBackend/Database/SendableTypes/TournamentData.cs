@@ -37,5 +37,6 @@ public class TournamentData {
         notes = tournament.Notes;
         ImageUrl = Utilities.FixImageUrl(tournament.ImageUrl);
         usingBadmintonServes = tournament.BadmintonServes;
+        editable = true; //TODO: This is not working
     }
 }

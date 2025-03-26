@@ -47,6 +47,15 @@ public class HandballContext : DbContext {
             .WithMany(
                 p => p.Events
             );
+        modelBuilder
+            .Entity<GameEvent>()
+            .HasOne(gE => gE.Game)
+            .WithMany(
+                g => g.Events
+            );
+        modelBuilder
+            .Entity<GameEvent>()
+            .HasOne(gE => gE.TeamOneLeft);
     }
 
     // The following configures EF to create a Sqlite database file in the

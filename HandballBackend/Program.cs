@@ -1,6 +1,7 @@
 using Azure.Core;
 using HandballBackend;
 using HandballBackend.Database;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
@@ -21,7 +22,6 @@ builder.Services.AddCors(options => {
 });
 
 var app = builder.Build();
-var db = new HandballContext();
 
 
 // Configure the HTTP request pipeline.
@@ -32,9 +32,10 @@ if (app.Environment.IsDevelopment()) {
 
 // app.UseHttpsRedirection();
 
+app.UseMiddleware<RequestLogger>();
+ 
 app.UseCors();
 
-app.UseHttpLogging();
 
 app.MapControllers();
 

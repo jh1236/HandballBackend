@@ -13,6 +13,7 @@ public class GamePlayerData : PersonData {
     public string? sideOfCourt { get; set; }
     public bool isCaptain { get; set; }
     public string startSide { get; set; }
+    public List<GameEventData> prevCards { get; set; }
 
     public GamePlayerData(Person player, Game game, bool includeStats = false, bool formatData = false)
         : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
@@ -26,6 +27,8 @@ public class GamePlayerData : PersonData {
         sideOfCourt = pgs.SideOfCourt;
         isCaptain = pgs.Id == pgs.Team.CaptainId;
         startSide = pgs.StartSide;
+        prevCards = pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
+            .Select(gE => gE.ToSendableData()).ToList() ?? [];
         if (!includeStats) return;
         stats = new Dictionary<string, dynamic> {
             ["B&F Votes"] = pgs.IsBestPlayer,

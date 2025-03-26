@@ -1,5 +1,6 @@
 ﻿using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -55,6 +56,108 @@ public class EditGamesController : ControllerBase {
     ) {
         GameManager.StartGame(startRequest.id, startRequest.swapService, startRequest.teamOne, startRequest.teamTwo,
             startRequest.teamOneIGA, startRequest.official, startRequest.scorer);
+        return NoContent();
+    }
+
+    public class ScorePointRequest {
+        public required int id { get; set; }
+        public required bool firstTeam { get; set; }
+        public bool? leftPlayer { get; set; }
+        public string? playerSearchable { get; set; }
+        public string? method { get; set; }
+    }
+
+    [HttpPost("score")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
+        if (scorePointRequest.leftPlayer.HasValue) {
+            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam, scorePointRequest.leftPlayer.Value, scorePointRequest.method);
+        } else if (!string.IsNullOrEmpty(scorePointRequest.playerSearchable)) {
+            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam, scorePointRequest.playerSearchable, scorePointRequest.method);
+        } else {
+            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+        }
+        return NoContent();
+    }
+
+    public class AceRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("ace")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Ace([FromBody] AceRequest aceRequest) {
+        GameManager.Ace(aceRequest.id);
+        return NoContent();
+    }
+
+    public class FaultRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("fault")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Fault([FromBody] FaultRequest faultRequest) {
+        GameManager.Fault(faultRequest.id);
+        return NoContent();
+    }
+
+    public class TimeoutRequest {
+        public required int id { get; set; }
+        public required bool firstTeam { get; set; }
+    }
+
+    [HttpPost("timeout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Timeout([FromBody] TimeoutRequest timeoutRequest) {
+        GameManager.Timeout(timeoutRequest.id, timeoutRequest.firstTeam);
+        return NoContent();
+    }
+
+    public class ForfeitRequest {
+        public required int id { get; set; }
+        public required bool firstTeam { get; set; }
+    }
+
+    [HttpPost("forfeit")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Forfeit([FromBody] ForfeitRequest forfeitRequest) {
+        GameManager.Forfeit(forfeitRequest.id, forfeitRequest.firstTeam);
+        return NoContent();
+    }
+
+    public class EndTimeoutRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("endTimeout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult EndTimeout([FromBody] EndTimeoutRequest endTimeoutRequest) {
+        GameManager.EndTimeout(endTimeoutRequest.id);
+        return NoContent();
+    }
+
+    public class SubstituteRequest {
+        public required int id { get; set; }
+        public required bool firstTeam { get; set; }
+        public required string playerSearchable { get; set; }
+    }
+
+    [HttpPost("substitute")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Substitute([FromBody] SubstituteRequest substituteRequest) {
+        GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam, substituteRequest.playerSearchable);
+        return NoContent();
+    }
+
+    public class UndoRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("undo")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Undo([FromBody] UndoRequest undoRequest) {
+        GameManager.Undo(undoRequest.id);
         return NoContent();
     }
 }
