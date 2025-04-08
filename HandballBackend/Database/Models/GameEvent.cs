@@ -65,7 +65,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public int? TeamWhoServedId { get; set; }
 
     [Column("side_served", TypeName = "TEXT")]
-    public string SideServed { get; set; }
+    public string? SideServed { get; set; }
 
     [Column("player_to_serve_id")]
     public int? PlayerToServeId { get; set; }

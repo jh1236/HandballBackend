@@ -33,9 +33,11 @@ public class EditGamesController : ControllerBase {
             return BadRequest("Official not found");
         }
 
-        var g = GameManager.CreateGame(tournament!.Id, create.playersOne, create.playersTwo, create.teamOne, create.teamTwo,
+        var g = GameManager.CreateGame(tournament!.Id, create.playersOne, create.playersTwo, create.teamOne,
+            create.teamTwo,
             official.Id);
-        return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}", Utilities.WrapInDictionary("game", g.ToSendableData()));
+        return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}",
+            Utilities.WrapInDictionary("game", g.ToSendableData()));
     }
 
     public class StartRequest {
@@ -71,12 +73,42 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
         if (scorePointRequest.leftPlayer.HasValue) {
-            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam, scorePointRequest.leftPlayer.Value, scorePointRequest.method);
+            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
+                scorePointRequest.leftPlayer.Value, scorePointRequest.method);
         } else if (!string.IsNullOrEmpty(scorePointRequest.playerSearchable)) {
-            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam, scorePointRequest.playerSearchable, scorePointRequest.method);
+            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
+                scorePointRequest.playerSearchable, scorePointRequest.method);
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
+
+        return NoContent();
+    }
+
+    public class CardRequest {
+        public required int id { get; set; }
+        public required bool firstTeam { get; set; }
+        public bool? leftPlayer { get; set; }
+        public string? playerSearchable { get; set; }
+        public string color { get; set; }
+        public string? reason { get; set; }
+        public int duration { get; set; }
+    }
+
+    [HttpPost("card")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult Card([FromBody] CardRequest cardRequest) {
+        if (cardRequest.leftPlayer.HasValue) {
+            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.leftPlayer.Value, cardRequest.color,
+                cardRequest.duration, cardRequest.reason ?? "Not Provided");
+        } else if (!string.IsNullOrEmpty(cardRequest.playerSearchable)) {
+            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.playerSearchable, cardRequest.color,
+                cardRequest.duration, cardRequest.reason ?? "Not Provided");
+        } else {
+            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+        }
+
         return NoContent();
     }
 

@@ -21,8 +21,6 @@ internal static class GameEventSynchroniser {
         }
 
         foreach (var gameEvent in game.Events) {
-            var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId);
-
             switch (gameEvent.EventType) {
                 case GameEventType.Start:
                     SyncStartGame(game, gameEvent);
@@ -32,7 +30,6 @@ internal static class GameEventSynchroniser {
                     break;
                 case GameEventType.Score:
                     SyncScorePoint(game, gameEvent);
-
                     break;
                 case GameEventType.Fault:
                     SyncFault(game, gameEvent);
@@ -40,35 +37,20 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Timeout:
                     SyncTimeout(game, gameEvent);
                     break;
-
                 case GameEventType.Forfeit:
                     SyncForfeit(game, gameEvent);
                     break;
                 case GameEventType.Warning:
-                    player.Warnings += 1;
+                    SyncCard(game, gameEvent);
                     break;
                 case GameEventType.GreenCard:
-                    player.GreenCards += 1;
-                    if (player.CardTimeRemaining >= 0) {
-                        //player isn't already red carded
-                        player.CardTimeRemaining += gameEvent.Details ?? 0;
-                        player.CardTime = player.CardTimeRemaining;
-                    }
-
+                    SyncCard(game, gameEvent);
                     break;
                 case GameEventType.YellowCard:
-                    player.YellowCards += 1;
-                    if (player.CardTimeRemaining >= 0) {
-                        //player isn't already red carded
-                        player.CardTimeRemaining += gameEvent.Details ?? 0;
-                        player.CardTime = player.CardTimeRemaining;
-                    }
-
+                    SyncCard(game, gameEvent);
                     break;
                 case GameEventType.RedCard:
-                    player.RedCards += 1;
-                    player.CardTimeRemaining += -1;
-                    player.CardTime = -1;
+                    SyncCard(game, gameEvent);
                     break;
                 case GameEventType.Protest:
                     game.Protested = true;
@@ -104,6 +86,40 @@ internal static class GameEventSynchroniser {
             game.PlayerToServeId = lastEvent.PlayerToServeId;
         }
     }
+
+    public static void SyncCard(Game game, GameEvent gameEvent) {
+        var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
+        switch (gameEvent.EventType) {
+            case GameEventType.Warning:
+                player.Warnings += 1;
+                break;
+            case GameEventType.GreenCard:
+                player.GreenCards += 1;
+                break;
+            case GameEventType.YellowCard:
+                player.YellowCards += 1;
+                break;
+            case GameEventType.RedCard:
+                player.RedCards += 1;
+                break;
+            default:
+                throw new ArgumentException("Only card events can be synced as cards");
+        }
+
+        player.GreenCards += 1;
+        if (player.CardTimeRemaining < 0) return;
+        //player isn't already red carded
+
+        if (gameEvent.Details > 0) {
+            //the card is not a red or warning
+            player.CardTimeRemaining += gameEvent.Details ?? 0;
+            player.CardTime = player.CardTimeRemaining;
+        } else if (gameEvent.Details < 0) {
+            //red card
+            player.CardTimeRemaining = -1;
+        }
+    }
+
 
     public static void SyncFault(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerId);
@@ -250,5 +266,7 @@ internal static class GameEventSynchroniser {
         } else {
             game.TeamOneScore = Math.Min(Math.Max(game.TeamTwoScore + 2, 11), 18);
         }
+
+        game.SomeoneHasWon = true;
     }
 }

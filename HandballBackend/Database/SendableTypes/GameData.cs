@@ -91,7 +91,7 @@ public class GameData {
     public string status { get; private set; }
     public bool faulted { get; private set; }
     public int changeCode { get; private set; }
-    public int? timeoutExpirationTime { get; private set; }
+    public long? timeoutExpirationTime { get; private set; }
     public bool isOfficialTimeout { get; private set; }
 
     public GameEventData[]? events { get; private set; } = null;
@@ -148,7 +148,7 @@ public class GameData {
                     a.EventType == GameEventType.Timeout
                         ? a.TeamId is null // the event is a timeout
                             ? a.CreatedAt // the event is an official timeout
-                            : a.CreatedAt + Config.TimeoutTime * 1000 // the event is a normal timeout
+                            : (a.CreatedAt + Config.TimeoutTime) * 1000 // the event is a normal timeout
                         : -1 // the event is an `end timeout`
             )
             .LastOrDefault(-1);

@@ -276,7 +276,6 @@ public static class GameManager {
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
         db.Add(gameEvent);
-        GameEventSynchroniser.SyncForfeit(game, gameEvent);
         db.SaveChanges();
     }
 
@@ -312,10 +311,41 @@ public static class GameManager {
         db.SaveChanges();
     }
 
-    public static void Card(int gameId, bool firstTeam, bool leftPlayer, string color, int duration, string reason) {
+    public static void Card(int gameNumber, bool firstTeam, string playerSearchable, string color, int duration,
+        string reason) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.Id == gameId);
-        if (game == null) return;
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+
+        var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable).PlayerId;
+        CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
+        db.SaveChanges();
+    }
+
+    public static void Card(int gameNumber, bool firstTeam, bool leftPlayer, string color, int duration,
+        string reason) {
+        var db = new HandballContext();
+        Console.WriteLine("Here!");
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.GameNumber == gameNumber);
+        int player;
+        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        Console.WriteLine("Here!");
+        if (firstTeam) {
+            player = (leftPlayer ? prevEvent.TeamOneLeftId : prevEvent.TeamOneRightId)!.Value;
+        } else {
+            player = (leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId)!.Value;
+        }
+        Console.WriteLine("Here!");
+
+        CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
+        Console.WriteLine("Here!");
+
+        db.SaveChanges();
+    }
+
+    private static void CardInternal(HandballContext db, int gameId, bool firstTeam, int playerId, string color, int duration,
+        string reason) {
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.GameNumber == gameId);
+        if (game == null) throw new ArgumentException("The game has not been found");
         if (color != "Warning" && !color.EndsWith(" Card")) {
             color += " Card";
         }
@@ -328,30 +358,21 @@ public static class GameManager {
             _ => throw new ArgumentOutOfRangeException(nameof(color), color, null)
         };
 
-        int? player;
-        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
-        if (firstTeam) {
-            player = leftPlayer ? prevEvent.TeamOneLeftId : prevEvent.TeamOneRightId;
-        } else {
-            player = leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId;
-        }
 
-        var gameEvent = SetUpGameEvent(game, type, firstTeam, player, reason, duration);
+        var gameEvent = SetUpGameEvent(game, type, firstTeam, playerId, reason, duration);
+        Console.WriteLine($"{gameEvent.EventType}");
         db.Add(gameEvent);
-        var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute").ToList();
+        var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
+        var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute" && pgs.TeamId == teamId).ToList();
 
         var bothCarded = players
             .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : 12)
             .DefaultIfEmpty(0)
             .Min();
 
-        if (bothCarded != 0 || players.Count == 1) {
+        if (!game.SomeoneHasWon && (bothCarded != 0 || players.Count == 1)) {
             var myScore = game.TeamOneScore;
             var theirScore = game.TeamTwoScore;
-
-            if (game.SomeoneHasWon) {
-                return;
-            }
 
             if (!firstTeam) {
                 (myScore, theirScore) = (theirScore, myScore);
@@ -369,8 +390,7 @@ public static class GameManager {
                 );
             }
         }
-
-        db.SaveChanges();
+        GameEventSynchroniser.SyncCard(game, gameEvent);
     }
 
     public static void Undo(int gameNumber) {
