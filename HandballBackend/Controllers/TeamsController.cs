@@ -172,6 +172,7 @@ public class TeamsController : ControllerBase {
         var output = Utilities.WrapInDictionary("ladder", ladder);
         output["poolOne"] = poolOne;
         output["poolTwo"] = poolTwo;
+        output["pooled"] = poolTwo is not null;
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");
