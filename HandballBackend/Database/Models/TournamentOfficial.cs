@@ -38,6 +38,38 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     [ForeignKey("OfficialId")]
     public Official Official { get; set; }
 
+    [NotMapped]
+    public int GamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int CourtOneGamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.Court == 0 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int CourtTwoGamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.Court == 1 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int GamesScored {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.TournamentId == TournamentId && g.ScorerId == OfficialId);
+        }
+    }
+
     public static IQueryable<TournamentOfficial> GetRelevant(IQueryable<TournamentOfficial> query) {
         return query
             .Include(to => to.Tournament)
