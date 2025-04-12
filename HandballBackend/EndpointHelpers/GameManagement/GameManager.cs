@@ -478,6 +478,23 @@ public static class GameManager {
         game.BestPlayerId = bestPlayer?.Id;
         game.Notes = notes;
         if (game is {Ranked: true, IsFinal: false}) {
+            var playingPlayers = game.Players
+                .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
+            var teamOneElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
+                .Average();
+            var teamTwoElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamTwoId).Select(pgs => pgs.InitialElo)
+                .Average();
+            foreach (var pgs in game.Players) {
+                var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
+                var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
+                pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.PlayerId);
+            }
+        }
+
+        db.SaveChanges();
+        var remainingGames = db.Games.Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended).Any();
+        if (!remainingGames) {
+            game.Tournament.EndRound();
         }
     }
 
@@ -597,17 +614,32 @@ public static class GameManager {
 
         db.Add(game);
         db.SaveChanges();
-        game = db.Games.Where(g => g.Id == game.Id).IncludeRelevant().Single(); //used to pull extra gamey data
+        game = db.Games.Where(g => g.Id == game.Id)
+            .Include(g => g.TeamOne.Captain == null ? null : g.TeamOne.Captain.PlayerGameStats)
+            .Include(g => g.TeamOne.NonCaptain == null ? null : g.TeamOne.NonCaptain.PlayerGameStats)
+            .Include(g => g.TeamOne.Substitute == null ? null : g.TeamOne.Substitute.PlayerGameStats)
+            .Include(g => g.TeamTwo.Captain == null ? null : g.TeamTwo.Captain.PlayerGameStats)
+            .Include(g => g.TeamTwo.NonCaptain == null ? null : g.TeamTwo.NonCaptain.PlayerGameStats)
+            .Include(g => g.TeamTwo.Substitute == null ? null : g.TeamTwo.Substitute.PlayerGameStats)
+            .IncludeRelevant()
+            .Single(); //used to pull extra gamey data
+
+        var carryCardTimes = game.TournamentId >= 7;
+
         foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) continue;
-            int?[] players = [team.CaptainId, team.NonCaptainId, team.SubstituteId];
-            foreach (var pid in players.Where(p => p != null).Select(p => p!.Value)) {
+            Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
+            foreach (var p in teamPlayers.Where(p => p != null)) {
+                var prevGame = p!.PlayerGameStats!.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
                 db.Add(new PlayerGameStats {
                     GameId = game.Id,
-                    PlayerId = pid,
+                    PlayerId = p.Id,
                     TournamentId = tournamentId,
                     TeamId = team.Id,
-                    OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId
+                    OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId,
+                    InitialElo = prevGame?.InitialElo + (prevGame?.EloDelta ?? 0) ?? 1500.0,
+                    CardTime = carryCardTimes ? (prevGame?.CardTime ?? 0) : 0,
+                    CardTimeRemaining = carryCardTimes ? (prevGame?.CardTimeRemaining ?? 0) : 0
                 });
             }
         }

@@ -1,6 +1,4 @@
-﻿using HandballBackend.Database.Models;
-using HandballBackend.EndpointHelpers;
-using HandballBackend.EndpointHelpers.GameManagement;
+﻿using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -190,6 +188,38 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Undo([FromBody] UndoRequest undoRequest) {
         GameManager.Undo(undoRequest.id);
+        return NoContent();
+    }
+
+    public class EndGameRequest {
+        public int GameNumber { get; set; }
+        public string? BestPlayerSearchable { get; set; }
+        public int TeamOneRating { get; set; }
+        public int TeamTwoRating { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        public string? ProtestReasonTeamOne { get; set; }
+        public string? ProtestReasonTeamTwo { get; set; }
+        public string NotesTeamOne { get; set; } = string.Empty;
+        public string NotesTeamTwo { get; set; } = string.Empty;
+        public bool MarkedForReview { get; set; }
+    }
+
+    [HttpPost("end")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult EndGame([FromBody] EndGameRequest request) {
+        GameManager.End(
+            request.GameNumber,
+            request.BestPlayerSearchable,
+            request.TeamOneRating,
+            request.TeamTwoRating,
+            request.Notes,
+            request.ProtestReasonTeamOne,
+            request.ProtestReasonTeamTwo,
+            request.NotesTeamOne,
+            request.NotesTeamTwo,
+            request.MarkedForReview
+        );
+
         return NoContent();
     }
 }
