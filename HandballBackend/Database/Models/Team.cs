@@ -64,7 +64,10 @@ public class Team : IHasRelevant<Team> {
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
         return query
             .Include(t => t.Captain)
+            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats)
             .Include(t => t.NonCaptain)
-            .Include(t => t.Substitute);
+            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats)
+            .Include(t => t.Substitute)
+            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats);
     }
 }

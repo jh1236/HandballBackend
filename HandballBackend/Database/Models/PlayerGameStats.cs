@@ -121,6 +121,12 @@ public class PlayerGameStats {
     [Column("rating")]
     public int? Rating { get; set; }
 
+    [Column("initial_elo")]
+    public double InitialElo { get; set; }
+
+    [Column("elo_delta")]
+    public double? EloDelta { get; set; }
+
     [ForeignKey("GameId")]
     public Game Game { get; set; }
 

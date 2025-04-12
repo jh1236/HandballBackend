@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using HandballBackend.Database.Models;
+using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
 
 namespace HandballBackend;
@@ -56,6 +57,7 @@ public class HandballContext : DbContext {
         modelBuilder
             .Entity<GameEvent>()
             .HasOne(gE => gE.TeamOneLeft);
+        
     }
 
     // The following configures EF to create a Sqlite database file in the

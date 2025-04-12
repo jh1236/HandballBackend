@@ -21,7 +21,7 @@ public class PersonData {
         "Serve Return Rate"
     ];
 
-    public Dictionary<string, dynamic>? stats { get; protected set; }
+    public Dictionary<string, dynamic?>? stats { get; protected set; }
 
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
@@ -33,7 +33,7 @@ public class PersonData {
 
         if (!generateStats) return;
 
-        stats = new Dictionary<string, dynamic> {
+        stats = new Dictionary<string, dynamic?> {
             {"B&F Votes", 0.0},
             {"Elo", 0.0},
             {"Games Won", 0.0},
@@ -74,13 +74,18 @@ public class PersonData {
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
-        foreach (var pgs in person.PlayerGameStats ?? []) {
+        foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
             var game = pgs.Game;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
+            stats["Elo"] = pgs.InitialElo;
+            if (pgs.EloDelta is not null) {
+                stats["Elo"] += pgs.EloDelta;
+            }
+
             stats["B&F Votes"] += pgs.IsBestPlayer ? 1 : 0;
             stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;

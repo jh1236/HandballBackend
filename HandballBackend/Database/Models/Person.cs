@@ -41,8 +41,39 @@ public class Person {
     public int PermissionLevel { get; set; } = 0;
 
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
-    
+
     public IEnumerable<GameEvent>? Events { get; set; }
+
+    public double Elo(int? gameId = null, int? tournamentId = null) {
+        if (gameId.HasValue) {
+            var pgs = PlayerGameStats?.First(g => g.GameId == gameId);
+            if (pgs is {EloDelta: not null}) {
+                return (double) (pgs.EloDelta + pgs.InitialElo);
+            }
+
+            return pgs.InitialElo;
+        }
+
+        if (tournamentId.HasValue) {
+            var pgs = PlayerGameStats?.Where(pgs => pgs.TournamentId == tournamentId)
+                .OrderByDescending(pgs => pgs.GameId)
+                .First();
+            if (pgs is {EloDelta: not null}) {
+                return (double) (pgs.EloDelta + pgs.InitialElo);
+            }
+
+            return pgs.InitialElo;
+        }
+
+        var player = PlayerGameStats
+            .OrderByDescending(pgs => pgs.GameId)
+            .First();
+        if (player is {EloDelta: not null}) {
+            return (double) (player.EloDelta + player.InitialElo);
+        }
+
+        return player.InitialElo;
+    }
 
     public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
         bool formatData = false) {

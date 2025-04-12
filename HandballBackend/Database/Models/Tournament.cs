@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
@@ -64,6 +65,23 @@ public class Tournament {
     [Required]
     [Column("badminton_serves")]
     public bool BadmintonServes { get; set; } = false;
+
+    public void EndRound() {
+        // THE ide is LYING.  AbstractFixtureGenerator.EndOfRound can change the 
+        // value of InFinals, so we need to check it twice.
+        // If the ide Asks for a switch statement, tell it to fuck off
+
+        // ReSharper disable ConvertIfStatementToSwitchStatement 
+        if (!InFinals) {
+            AbstractFixtureGenerator.GetControllerByName(FixturesType, Id).EndOfRound();
+        }
+
+        if (InFinals && !Finished) {
+            AbstractFixtureGenerator.GetControllerByName(FinalsType, Id).EndOfRound();
+        }
+        // we can give the ide its rights back now
+        // ReSharper restore ConvertIfStatementToSwitchStatement
+    }
 
     public TournamentData ToSendableData() {
         return new TournamentData(this);

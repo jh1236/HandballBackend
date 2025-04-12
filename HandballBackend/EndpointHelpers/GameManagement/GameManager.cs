@@ -2,6 +2,7 @@
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HandballBackend.EndpointHelpers.GameManagement;
 
@@ -334,6 +335,7 @@ public static class GameManager {
         } else {
             player = (leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId)!.Value;
         }
+
         Console.WriteLine("Here!");
 
         CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
@@ -342,7 +344,8 @@ public static class GameManager {
         db.SaveChanges();
     }
 
-    private static void CardInternal(HandballContext db, int gameId, bool firstTeam, int playerId, string color, int duration,
+    private static void CardInternal(HandballContext db, int gameId, bool firstTeam, int playerId, string color,
+        int duration,
         string reason) {
         var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.GameNumber == gameId);
         if (game == null) throw new ArgumentException("The game has not been found");
@@ -390,6 +393,7 @@ public static class GameManager {
                 );
             }
         }
+
         GameEventSynchroniser.SyncCard(game, gameEvent);
     }
 
@@ -407,6 +411,74 @@ public static class GameManager {
         db = new HandballContext();
         GameEventSynchroniser.SyncGame(db, gameNumber);
         db.SaveChanges();
+    }
+
+    public static void End(
+        int gameNumber,
+        string? bestPlayerSearchable,
+        int teamOneRating, int teamTwoRating,
+        string notes,
+        string? protestReasonTeamOne, string? protestReasonTeamTwo,
+        string notesTeamOne, string notesTeamTwo,
+        bool markedForReview
+    ) {
+        var db = new HandballContext();
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        if (!game.SomeoneHasWon) throw new InvalidOperationException("The game has not ended!");
+        var bestPlayer = db.People.FirstOrDefault(p => p.SearchableName == bestPlayerSearchable);
+        var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
+        if (bestPlayer == null && !isForfeit && game.TeamOne.NonCaptainId is not null &&
+            game.TeamTwo.NonCaptainId is not null) {
+            throw new InvalidOperationException("A Best player has not been provided");
+        }
+
+        var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes, bestPlayer?.Id);
+        db.Add(endEvent);
+
+
+        if (!protestReasonTeamOne.IsNullOrEmpty()) {
+            var protestEvent = SetUpGameEvent(game, GameEventType.Protest, true, null, protestReasonTeamOne);
+            db.Add(protestEvent);
+        }
+
+        if (!protestReasonTeamTwo.IsNullOrEmpty()) {
+            var protestEvent = SetUpGameEvent(game, GameEventType.Protest, false, null, protestReasonTeamTwo);
+            db.Add(protestEvent);
+        }
+
+        var notesTeamOneEvent = SetUpGameEvent(game, GameEventType.Notes, true, null, notesTeamOne, teamOneRating);
+        db.Add(notesTeamOneEvent);
+        var notesTeamTwoEvent = SetUpGameEvent(game, GameEventType.Notes, false, null, notesTeamTwo, teamTwoRating);
+        db.Add(notesTeamTwoEvent);
+        foreach (var pgs in game.Players) {
+            pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
+        }
+
+        game.MarkedForReview = markedForReview;
+
+        if (game.Players.Any(i => i.RedCards != 0)) {
+            game.AdminStatus = "Red Card Awarded";
+        } else if (!protestReasonTeamOne.IsNullOrEmpty() || !protestReasonTeamTwo.IsNullOrEmpty()) {
+            game.AdminStatus = "Protested";
+        } else if (markedForReview) {
+            game.AdminStatus = "Marked for Review";
+        } else if (game.Players.Any(i => i.YellowCards != 0)) {
+            game.AdminStatus = "Yellow Card Awarded";
+        } else if (teamOneRating == 1 || teamTwoRating == 1) {
+            game.AdminStatus = "Unsportsmanlike Conduct";
+        } else if (isForfeit) {
+            game.AdminStatus = "Forfeit";
+        } else {
+            game.AdminStatus = "Official";
+        }
+
+        game.NoteableStatus = game.AdminStatus;
+        game.Status = "Official";
+        game.Length = Utilities.GetUnixSeconds() - game.StartTime;
+        game.BestPlayerId = bestPlayer?.Id;
+        game.Notes = notes;
+        if (game is {Ranked: true, IsFinal: false}) {
+        }
     }
 
     public static Game CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,
@@ -451,6 +523,7 @@ public static class GameManager {
         db.SaveChanges();
         return CreateGame(tournamentId, teams[0].Id, teams[1].Id, officialId, scorerId, round, court, isFinal);
     }
+
 
     public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId,
         int officialId = -1,

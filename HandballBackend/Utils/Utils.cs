@@ -28,6 +28,7 @@ public static partial class Utilities {
         if (str.StartsWith("the_")) {
             str = str[4..];
         }
+
         return rgx.Replace(str, "");
     }
 
@@ -46,7 +47,7 @@ public static partial class Utilities {
     }
 
     [GeneratedRegex("([A-Z])", RegexOptions.Compiled)]
-    private static partial System.Text.RegularExpressions.Regex SplitCamelCase();
+    private static partial Regex SplitCamelCase();
 
     [GeneratedRegex("^[a-zA-Z0-9_]+$", RegexOptions.Compiled)]
     private static partial Regex SearchableNameRegex();

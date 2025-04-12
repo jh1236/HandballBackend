@@ -17,7 +17,7 @@ public class TeamData {
     public PersonData? substitute { get; protected set; }
     public string? teamColor { get; protected set; }
     public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; protected set; }
-    public float elo { get; private set; }
+    public double elo { get; private set; }
 
     public Dictionary<string, dynamic>? stats { get; protected set; }
 
@@ -46,7 +46,12 @@ public class TeamData {
             team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
         teamColor = team.TeamColor;
         teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
-        elo = 1500.0f;
+        elo = (team.Captain?.Elo(tournamentId: tournament?.Id) ?? 0.0)
+              + (team.NonCaptain?.Elo(tournamentId: tournament?.Id) ?? 0.0)
+              + (team.Substitute?.Elo(tournamentId: tournament?.Id) ?? 0.0);
+        elo /= (team.Captain is null ? 1 : 0)
+               + (team.NonCaptain is null ? 1 : 0)
+               + (team.Substitute is null ? 1 : 0);
 
         if (!generateStats) return;
 

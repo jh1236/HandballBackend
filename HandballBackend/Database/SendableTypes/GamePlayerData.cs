@@ -30,7 +30,9 @@ public class GamePlayerData : PersonData {
         prevCards = pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
             .Select(gE => gE.ToSendableData()).ToList() ?? [];
         if (!includeStats) return;
-        stats = new Dictionary<string, dynamic> {
+        stats = new Dictionary<string, dynamic?> {
+            ["Elo"] = pgs.InitialElo,
+            ["Elo Delta"] = pgs.EloDelta,
             ["B&F Votes"] = pgs.IsBestPlayer,
             ["Games Won"] = pgs.Game.Ended && pgs.Game.WinningTeamId == pgs.TeamId ? 1 : 0,
             ["Games Lost"] = pgs.Game.Ended && pgs.Game.WinningTeamId != pgs.TeamId ? 1 : 0,

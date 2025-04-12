@@ -5,6 +5,10 @@ namespace HandballBackend.FixtureGenerator;
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool editable, bool fillCourts) {
     public readonly bool Editable = editable;
 
+    public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
+        throw new NotImplementedException();
+    }
+    
     public void EndOfRound() {
         if (fillCourts) {
             AddCourts();
@@ -200,4 +204,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
         db.SaveChanges();
     }
+
+    public abstract string GetName();
+    
 }
