@@ -83,6 +83,10 @@ public class Tournament {
         // ReSharper restore ConvertIfStatementToSwitchStatement
     }
 
+    public void BeginTournament() {
+        GetFixtureGenerator.BeginTournament();
+    }
+
     [NotMapped]
     public AbstractFixtureGenerator GetFinalGenerator => AbstractFixtureGenerator.GetControllerByName(FinalsType, Id);
 

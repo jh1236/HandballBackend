@@ -22,11 +22,11 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
 
     [Required]
     [Column("is_umpire")]
-    public int IsUmpire { get; set; } = 1;
+    public bool IsUmpire { get; set; } = true;
 
     [Required]
     [Column("is_scorer")]
-    public int IsScorer { get; set; } = 1;
+    public bool IsScorer { get; set; } = true;
 
     [Required]
     [Column("created_at")]

@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
@@ -10,6 +11,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
         return name switch {
             "OneRoundEditable" => new OneRound(tournamentId),
+            "Pooled" => new Pooled(tournamentId),
+            "PooledFinals" => new PooledFinals(tournamentId),
             _ => throw new ArgumentOutOfRangeException(nameof(name), name, null)
         };
     }
@@ -24,7 +27,17 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         }
     }
 
-    public abstract void BeginTournament();
+    protected void EndTournament(string note = "Thank you for participating in the tournament! We look forward to seeing you next time.") {
+        var db = new HandballContext();
+        var tournament = db.Tournaments.Find(tournamentId)!;
+        tournament.Finished = true;
+        tournament.Notes = note;
+        db.SaveChanges();
+    }
+
+    public virtual void BeginTournament() {
+        
+    }
 
 
     private void AddCourts() {

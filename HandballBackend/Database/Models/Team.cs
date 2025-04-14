@@ -58,11 +58,15 @@ public class Team : IHasRelevant<Team> {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
+    public double Elo() => new[] {Captain?.Elo(), NonCaptain?.Elo(), Substitute?.Elo()}.Where(e => e.HasValue)
+        .Select(e => e!.Value).Average();
+
     public GameTeamData ToGameSendableData(Game game, bool generateStats = false,
         bool formatData = false, bool isAdmin = false) {
         if (Id == 1) {
             return new GameTeamData(this, game, false, false, formatData);
         }
+
         return new GameTeamData(this, game, generateStats, formatData, isAdmin);
     }
 

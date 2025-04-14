@@ -2,12 +2,16 @@
 // Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 using System.Drawing;
+using System.Text.Json.Serialization;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
 public class TeamData {
+    [JsonIgnore]
+    public int id { get; protected set; }
+
     public string name { get; protected set; }
     public string searchableName { get; protected set; }
     public string? imageUrl { get; protected set; }
@@ -35,6 +39,7 @@ public class TeamData {
 
     public TeamData(Team team, Tournament? tournament = null, bool generateStats = false,
         bool generatePlayerStats = false, bool formatData = false) {
+        id = team.Id;
         name = team.Name;
         searchableName = team.SearchableName;
         imageUrl = Utilities.FixImageUrl(team.ImageUrl);
@@ -50,8 +55,7 @@ public class TeamData {
 
         if (!generateStats) return;
 
-        elo = new[] {team.Captain?.Elo(), team.NonCaptain?.Elo(), team.Substitute?.Elo()}.Where(e => e.HasValue)
-            .Select(e => e!.Value).Average();
+        elo = team.Elo();
 
         stats = new Dictionary<string, dynamic> {
             {"Games Played", 0.0},
@@ -72,6 +76,7 @@ public class TeamData {
             if (tournament?.Ranked != false) {
                 if (!pgs.Game.Ranked) continue;
             }
+
             if (pgs.Game.IsFinal) continue;
             if (gameId < pgs.GameId) {
                 gameId = pgs.GameId;

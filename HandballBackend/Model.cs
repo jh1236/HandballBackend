@@ -7,7 +7,7 @@ using HandballBackend.Utils;
 
 namespace HandballBackend;
 
-public class HandballContext : DbContext {
+public class HandballContext(string dbPath = "./resources/database.db") : DbContext {
     public DbSet<Game> Games { get; set; }
     public DbSet<GameEvent> GameEvents { get; set; }
     public DbSet<Official> Officials { get; set; }
@@ -18,8 +18,6 @@ public class HandballContext : DbContext {
     public DbSet<Tournament> Tournaments { get; set; }
     public DbSet<TournamentOfficial> TournamentOfficials { get; set; }
     public DbSet<TournamentTeam> TournamentTeams { get; set; }
-
-    public const string DbPath = "./resources/database.db";
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
@@ -70,5 +68,5 @@ public class HandballContext : DbContext {
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
+        => options.UseSqlite($"Data Source={dbPath}");
 }

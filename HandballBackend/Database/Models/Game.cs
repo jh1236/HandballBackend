@@ -172,6 +172,9 @@ public class Game : IHasRelevant<Game> {
 
     public ICollection<PlayerGameStats> Players { get; set; } = new List<PlayerGameStats>();
 
+    [NotMapped]
+    public int LosingTeamId => TeamOneId == WinningTeamId ? TeamTwoId : TeamOneId;
+
     public GameData ToSendableData(
         bool includeTournament = false,
         bool includeGameEvents = false,
