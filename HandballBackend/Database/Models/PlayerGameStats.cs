@@ -97,7 +97,7 @@ public class PlayerGameStats {
     public int CardTime { get; set; } = 0;
 
     [Column("start_side", TypeName = "TEXT")]
-    public string StartSide { get; set; }
+    public string? StartSide { get; set; }
 
     [Required]
     [Column("created_at")]

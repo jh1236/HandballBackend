@@ -4,6 +4,7 @@ using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Controllers;
 
@@ -55,12 +56,13 @@ public class OfficialsController : ControllerBase {
     public ActionResult<Dictionary<string, dynamic?>> GetSingleOfficial(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
-        [FromQuery] bool formatData = false,
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        var official = db.Officials.IncludeRelevant()
-            .FirstOrDefault(o => o.Person.SearchableName == searchable);
+        var official = db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
+            .Include(g => g.Games)
+            .ThenInclude(g => g.Players)
+            .FirstOrDefault();
         if (official is null) {
             return NotFound("Invalid Name");
         }
@@ -69,7 +71,8 @@ public class OfficialsController : ControllerBase {
             return BadRequest("invalid Tournament");
         }
 
-        var output = Utilities.WrapInDictionary("official", official.ToSendableData(tournament, formatData));
+
+        var output = Utilities.WrapInDictionary("official", official.ToSendableData(tournament, true));
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");

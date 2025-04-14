@@ -8,7 +8,6 @@ using HandballBackend.Utils;
 namespace HandballBackend;
 
 public class HandballContext : DbContext {
-    public DbSet<EloChange> EloChanges { get; set; }
     public DbSet<Game> Games { get; set; }
     public DbSet<GameEvent> GameEvents { get; set; }
     public DbSet<Official> Officials { get; set; }
@@ -25,13 +24,16 @@ public class HandballContext : DbContext {
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
 
-        // Configure the one-to-many relationship between Team and PlayerGameStats
         modelBuilder.Entity<PlayerGameStats>()
             .HasOne(pgs => pgs.Team)
             .WithMany(t => t.PlayerGameStats)
             .HasForeignKey(pgs => pgs.TeamId);
 
-        // Configure other relationships if needed
+        modelBuilder.Entity<Game>()
+            .HasOne(g => g.Official)
+            .WithMany(o => o.Games)
+            .HasForeignKey(pgs => pgs.OfficialId);
+
         modelBuilder.Entity<PlayerGameStats>()
             .HasOne(pgs => pgs.Opponent)
             .WithMany()
@@ -57,7 +59,12 @@ public class HandballContext : DbContext {
         modelBuilder
             .Entity<GameEvent>()
             .HasOne(gE => gE.TeamOneLeft);
-        
+
+        modelBuilder
+            .Entity<TournamentTeam>()
+            .HasOne(gE => gE.Team)
+            .WithMany(g => g.TournamentTeams)
+            .HasForeignKey(g => g.TeamId);
     }
 
     // The following configures EF to create a Sqlite database file in the

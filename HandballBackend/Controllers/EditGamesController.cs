@@ -70,12 +70,12 @@ public class EditGamesController : ControllerBase {
     [HttpPost("score")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
-        if (scorePointRequest.leftPlayer.HasValue) {
-            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
-                scorePointRequest.leftPlayer.Value, scorePointRequest.method);
-        } else if (!string.IsNullOrEmpty(scorePointRequest.playerSearchable)) {
+        if (!string.IsNullOrEmpty(scorePointRequest.playerSearchable)) {
             GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
                 scorePointRequest.playerSearchable, scorePointRequest.method);
+        } else if (scorePointRequest.leftPlayer.HasValue) {
+            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
+                scorePointRequest.leftPlayer.Value, scorePointRequest.method);
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -97,11 +97,11 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult Card([FromBody] CardRequest cardRequest) {
-        if (cardRequest.leftPlayer.HasValue) {
-            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.leftPlayer.Value, cardRequest.color,
-                cardRequest.duration, cardRequest.reason ?? "Not Provided");
-        } else if (!string.IsNullOrEmpty(cardRequest.playerSearchable)) {
+        if (!string.IsNullOrEmpty(cardRequest.playerSearchable)) {
             GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.playerSearchable, cardRequest.color,
+                cardRequest.duration, cardRequest.reason ?? "Not Provided");
+        } else if (cardRequest.leftPlayer.HasValue) {
+            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.leftPlayer.Value, cardRequest.color,
                 cardRequest.duration, cardRequest.reason ?? "Not Provided");
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
@@ -170,13 +170,23 @@ public class EditGamesController : ControllerBase {
     public class SubstituteRequest {
         public required int id { get; set; }
         public required bool firstTeam { get; set; }
-        public required string playerSearchable { get; set; }
+        public string? playerSearchable { get; set; }
+        public bool? leftPlayer { get; set; }
     }
 
     [HttpPost("substitute")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Substitute([FromBody] SubstituteRequest substituteRequest) {
-        GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam, substituteRequest.playerSearchable);
+        if (!string.IsNullOrEmpty(substituteRequest.playerSearchable)) {
+            GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam,
+                substituteRequest.playerSearchable);
+        } else if (substituteRequest.leftPlayer.HasValue) {
+            GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam,
+                substituteRequest.leftPlayer.Value);
+        } else {
+            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+        }
+
         return NoContent();
     }
 
@@ -191,8 +201,19 @@ public class EditGamesController : ControllerBase {
         return NoContent();
     }
 
+    public class DeleteRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("delete")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Delete([FromBody] DeleteRequest deleteRequest) {
+        GameManager.Delete(deleteRequest.id);
+        return NoContent();
+    }
+
     public class EndGameRequest {
-        public int GameNumber { get; set; }
+        public int Id { get; set; }
         public string? BestPlayerSearchable { get; set; }
         public int TeamOneRating { get; set; }
         public int TeamTwoRating { get; set; }
@@ -208,7 +229,7 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult EndGame([FromBody] EndGameRequest request) {
         GameManager.End(
-            request.GameNumber,
+            request.Id,
             request.BestPlayerSearchable,
             request.TeamOneRating,
             request.TeamTwoRating,

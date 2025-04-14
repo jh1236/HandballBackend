@@ -1,10 +1,4 @@
-using Azure.Core;
-using HandballBackend;
-using HandballBackend.Database;
 using HandballBackend.Utils;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpLogging(o => { });
 
 builder.Services.AddCors(options => {

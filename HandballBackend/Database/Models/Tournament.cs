@@ -73,15 +73,22 @@ public class Tournament {
 
         // ReSharper disable ConvertIfStatementToSwitchStatement 
         if (!InFinals) {
-            AbstractFixtureGenerator.GetControllerByName(FixturesType, Id).EndOfRound();
+            GetFixtureGenerator.EndOfRound();
         }
 
         if (InFinals && !Finished) {
-            AbstractFixtureGenerator.GetControllerByName(FinalsType, Id).EndOfRound();
+            GetFinalGenerator.EndOfRound();
         }
         // we can give the ide its rights back now
         // ReSharper restore ConvertIfStatementToSwitchStatement
     }
+
+    [NotMapped]
+    public AbstractFixtureGenerator GetFinalGenerator => AbstractFixtureGenerator.GetControllerByName(FinalsType, Id);
+
+    [NotMapped]
+    public AbstractFixtureGenerator GetFixtureGenerator =>
+        AbstractFixtureGenerator.GetControllerByName(FixturesType, Id);
 
     public TournamentData ToSendableData() {
         return new TournamentData(this);

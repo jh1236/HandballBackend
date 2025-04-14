@@ -78,6 +78,7 @@ public class PersonData {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
+            if (pgs.Game.IsFinal || pgs.Game.IsBye) continue;
             var game = pgs.Game;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
@@ -139,7 +140,7 @@ public class PersonData {
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = Math.Round(100.0 * (double) stats[stat], 2) + "%";
             } else if (stats[stat] is double or float) {
-                stats[stat] = Math.Round((double) stats[stat], 2).ToString();
+                stats[stat] = Math.Round((double) stats[stat], 2);
             }
         }
     }

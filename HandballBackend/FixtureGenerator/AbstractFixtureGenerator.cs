@@ -1,15 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
 
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool editable, bool fillCourts) {
     public readonly bool Editable = editable;
 
+
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
-        throw new NotImplementedException();
+        return name switch {
+            "OneRoundEditable" => new OneRound(tournamentId),
+            _ => throw new ArgumentOutOfRangeException(nameof(name), name, null)
+        };
     }
-    
-    public void EndOfRound() {
+
+    public virtual void EndOfRound() {
         if (fillCourts) {
             AddCourts();
         }
@@ -18,6 +23,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             AddUmpires();
         }
     }
+
+    public abstract void BeginTournament();
 
 
     private void AddCourts() {
@@ -32,41 +39,39 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         var games = db.Games
             .Include(g => g.TeamOne)
             .Include(g => g.TeamTwo)
-            .Where(g => g.TournamentId == tournamentId && 
-                        g.Round == rounds && 
-                        !g.IsBye && 
-                        !g.Started && 
+            .Where(g => g.TournamentId == tournamentId &&
+                        g.Round == rounds &&
+                        !g.IsBye &&
+                        !g.Started &&
                         !g.IsFinal)
             .ToList();
         var tourney = db.Tournaments
             .FirstOrDefault(t => t.Id == tournamentId);
         // Get final games for the highest round
         var finals = db.Games
-            .Where(g => g.TournamentId == tournamentId && 
-                        g.Round == rounds && 
-                        !g.IsBye && 
-                        !g.Started && 
+            .Where(g => g.TournamentId == tournamentId &&
+                        g.Round == rounds &&
+                        !g.IsBye &&
+                        !g.Started &&
                         g.IsFinal)
             .ToList();
 
         // Calculate the split point
-        var splitPoint = (int)Math.Ceiling(games.Count / 2.0) - 1;
+        var splitPoint = (int) Math.Ceiling(games.Count / 2.0) - 1;
 
         // Sort games by combined wins of both teams
-        games = games.OrderByDescending(g => 
-                g.TeamOne.ToSendableData(tourney, true).stats!["Games Won"] + 
-                g.TeamTwo.ToSendableData(tourney, true).stats!["Games Won"])
+        games = games.OrderByDescending(g =>
+                g.TeamOne.ToSendableData(true, tournament: tourney).stats!["Games Won"] +
+                g.TeamTwo.ToSendableData(true, tournament: tourney).stats!["Games Won"])
             .ToList();
 
         // Assign courts (0 for first half, 1 for second half)
-        for (var i = 0; i < games.Count; i++)
-        {
+        for (var i = 0; i < games.Count; i++) {
             games[i].Court = i > splitPoint ? 1 : 0;
         }
 
         // All finals go to court 0
-        foreach (var final in finals)
-        {
+        foreach (var final in finals) {
             final.Court = 0;
         }
 
@@ -204,7 +209,4 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
         db.SaveChanges();
     }
-
-    public abstract string GetName();
-    
 }

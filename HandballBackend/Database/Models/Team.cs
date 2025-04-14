@@ -51,23 +51,28 @@ public class Team : IHasRelevant<Team> {
 
     public List<PlayerGameStats> PlayerGameStats { get; set; } = [];
 
-    public TeamData ToSendableData(Tournament? tournament = null, bool generateStats = false,
-        bool generatePlayerStats = false, bool formatData = false) {
+    public List<TournamentTeam> TournamentTeams { get; set; } = [];
+
+    public TeamData ToSendableData(bool generateStats = false,
+        bool generatePlayerStats = false, bool formatData = false, Tournament? tournament = null) {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
     public GameTeamData ToGameSendableData(Game game, bool generateStats = false,
         bool formatData = false, bool isAdmin = false) {
+        if (Id == 1) {
+            return new GameTeamData(this, game, false, false, formatData);
+        }
         return new GameTeamData(this, game, generateStats, formatData, isAdmin);
     }
 
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
         return query
             .Include(t => t.Captain)
-            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats)
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
             .Include(t => t.NonCaptain)
-            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats)
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
             .Include(t => t.Substitute)
-            .ThenInclude(pgs => pgs == null ? null : pgs.PlayerGameStats);
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1));
     }
 }

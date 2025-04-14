@@ -27,7 +27,7 @@ public class AdminGameData {
     public AdminGameData(Game game) {
         var teamNotes = game.Events.Where(a => a.EventType is GameEventType.Notes).ToArray();
         var protests = game.Events.Where(a => a.EventType is GameEventType.Protest).ToArray();
-        var cardEvemts = game.Events.Where(a => a.IsCard);
+        var cardEvents = game.Events.Where(a => a.IsCard);
         markedForReview = game.MarkedForReview;
         requiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
         noteableStatus = game.NoteableStatus;
@@ -56,7 +56,7 @@ public class AdminGameData {
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        cards = cardEvemts.Select(a => a.ToSendableData()).ToArray();
+        cards = cardEvents.Select(a => a.ToSendableData()).ToArray();
     }
 }
 
@@ -160,7 +160,7 @@ public class GameData {
 
 
         if (includeGameEvents) {
-            events = game.Events.Select(a => a.ToSendableData(false)).ToArray();
+            events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.id).ToArray();
         }
 
         if (isAdmin) {

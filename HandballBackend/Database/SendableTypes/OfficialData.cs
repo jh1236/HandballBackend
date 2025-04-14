@@ -8,17 +8,27 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.Database.SendableTypes;
 
 public class OfficialData : PersonData {
-    public Dictionary<string, float> stats { get; private set; }
+    public new Dictionary<string, float> stats { get; private set; }
 
-    public OfficialData(Official official, bool includeStats = false) : base(official.Person) {
+    public OfficialData(Official official, Tournament? tournament = null, bool includeStats = false) : base(
+        official.Person) {
         if (!includeStats) return;
-        var db = new HandballContext();
-        var playerGameStats = db.PlayerGameStats
-            .Where(g => g.Game.OfficialId == official.Id || g.Game.ScorerId == official.Id)
-            .Include(g => g.Game)
-            .OrderBy(g => g.GameId);
+
+        var playerGameStats =
+            official.Games
+                .Where(g => tournament == null || g.TournamentId == tournament.Id)
+                .OrderBy(g => g.Id).SelectMany(g => g.Players);
         var prevGameId = 0;
-        stats = new Dictionary<string, float>();
+        stats = new Dictionary<string, float> {
+            {"Games Umpired", 0},
+            {"Rounds Umpired", 0},
+            {"Green Cards Given", 0},
+            {"Yellow Cards Given", 0},
+            {"Red Cards Given", 0},
+            {"Cards Given", 0},
+            {"Faults Called", 0},
+            {"Double Faults Called", 0},
+        };
         foreach (var pgs in playerGameStats) {
             if (pgs.GameId > prevGameId) {
                 prevGameId = pgs.GameId;

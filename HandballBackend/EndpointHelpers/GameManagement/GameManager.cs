@@ -312,6 +312,45 @@ public static class GameManager {
         db.SaveChanges();
     }
 
+    public static void Substitute(int gameNumber, bool firstTeam, bool leftPlayer) {
+        var db = new HandballContext();
+        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        if (!game.Started) throw new InvalidOperationException("The game has not started");
+        if (game.Ended) throw new InvalidOperationException("The game has ended");
+        var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
+        var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
+        var playerComingIn = game.Players.First(pgs => pgs.TeamId == teamId && pgs.SideOfCourt == "Substitute");
+        var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        int playerGoingOutId;
+        if (firstTeam) {
+            playerGoingOutId = (leftPlayer ? prevEvent.TeamOneLeftId : prevEvent.TeamOneRightId)!.Value;
+        } else {
+            playerGoingOutId = (leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId)!.Value;
+        }
+
+        var playerGoingOut = game.Players.First(p => p.PlayerId == playerGoingOutId);
+        var leftSide = playerGoingOut.SideOfCourt == "Left";
+        playerComingIn.SideOfCourt = playerGoingOut.SideOfCourt;
+        playerGoingOut.SideOfCourt = "Substitute";
+        if (firstTeam) {
+            if (leftSide) {
+                gameEvent.TeamOneLeftId = playerComingIn.PlayerId;
+            } else {
+                gameEvent.TeamOneRightId = playerComingIn.PlayerId;
+            }
+        } else {
+            if (leftSide) {
+                gameEvent.TeamTwoLeftId = playerComingIn.PlayerId;
+            } else {
+                gameEvent.TeamTwoRightId = playerComingIn.PlayerId;
+            }
+        }
+
+        db.Add(gameEvent);
+        // GameEventSynchroniser.SyncSubstitute(game, gameEvent);  //Doesn't exist
+        db.SaveChanges();
+    }
+
     public static void Card(int gameNumber, bool firstTeam, string playerSearchable, string color, int duration,
         string reason) {
         var db = new HandballContext();
@@ -329,17 +368,14 @@ public static class GameManager {
         var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.GameNumber == gameNumber);
         int player;
         var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
-        Console.WriteLine("Here!");
         if (firstTeam) {
             player = (leftPlayer ? prevEvent.TeamOneLeftId : prevEvent.TeamOneRightId)!.Value;
         } else {
             player = (leftPlayer ? prevEvent.TeamTwoLeftId : prevEvent.TeamTwoRightId)!.Value;
         }
 
-        Console.WriteLine("Here!");
 
         CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
-        Console.WriteLine("Here!");
 
         db.SaveChanges();
     }
@@ -363,8 +399,10 @@ public static class GameManager {
 
 
         var gameEvent = SetUpGameEvent(game, type, firstTeam, playerId, reason, duration);
-        Console.WriteLine($"{gameEvent.EventType}");
         db.Add(gameEvent);
+        GameEventSynchroniser.SyncCard(game, gameEvent);
+
+
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute" && pgs.TeamId == teamId).ToList();
 
@@ -389,12 +427,13 @@ public static class GameManager {
                     gameId,
                     !firstTeam,
                     null,
-                    penalty: false
+                    penalty: true
                 );
+                foreach (var pgs in players.Where(pgs => pgs.CardTimeRemaining > 0)) {
+                    pgs.CardTimeRemaining--;
+                }
             }
         }
-
-        GameEventSynchroniser.SyncCard(game, gameEvent);
     }
 
     public static void Undo(int gameNumber) {
@@ -402,7 +441,7 @@ public static class GameManager {
         var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var smallestId = game.Events.Where(gE => !IGNORED_BY_UNDO.Contains(gE.EventType))
+        var smallestId = game.Events.Where(gE => !IGNORED_BY_UNDO.Contains(gE.EventType) && gE.Notes != "Penalty")
             .OrderByDescending(gE => gE.Id).First().Id;
         db.GameEvents.Where(gE => gE.GameId == game.Id && gE.Id >= smallestId).ExecuteDelete();
         db.SaveChanges(); // Not necessary but probably still a good idea
@@ -410,6 +449,19 @@ public static class GameManager {
 
         db = new HandballContext();
         GameEventSynchroniser.SyncGame(db, gameNumber);
+        db.SaveChanges();
+    }
+
+    public static void Delete(int gameNumber) {
+        var db = new HandballContext();
+        var game = db.Games.Include(game => game.Tournament).FirstOrDefault(g => g.GameNumber == gameNumber);
+        if (!game.Tournament.GetFixtureGenerator.Editable) {
+            throw new InvalidOperationException("The game is not in an editable tournament");
+        }
+
+        db.GameEvents.Where(gE => gE.GameId == game.Id).ExecuteDelete();
+        db.PlayerGameStats.Where(pgs => pgs.GameId == game.Id).ExecuteDelete();
+        db.Remove(game);
         db.SaveChanges();
     }
 
@@ -615,29 +667,35 @@ public static class GameManager {
         db.Add(game);
         db.SaveChanges();
         game = db.Games.Where(g => g.Id == game.Id)
-            .Include(g => g.TeamOne.Captain == null ? null : g.TeamOne.Captain.PlayerGameStats)
-            .Include(g => g.TeamOne.NonCaptain == null ? null : g.TeamOne.NonCaptain.PlayerGameStats)
-            .Include(g => g.TeamOne.Substitute == null ? null : g.TeamOne.Substitute.PlayerGameStats)
-            .Include(g => g.TeamTwo.Captain == null ? null : g.TeamTwo.Captain.PlayerGameStats)
-            .Include(g => g.TeamTwo.NonCaptain == null ? null : g.TeamTwo.NonCaptain.PlayerGameStats)
-            .Include(g => g.TeamTwo.Substitute == null ? null : g.TeamTwo.Substitute.PlayerGameStats)
+            .Include(g =>
+                g.TeamOne.Captain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
+            .Include(g =>
+                g.TeamOne.NonCaptain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
+            .Include(g =>
+                g.TeamOne.Substitute.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
+            .Include(g =>
+                g.TeamTwo.Captain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
+            .Include(g =>
+                g.TeamTwo.NonCaptain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
+            .Include(g =>
+                g.TeamTwo.Substitute.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
             .IncludeRelevant()
             .Single(); //used to pull extra gamey data
 
-        var carryCardTimes = game.TournamentId >= 7;
 
         foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
             foreach (var p in teamPlayers.Where(p => p != null)) {
                 var prevGame = p!.PlayerGameStats!.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
+                var carryCardTimes = game.TournamentId >= 7 && prevGame?.TournamentId == game.TournamentId;
                 db.Add(new PlayerGameStats {
                     GameId = game.Id,
                     PlayerId = p.Id,
                     TournamentId = tournamentId,
                     TeamId = team.Id,
                     OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId,
-                    InitialElo = prevGame?.InitialElo + (prevGame?.EloDelta ?? 0) ?? 1500.0,
+                    InitialElo = prevGame?.InitialElo ?? 1500.0 + prevGame?.EloDelta ?? 0,
                     CardTime = carryCardTimes ? (prevGame?.CardTime ?? 0) : 0,
                     CardTimeRemaining = carryCardTimes ? (prevGame?.CardTimeRemaining ?? 0) : 0
                 });

@@ -25,17 +25,33 @@ public class TeamsController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        var team = db.Teams
-            .Where(t => t.SearchableName == searchable)
-            .IncludeRelevant()
-            .Include(t => t.PlayerGameStats)
-            .ThenInclude(pgs => pgs.Game)
-            .FirstOrDefault();
-        if (team is null) {
-            return NotFound();
+        TeamData teamData = null;
+        if (tournament == null) {
+            var team = db.Teams
+                .Where(t => t.SearchableName == searchable)
+                .IncludeRelevant()
+                .Include(t => t.PlayerGameStats)
+                .ThenInclude(pgs => pgs.Game)
+                .FirstOrDefault();
+            if (team is null) {
+                return NotFound();
+            }
+
+            teamData = team.ToSendableData(true, true, formatData);
+        } else {
+            var team = db.TournamentTeams
+                .Where(t => t.Team.SearchableName == searchable)
+                .IncludeRelevant()
+                .Include(t => t.Team.PlayerGameStats)
+                .ThenInclude(pgs => pgs.Game)
+                .FirstOrDefault();
+            if (team is null) {
+                return NotFound();
+            }
+
+            teamData = team.ToSendableData(true, true, formatData);
         }
 
-        var teamData = team.ToSendableData(tournament, true, true, formatData);
 
         foreach (var (key, value) in teamData.stats) {
             Console.WriteLine($"{key}: {value}");
@@ -63,27 +79,41 @@ public class TeamsController : ControllerBase {
         [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
 
-        IQueryable<Team> query;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
+        List<TeamData> teamData = null;
         if (tournament is not null) {
-            IQueryable<TournamentTeam> innerQuery = db.TournamentTeams
+            IQueryable<TournamentTeam> query = db.TournamentTeams
                 .Where(t => t.TournamentId == tournament.Id)
                 .Include(t => t.Team.Captain)
                 .Include(t => t.Team.NonCaptain)
                 .Include(t => t.Team.Substitute);
             if (includeStats) {
-                innerQuery = innerQuery
+                query = query
                     .Include(t => t.Team.PlayerGameStats)
                     .ThenInclude(pgs => pgs.Game);
             }
 
-            query = innerQuery.Select(t => t.Team);
+
+            if (player != null) {
+                foreach (var p in player) {
+                    query = query.Where(t =>
+                        t.Team.Captain != null && p == t.Team.Captain.SearchableName ||
+                        t.Team.NonCaptain != null && p == t.Team.NonCaptain.SearchableName ||
+                        t.Team.Substitute != null && p == t.Team.Substitute.SearchableName
+                    );
+                }
+            }
+
+            teamData = query.OrderBy(t => !EF.Functions.Like(t.Team.ImageUrl, "/api/%"))
+                .ThenBy(t => EF.Functions.Like(t.Team.SearchableName, "solo_%"))
+                .ThenBy(t => t.Team.SearchableName)
+                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData)).ToList();
         } else {
             //Not null captain removes bye team
-            query = db.Teams.IncludeRelevant();
+            var query = db.Teams.IncludeRelevant();
 
             if (includeStats) {
                 query = query
@@ -92,24 +122,24 @@ public class TeamsController : ControllerBase {
             }
 
             query = query.Where(t => t.Captain != null);
-        }
-
-        if (player != null) {
-            foreach (var p in player) {
-                query = query.Where(t =>
-                    t.Captain != null && p == t.Captain.SearchableName ||
-                    t.NonCaptain != null && p == t.NonCaptain.SearchableName ||
-                    t.Substitute != null && p == t.Substitute.SearchableName
-                );
+            if (player != null) {
+                foreach (var p in player) {
+                    query = query.Where(t =>
+                        t.Captain != null && p == t.Captain.SearchableName ||
+                        t.NonCaptain != null && p == t.NonCaptain.SearchableName ||
+                        t.Substitute != null && p == t.Substitute.SearchableName
+                    );
+                }
             }
+
+            teamData = query.OrderBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
+                .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
+                .ThenBy(t => t.SearchableName)
+                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToList();
         }
 
-        var teams = query
-            .OrderBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
-            .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
-            .ThenBy(t => t.SearchableName)
-            .Select(t => t.ToSendableData(tournament, includeStats, includePlayerStats, formatData)).ToArray();
-        var output = Utilities.WrapInDictionary("teams", teams);
+
+        var output = Utilities.WrapInDictionary("teams", teamData);
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");
@@ -145,7 +175,7 @@ public class TeamsController : ControllerBase {
                 .ThenInclude(pgs => pgs.Game)
                 .Where(t => t.Captain != null);
 
-            ladder = LadderHelper.SortTeams(null, query.ToArray());
+            ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null)).ToArray());
         }
 
 

@@ -8,7 +8,7 @@ using HandballBackend.Utils;
 namespace HandballBackend.Database.SendableTypes;
 
 public class TeamData {
-    public string name { get; private set; }
+    public string name { get; protected set; }
     public string searchableName { get; protected set; }
     public string? imageUrl { get; protected set; }
     public string? bigImageUrl { get; protected set; }
@@ -17,7 +17,7 @@ public class TeamData {
     public PersonData? substitute { get; protected set; }
     public string? teamColor { get; protected set; }
     public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; protected set; }
-    public double elo { get; private set; }
+    public double elo { get; protected set; }
 
     public Dictionary<string, dynamic>? stats { get; protected set; }
 
@@ -46,14 +46,12 @@ public class TeamData {
             team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
         teamColor = team.TeamColor;
         teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
-        elo = (team.Captain?.Elo(tournamentId: tournament?.Id) ?? 0.0)
-              + (team.NonCaptain?.Elo(tournamentId: tournament?.Id) ?? 0.0)
-              + (team.Substitute?.Elo(tournamentId: tournament?.Id) ?? 0.0);
-        elo /= (team.Captain is null ? 1 : 0)
-               + (team.NonCaptain is null ? 1 : 0)
-               + (team.Substitute is null ? 1 : 0);
+
 
         if (!generateStats) return;
+
+        elo = new[] {team.Captain?.Elo(), team.NonCaptain?.Elo(), team.Substitute?.Elo()}.Where(e => e.HasValue)
+            .Select(e => e!.Value).Average();
 
         stats = new Dictionary<string, dynamic> {
             {"Games Played", 0.0},
@@ -70,8 +68,11 @@ public class TeamData {
         };
         var gameId = 0;
         foreach (var pgs in team.PlayerGameStats.Where(pgs =>
-                     (tournament == null || pgs.TournamentId == tournament.Id)) ?? []) {
-            if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
+                     (tournament == null || pgs.TournamentId == tournament.Id)).OrderBy(pgs => pgs.GameId)) {
+            if (tournament?.Ranked != false) {
+                if (!pgs.Game.Ranked) continue;
+            }
+            if (pgs.Game.IsFinal) continue;
             if (gameId < pgs.GameId) {
                 gameId = pgs.GameId;
                 stats["Games Played"] += pgs.Game.Ended ? 1 : 0;
@@ -93,6 +94,7 @@ public class TeamData {
 
         stats["Point Difference"] = stats["Points Scored"] - stats["Points Against"];
         stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1);
+        stats["Elo"] = elo;
 
         if (!formatData) return;
 
@@ -105,7 +107,7 @@ public class TeamData {
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = 100.0 * Math.Round((double) stats[stat], 2) + "%";
             } else {
-                stats[stat] = Math.Round((double) stats[stat], 2).ToString();
+                stats[stat] = Math.Round((double) stats[stat], 2);
             }
         }
     }

@@ -28,8 +28,10 @@ public class Official : IHasRelevant<Official> {
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
+    public List<Game> Games { get; set; } = new List<Game>();
+    
     public OfficialData ToSendableData(Tournament? tournament = null, bool includeStats = false) {
-        return new OfficialData(this);
+        return new OfficialData(this, tournament, includeStats);
     }
 
     public static IQueryable<Official> GetRelevant(IQueryable<Official> query) {

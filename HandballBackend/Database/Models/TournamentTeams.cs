@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
 [Table("tournamentTeams", Schema = "main")]
-public class TournamentTeam {
+public class TournamentTeam : IHasRelevant<TournamentTeam> {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -43,4 +45,19 @@ public class TournamentTeam {
 
     [ForeignKey("TeamId")]
     public Team Team { get; set; }
+
+    public TeamData ToSendableData(bool generateStats = false,
+        bool generatePlayerStats = false, bool formatData = false) {
+        return new TournamentTeamData(this, generateStats, generatePlayerStats, formatData);
+    }
+
+    public static IQueryable<TournamentTeam> GetRelevant(IQueryable<TournamentTeam> query) {
+        return query
+            .Include(t => t.Team.Captain)
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
+            .Include(t => t.Team.NonCaptain)
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
+            .Include(t => t.Team.Substitute)
+            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1));
+    }
 }

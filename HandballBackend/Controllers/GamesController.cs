@@ -31,13 +31,14 @@ public class GamesController : ControllerBase {
     ) {
         var db = new HandballContext();
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
-        var query = db.Games.IncludeRelevant()
+
+
+        var game = db.Games.IncludeRelevant()
             .Include(g => g.Events)
             .Include(g => g.Players)
-            .ThenInclude(pgs => pgs.Player.Events);
-
-
-        var game = query.FirstOrDefault(g => g.GameNumber == gameNumber);
+            .ThenInclude(pgs => pgs.Player.Events.Where(e => GameEvent.CardTypes.Contains(e.EventType)))
+            .ThenInclude(gE => gE.Game)
+            .FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
             return NotFound();
         }
@@ -48,7 +49,7 @@ public class GamesController : ControllerBase {
 
     [HttpGet]
     public ActionResult<Dictionary<string, dynamic?>> GetMulti(
-        [FromQuery(Name = "tournament")] string tournamentSearchable,
+        [FromQuery(Name = "tournament")] string? tournamentSearchable,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeByes = false,
         [FromQuery] bool returnTournament = false,
@@ -125,6 +126,52 @@ public class GamesController : ControllerBase {
         return output;
     }
 
+    [HttpGet("noteable")]
+    public ActionResult<Dictionary<string, dynamic?>> GetNoteable(
+        [FromQuery(Name = "tournament")] string tournamentSearchable,
+        [FromQuery] bool includeGameEvents = false,
+        [FromQuery] bool returnTournament = false,
+        [FromQuery] bool formatData = false,
+        [FromQuery] bool includeStats = false,
+        [FromQuery] int limit = -1
+    ) {
+        var db = new HandballContext();
+        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+            return BadRequest("Invalid tournament");
+        }
+
+        var query = db.Games.IncludeRelevant().Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
+        if (tournament is not null) {
+            query = query.Where(g => g.TournamentId == tournament.Id);
+        }
+
+
+        query = query.OrderByDescending(g => g.Id);
+
+        if (limit > 0) {
+            query = query.Take(limit);
+        }
+
+        query = query.Include(g => g.Events);
+
+
+        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
+            .ToArray();
+
+        var output = Utilities.WrapInDictionary("games", games);
+        if (returnTournament) {
+            if (tournament is null) {
+                return BadRequest("Cannot return null tournament");
+            }
+
+            output["tournament"] = tournament.ToSendableData();
+        }
+
+        return output;
+    }
+
 
     [HttpGet("fixtures")]
     public ActionResult<Dictionary<string, dynamic?>> GetFixtures(
@@ -142,8 +189,7 @@ public class GamesController : ControllerBase {
         }
 
 
-        IQueryable<Game> query = db.Games.Where(g => g.TournamentId == tournament!.Id).IncludeRelevant()
-            ;
+        var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();
 
         query = query.OrderBy(g => g.Id);
 

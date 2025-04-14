@@ -8,6 +8,15 @@ namespace HandballBackend.Database.Models;
 
 [Table("games", Schema = "main")]
 public class Game : IHasRelevant<Game> {
+    public static readonly string[] ResolvedStatuses = [
+        "Resolved",
+        "In Progress",
+        "Official",
+        "Ended",
+        "Waiting for Start",
+        "Forfeit"
+    ];
+
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -197,9 +206,11 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.TeamOne.Captain)
             .Include(x => x.TeamOne.NonCaptain)
             .Include(x => x.TeamOne.Substitute)
+            .Include(t => t.TeamOne.TournamentTeams)
             .Include(x => x.TeamTwo.Captain)
             .Include(x => x.TeamTwo.NonCaptain)
             .Include(x => x.TeamTwo.Substitute)
+            .Include(t => t.TeamTwo.TournamentTeams)
             .Include(x => x.Tournament)
             .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)

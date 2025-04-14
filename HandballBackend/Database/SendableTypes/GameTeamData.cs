@@ -3,6 +3,7 @@
 
 
 using HandballBackend.Database.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -19,6 +20,10 @@ public class GameTeamData : TeamData {
         bool generateStats = false,
         bool formatData = false,
         bool isAdmin = false) : base(team) {
+        var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
+        imageUrl = tt?.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
+        imageUrl = tt?.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        name = tt?.Name ?? name;
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)

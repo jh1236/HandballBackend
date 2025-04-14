@@ -20,7 +20,7 @@ internal static class GameEventSynchroniser {
             pgs.CardTime = cardTime;
         }
 
-        foreach (var gameEvent in game.Events) {
+        foreach (var gameEvent in game.Events.OrderBy(g => g.Id)) {
             switch (gameEvent.EventType) {
                 case GameEventType.Start:
                     SyncStartGame(game, gameEvent);

@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
@@ -45,34 +46,40 @@ public class Person {
     public IEnumerable<GameEvent>? Events { get; set; }
 
     public double Elo(int? gameId = null, int? tournamentId = null) {
+        var db = new HandballContext();
         if (gameId.HasValue) {
             var pgs = PlayerGameStats?.First(g => g.GameId == gameId);
-            if (pgs is {EloDelta: not null}) {
-                return (double) (pgs.EloDelta + pgs.InitialElo);
-            }
+            if (pgs is not null) {
+                if (pgs.EloDelta is not null) {
+                    return (double) (pgs.EloDelta + pgs.InitialElo);
+                }
 
-            return pgs.InitialElo;
+                return pgs.InitialElo;
+            }
         }
 
         if (tournamentId.HasValue) {
             var pgs = PlayerGameStats?.Where(pgs => pgs.TournamentId == tournamentId)
                 .OrderByDescending(pgs => pgs.GameId)
-                .First();
-            if (pgs is {EloDelta: not null}) {
-                return (double) (pgs.EloDelta + pgs.InitialElo);
-            }
+                .FirstOrDefault();
+            if (pgs is not null) {
+                if (pgs.EloDelta is not null) {
+                    return (double) (pgs.EloDelta + pgs.InitialElo);
+                }
 
-            return pgs.InitialElo;
+                return pgs.InitialElo;
+            }
         }
 
-        var player = PlayerGameStats
+
+        var player = PlayerGameStats?
             .OrderByDescending(pgs => pgs.GameId)
-            .First();
+            .FirstOrDefault();
         if (player is {EloDelta: not null}) {
             return (double) (player.EloDelta + player.InitialElo);
         }
 
-        return player.InitialElo;
+        return player?.InitialElo ?? 1500.0;
     }
 
     public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
