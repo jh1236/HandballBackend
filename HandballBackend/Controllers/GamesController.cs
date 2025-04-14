@@ -183,7 +183,6 @@ public class GamesController : ControllerBase {
     ) {
         var db = new HandballContext();
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
-        Console.WriteLine(tournamentSearchable);
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }

@@ -6,8 +6,9 @@ using HandballBackend.Utils;
 namespace HandballBackend;
 
 internal static class EvilTests {
-    private static HandballContext db = new HandballContext(@"G:\Programming\c#\HandballBackend\HandballBackend\resources\database.db");
-    
+    private static HandballContext db =
+        new HandballContext(@"G:\Programming\c#\HandballBackend\HandballBackend\resources\database.db");
+
     public static void EvilTest() {
         IQueryable<Team> query = db.Teams;
         query = Team.GetRelevant(query);
@@ -16,9 +17,21 @@ internal static class EvilTests {
     }
 
     public static void SinisterTest() {
-        
+        var teams = new List<int>();
+        var officials = new List<int>();
+        CreateTournament(
+            "Ninth S.U.S.S. Championship",
+            "Pooled",
+            "PooledFinals",
+            true,
+            true,
+            true,
+            true,
+            teams,
+            officials
+        );
     }
-    
+
     public static Tournament CreateTournament(
         string name,
         string fixturesGen,
@@ -26,15 +39,15 @@ internal static class EvilTests {
         bool ranked,
         bool twoCourts,
         bool scorer,
+        bool badmintonServes,
         List<int>? teams = null,
         List<int>? officials = null) {
         officials ??= [];
         teams ??= [];
-        
+
         var searchableName = Utilities.ToSearchable(name);
-        
-        var tournament = new Tournament
-        {
+
+        var tournament = new Tournament {
             Name = name,
             SearchableName = searchableName,
             FixturesType = fixturesGen,
@@ -42,37 +55,33 @@ internal static class EvilTests {
             Ranked = ranked,
             TwoCourts = twoCourts,
             HasScorer = scorer,
-            BadmintonServes = true,
+            BadmintonServes = badmintonServes,
             ImageUrl = $"https://api.squarers.club/tournaments/image?name={searchableName}"
         };
 
         db.Tournaments.Add(tournament);
         db.SaveChanges();
-        
-        foreach (var teamId in teams.OrderBy(i => i))
-        {
-            db.TournamentTeams.Add(new TournamentTeam
-            {
+
+        foreach (var teamId in teams.OrderBy(i => i)) {
+            db.TournamentTeams.Add(new TournamentTeam {
                 TournamentId = tournament.Id,
                 TeamId = teamId
             });
         }
-        
-        foreach (var officialId in officials.OrderBy(i => i))
-        {
-            db.TournamentOfficials.Add(new TournamentOfficial
-            {
+
+        foreach (var officialId in officials.OrderBy(i => i)) {
+            db.TournamentOfficials.Add(new TournamentOfficial {
                 TournamentId = tournament.Id,
                 OfficialId = officialId,
                 IsScorer = true,
                 IsUmpire = true
             });
         }
-        
+
         db.SaveChanges();
-        
+
         tournament.BeginTournament();
-        
+
         return tournament;
     }
 }

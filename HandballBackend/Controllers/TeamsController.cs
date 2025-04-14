@@ -40,7 +40,7 @@ public class TeamsController : ControllerBase {
             teamData = team.ToSendableData(true, true, formatData);
         } else {
             var team = db.TournamentTeams
-                .Where(t => t.Team.SearchableName == searchable)
+                .Where(t => t.Team.SearchableName == searchable && t.TournamentId == tournament.Id)
                 .IncludeRelevant()
                 .Include(t => t.Team.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
@@ -50,11 +50,6 @@ public class TeamsController : ControllerBase {
             }
 
             teamData = team.ToSendableData(true, true, formatData);
-        }
-
-
-        foreach (var (key, value) in teamData.stats) {
-            Console.WriteLine($"{key}: {value}");
         }
 
         var output = Utilities.WrapInDictionary("team", teamData);

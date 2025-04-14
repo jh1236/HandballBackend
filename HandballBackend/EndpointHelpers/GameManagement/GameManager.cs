@@ -90,11 +90,16 @@ public static class GameManager {
                 .FirstOrDefault();
             // default side is the only difference between badminton and normal serves; the second team starts on the 
             // right if using badminton.
-            var defaultSide = game.Tournament.BadmintonServes ? "Left" : "Right";
+            var defaultSide = game.Tournament!.BadmintonServes ? "Left" : "Right";
             newEvent.TeamToServeId = teamId;
             newEvent.SideToServe = (lastService?.SideToServe ?? defaultSide) == "Left" ? "Right" : "Left";
-            newEvent.PlayerToServeId = game.Players
-                .First(pgs => pgs.TeamId == teamId && pgs.SideOfCourt == newEvent.SideToServe).PlayerId;
+            var teamPlayers = game.Players!.Where(pgs => pgs.TeamId == teamId).ToList();
+            if (teamPlayers.Count == 1) {
+                newEvent.PlayerToServeId = teamPlayers[0].PlayerId;
+            } else {
+                newEvent.PlayerToServeId = teamPlayers
+                    .First(pgs => pgs.SideOfCourt == newEvent.SideToServe).PlayerId;
+            }
         }
 
         db.Add(newEvent);
@@ -118,7 +123,7 @@ public static class GameManager {
         } else {
             foreach (var searchableName in playersTeamOne) {
                 teamOneIds.Add(
-                    game.Players.Single(pgs => pgs.Player.SearchableName == searchableName));
+                    game.Players.First(pgs => pgs.Player.SearchableName == searchableName));
             }
         }
 
@@ -127,7 +132,7 @@ public static class GameManager {
         } else {
             foreach (var searchableName in playersTeamTwo) {
                 teamTwoIds.Add(
-                    game.Players.Single(pgs => pgs.Player.SearchableName == searchableName));
+                    game.Players.First(pgs => pgs.Player.SearchableName == searchableName));
             }
         }
 
@@ -364,7 +369,6 @@ public static class GameManager {
     public static void Card(int gameNumber, bool firstTeam, bool leftPlayer, string color, int duration,
         string reason) {
         var db = new HandballContext();
-        Console.WriteLine("Here!");
         var game = db.Games.IncludeRelevant().Include(g => g.Events).FirstOrDefault(g => g.GameNumber == gameNumber);
         int player;
         var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
@@ -556,7 +560,6 @@ public static class GameManager {
         var db = new HandballContext();
         var teams = new List<Team>();
         foreach (var (players, teamName) in new[] {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
-            var playerIds = players?.Select(a => db.People.FirstOrDefault(p => p.Name == a)?.Id).ToList();
             Team team;
             if (players == null || players.Length == 0) {
                 if (teamName == null) {
@@ -566,11 +569,22 @@ public static class GameManager {
 
                 team = db.Teams.IncludeRelevant().FirstOrDefault(t => t.Name == teamName)!;
             } else {
-                var maybeTeam = db.Teams.IncludeRelevant().FirstOrDefault(
-                    t =>
-                        t.CaptainId != null &&
-                        players.Contains(t.Captain!.Name) &&
-                        players.Contains(t.NonCaptain!.Name)
+                var playerIds = players.Select(a => db.People.FirstOrDefault(p => p.Name == a)?.Id)
+                    .ToList();
+                while (playerIds.Count < 3) {
+                    playerIds.Add(null);
+                }
+
+                var maybeTeam = db.Teams.IncludeRelevant().FirstOrDefault(t =>
+                    // Both players must be in one of the roles
+                    (playerIds.Contains(t.CaptainId ?? null) &&
+                     playerIds.Contains(t.NonCaptainId ?? null) &&
+                     playerIds.Contains(t.SubstituteId ?? null)) &&
+
+                    // Count of non-null player references should be exactly 2
+                    ((t.CaptainId.HasValue ? 1 : 0) +
+                        (t.NonCaptainId.HasValue ? 1 : 0) +
+                        (t.SubstituteId.HasValue ? 1 : 0) == playerIds.Count(a => a.HasValue))
                 );
                 if (maybeTeam == null) {
                     team = new Team {

@@ -183,7 +183,6 @@ internal static class GameEventSynchroniser {
 
         player.ServeStreak = Math.Max(player.ServeStreak, serveStreak);
         player.AceStreak = Math.Max(player.AceStreak, aceStreak);
-
         var receivingPlayer = nonServingTeam[leftServed ? 0 : 1] ??
                               nonServingTeam.FirstOrDefault(a => a != null);
         if (receivingPlayer?.CardTimeRemaining != 0) {
