@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using HandballBackend.Database.Models;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
 
 namespace HandballBackend;
 
-public class HandballContext(string dbPath = "./resources/database.db") : DbContext {
+public class HandballContext : DbContext {
     public DbSet<Game> Games { get; set; }
     public DbSet<GameEvent> GameEvents { get; set; }
     public DbSet<Official> Officials { get; set; }
@@ -18,6 +19,8 @@ public class HandballContext(string dbPath = "./resources/database.db") : DbCont
     public DbSet<Tournament> Tournaments { get; set; }
     public DbSet<TournamentOfficial> TournamentOfficials { get; set; }
     public DbSet<TournamentTeam> TournamentTeams { get; set; }
+
+    public static string DbPath = "./resources/database.db";
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
@@ -42,6 +45,12 @@ public class HandballContext(string dbPath = "./resources/database.db") : DbCont
             .HasConversion(
                 v => Utilities.SplitCamelCase(v.ToString()),
                 v => (GameEventType) Enum.Parse(typeof(GameEventType), v.Replace(" ", "")));
+        modelBuilder
+            .Entity<Person>()
+            .Property(e => e.PhoneNumber)
+            .HasConversion(
+                v => v == null ? null : EncryptionHelper.Encrypt(v),
+                v => v == null ? null : EncryptionHelper.Decrypt(v));
         modelBuilder
             .Entity<GameEvent>()
             .HasOne(gE => gE.Player)
@@ -68,5 +77,5 @@ public class HandballContext(string dbPath = "./resources/database.db") : DbCont
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={dbPath}");
+        => options.UseSqlite($"Data Source={DbPath}");
 }
