@@ -13,6 +13,7 @@ public class TeamData {
     public int id { get; protected set; }
 
     public string name { get; protected set; }
+    public string extendedName { get; protected set; }
     public string searchableName { get; protected set; }
     public string? imageUrl { get; protected set; }
     public string? bigImageUrl { get; protected set; }
@@ -41,6 +42,7 @@ public class TeamData {
         bool generatePlayerStats = false, bool formatData = false) {
         id = team.Id;
         name = team.Name;
+        extendedName = team.LongName ?? team.Name;
         searchableName = team.SearchableName;
         imageUrl = Utilities.FixImageUrl(team.ImageUrl);
         bigImageUrl = Utilities.FixImageUrl(team.BigImageUrl);

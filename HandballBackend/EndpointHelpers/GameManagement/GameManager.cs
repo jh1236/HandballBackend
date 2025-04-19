@@ -167,6 +167,7 @@ public static class GameManager {
 
         var servingTeamId = swapService ? game.TeamTwoId : game.TeamOneId;
         var servingPlayer = swapService ? teamTwoIds[0] : teamOneIds[0];
+        game.TeamToServeId = servingTeamId;
         teamOneIds.Add(teamOneIds.Last());
         teamTwoIds.Add(teamTwoIds.Last());
 
@@ -210,7 +211,7 @@ public static class GameManager {
 
     public static void ScorePoint(int gameNumber, bool firstTeam, string playerSearchable, string? scoreMethod) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         if (!VALID_SCORE_METHODS.Contains(scoreMethod)) {
@@ -224,7 +225,7 @@ public static class GameManager {
 
     public static void Ace(int gameNumber) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
@@ -235,7 +236,7 @@ public static class GameManager {
 
     public static void Fault(int gameNumber) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var lastGameEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
@@ -255,7 +256,7 @@ public static class GameManager {
 
     public static void Timeout(int gameNumber, bool firstTeam) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = SetUpGameEvent(game, GameEventType.Timeout, firstTeam, null);
@@ -266,7 +267,7 @@ public static class GameManager {
 
     public static void Forfeit(int gameNumber, bool firstTeam) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = SetUpGameEvent(game, GameEventType.Forfeit, firstTeam, null);
@@ -277,7 +278,7 @@ public static class GameManager {
 
     public static void EndTimeout(int gameNumber) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
@@ -287,10 +288,10 @@ public static class GameManager {
 
     public static void Substitute(int gameNumber, bool firstTeam, string playerSearchable) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
+        var gameEvent = SetUpGameEvent(game, GameEventType.Substitute, null, null);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var playerComingIn = game.Players.First(pgs => pgs.TeamId == teamId && pgs.SideOfCourt == "Substitute");
         var playerGoingOut =
@@ -319,10 +320,10 @@ public static class GameManager {
 
     public static void Substitute(int gameNumber, bool firstTeam, bool leftPlayer) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
+        var gameEvent = SetUpGameEvent(game, GameEventType.Substitute, null, null);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var playerComingIn = game.Players.First(pgs => pgs.TeamId == teamId && pgs.SideOfCourt == "Substitute");
         var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
@@ -359,7 +360,7 @@ public static class GameManager {
     public static void Card(int gameNumber, bool firstTeam, string playerSearchable, string color, int duration,
         string reason) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
 
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable).PlayerId;
         CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
@@ -479,7 +480,7 @@ public static class GameManager {
         bool markedForReview
     ) {
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).First(g => g.GameNumber == gameNumber);
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.SomeoneHasWon) throw new InvalidOperationException("The game has not ended!");
         var bestPlayer = db.People.FirstOrDefault(p => p.SearchableName == bestPlayerSearchable);
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
@@ -492,12 +493,12 @@ public static class GameManager {
         db.Add(endEvent);
 
 
-        if (!protestReasonTeamOne.IsNullOrEmpty()) {
+        if (!string.IsNullOrEmpty(protestReasonTeamOne)) {
             var protestEvent = SetUpGameEvent(game, GameEventType.Protest, true, null, protestReasonTeamOne);
             db.Add(protestEvent);
         }
 
-        if (!protestReasonTeamTwo.IsNullOrEmpty()) {
+        if (!string.IsNullOrEmpty(protestReasonTeamTwo)) {
             var protestEvent = SetUpGameEvent(game, GameEventType.Protest, false, null, protestReasonTeamTwo);
             db.Add(protestEvent);
         }
@@ -514,7 +515,7 @@ public static class GameManager {
 
         if (game.Players.Any(i => i.RedCards != 0)) {
             game.AdminStatus = "Red Card Awarded";
-        } else if (!protestReasonTeamOne.IsNullOrEmpty() || !protestReasonTeamTwo.IsNullOrEmpty()) {
+        } else if (!string.IsNullOrEmpty(protestReasonTeamOne) || !string.IsNullOrEmpty(protestReasonTeamTwo)) {
             game.AdminStatus = "Protested";
         } else if (markedForReview) {
             game.AdminStatus = "Marked for Review";
@@ -528,8 +529,11 @@ public static class GameManager {
             game.AdminStatus = "Official";
         }
 
+
+        game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
         game.NoteableStatus = game.AdminStatus;
         game.Status = "Official";
+        game.Ended = true;
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         game.BestPlayerId = bestPlayer?.Id;
         game.Notes = notes;
@@ -543,12 +547,37 @@ public static class GameManager {
             foreach (var pgs in game.Players) {
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
-                pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.PlayerId);
+                pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
             }
         }
 
         db.SaveChanges();
-        var remainingGames = db.Games.Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended).Any();
+        if (game.Tournament.TextAlerts) {
+            var nextGame = db.Games
+                .Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id > game.Id && g.Court == game.Court)
+                .IncludeRelevant()
+                .OrderBy(g => g.Id).FirstOrDefault();
+            if (nextGame != null) {
+                // if the next game is null, we have likely reached the end of the round
+                TextHelper.Text(nextGame.Official.Person,
+                    $"You are umpiring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
+                if (nextGame.ScorerId != null && nextGame.ScorerId != nextGame.OfficialId) {
+                    TextHelper.Text(nextGame.Scorer.Person,
+                        $"You are scoring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
+                }
+
+                var teams = new[] {nextGame.TeamOne, nextGame.TeamTwo};
+                for (var i = 0; i < teams.Length; i++) {
+                    var team = teams[i];
+                    var oppTeam = teams[1 - i];
+                    TextHelper.Text(team.Captain,
+                        $"Your game against {oppTeam.Name} is beginning soon on court {nextGame.Court + 1}.");
+                }
+            }
+        }
+
+        var remainingGames =
+            db.Games.Any(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id != game.Id);
         if (!remainingGames) {
             game.Tournament.EndRound();
         }
@@ -625,7 +654,7 @@ public static class GameManager {
             }
 
             ranked &= team.CaptainId != null;
-            var tt = db.TournamentTeams.FirstOrDefault(t => t.Id == tournamentId && t.TeamId == team.Id);
+            var tt = db.TournamentTeams.FirstOrDefault(t => t.TournamentId == tournamentId && t.TeamId == team.Id);
             if (tt != null) continue;
             tt = new TournamentTeam {
                 TeamId = team.Id,
@@ -635,7 +664,8 @@ public static class GameManager {
         }
 
         if (round < 0) {
-            var lastGame = db.Games.Where(g => g.StartTime != null).OrderByDescending(g => g.StartTime)
+            var lastGame = db.Games.Where(g => g.StartTime != null && g.TournamentId == tournamentId)
+                .OrderByDescending(g => g.GameNumber)
                 .FirstOrDefault();
             int lastStartTime;
             if (lastGame == null) {
@@ -664,7 +694,8 @@ public static class GameManager {
             TournamentId = tournamentId,
             TeamOneId = teamOneId,
             TeamTwoId = teamTwoId,
-            OfficialId = officialId,
+            IgaSideId = teamOneId,
+            OfficialId = officialId > 0 ? officialId : null,
             Court = court,
             IsFinal = isFinal,
             Round = round,
@@ -709,7 +740,7 @@ public static class GameManager {
                     TournamentId = tournamentId,
                     TeamId = team.Id,
                     OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId,
-                    InitialElo = prevGame?.InitialElo ?? 1500.0 + prevGame?.EloDelta ?? 0,
+                    InitialElo = (prevGame?.InitialElo ?? 1500.0) + (prevGame?.EloDelta ?? 0),
                     CardTime = carryCardTimes ? (prevGame?.CardTime ?? 0) : 0,
                     CardTimeRemaining = carryCardTimes ? (prevGame?.CardTimeRemaining ?? 0) : 0
                 });

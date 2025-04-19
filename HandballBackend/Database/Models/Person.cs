@@ -41,12 +41,14 @@ public class Person {
     [Column("permission_level")]
     public int PermissionLevel { get; set; } = 0;
 
+    [Column("phone_number", TypeName = "TEXT")]
+    public string?  PhoneNumber { get; set; }
+
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
     public IEnumerable<GameEvent>? Events { get; set; }
 
     public double Elo(int? gameId = null, int? tournamentId = null) {
-        var db = new HandballContext();
         if (gameId.HasValue) {
             var pgs = PlayerGameStats?.First(g => g.GameId == gameId);
             if (pgs is not null) {

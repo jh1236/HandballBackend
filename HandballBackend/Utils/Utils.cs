@@ -49,6 +49,6 @@ public static partial class Utilities {
     [GeneratedRegex("([A-Z])", RegexOptions.Compiled)]
     private static partial Regex SplitCamelCase();
 
-    [GeneratedRegex("^[a-zA-Z0-9_]+$", RegexOptions.Compiled)]
+    [GeneratedRegex("[^a-zA-Z0-9_]", RegexOptions.Compiled)]
     private static partial Regex SearchableNameRegex();
 }

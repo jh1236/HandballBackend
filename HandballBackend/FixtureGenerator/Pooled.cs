@@ -28,9 +28,12 @@ public class Pooled : AbstractFixtureGenerator {
             team.Pool = 1 + pool;
             pool = 1 - pool;
         }
+
+        db.SaveChanges();
+        base.BeginTournament();
     }
 
-    public override void EndOfRound() {
+    public override bool EndOfRound() {
         var db = new HandballContext();
         var tournament = db.Tournaments.Find(_tournamentId)!;
         var tournamentTeams = db.TournamentTeams
@@ -40,11 +43,10 @@ public class Pooled : AbstractFixtureGenerator {
 
         var rounds = db.Games
             .Where(g => g.TournamentId == _tournamentId)
-            .Select(g => g.Round).OrderByDescending(g => g).FirstOrDefault(0);
+            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefault();
 
-        var poolOne = tournamentTeams.Where(tt => tt.Pool == 1).Select(tt => tt.Team).ToList();
-        var poolTwo = tournamentTeams.Where(tt => tt.Pool == 2).Select(tt => tt.Team).ToList();
-
+        var poolOne = tournamentTeams.Where(tt => tt.Pool == 1).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
+        var poolTwo = tournamentTeams.Where(tt => tt.Pool == 2).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
         if (poolOne.Count % 2 != 0) {
             poolOne.Add(db.Teams.First(t => t.Id == 1));
         }
@@ -53,26 +55,31 @@ public class Pooled : AbstractFixtureGenerator {
             poolTwo.Add(db.Teams.First(t => t.Id == 1));
         }
 
-        if (Math.Max(poolTwo.Count, poolOne.Count) <= rounds + 1) {
+        if (Math.Min(poolTwo.Count, poolOne.Count) <= rounds + 1) {
             // we are now in finals
             tournament.InFinals = true;
             db.SaveChanges();
-            return;
+            return true;
         }
 
         for (var i = 0; i < rounds; i++) {
-            poolOne.Insert(0, poolOne.Last());
+            poolOne.Insert(1, poolOne.Last());
             poolOne.RemoveAt(poolOne.Count - 1);
-            poolTwo.Insert(0, poolTwo.Last());
+            poolTwo.Insert(1, poolTwo.Last());
             poolTwo.RemoveAt(poolTwo.Count - 1);
         }
-
         for (var i = 0; i < poolOne.Count / 2; i++) {
             var teamOne = poolOne[i];
             var teamTwo = poolOne[poolOne.Count - i - 1];
             GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
+        for (var i = 0; i < poolTwo.Count / 2; i++) {
+            var teamOne = poolTwo[i];
+            var teamTwo = poolTwo[poolTwo.Count - i - 1];
+            GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
+        }
 
-        base.EndOfRound();
+        db.SaveChanges();
+        return base.EndOfRound();
     }
 }

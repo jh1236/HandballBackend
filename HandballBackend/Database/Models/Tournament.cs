@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
 
@@ -49,11 +50,15 @@ public class Tournament {
     public bool HasScorer { get; set; } = true;
 
     [Required]
+    [Column("text_alerts")]
+    public bool TextAlerts { get; set; } = true;
+
+    [Required]
     [Column("is_pooled")]
     public bool IsPooled { get; set; } = false;
 
     [Column("notes", TypeName = "TEXT")]
-    public string Notes { get; set; }
+    public string? Notes { get; set; }
 
     [Column("image_url", TypeName = "TEXT")]
     public string ImageUrl { get; set; }
@@ -67,20 +72,40 @@ public class Tournament {
     public bool BadmintonServes { get; set; } = false;
 
     public void EndRound() {
-        // THE ide is LYING.  AbstractFixtureGenerator.EndOfRound can change the 
-        // value of InFinals, so we need to check it twice.
-        // If the ide Asks for a switch statement, tell it to fuck off
-
-        // ReSharper disable ConvertIfStatementToSwitchStatement 
-        if (!InFinals) {
-            GetFixtureGenerator.EndOfRound();
+        var finals = InFinals;
+        if (!finals) {
+            finals = GetFixtureGenerator.EndOfRound();
         }
 
-        if (InFinals && !Finished) {
-            GetFinalGenerator.EndOfRound();
+        var finished = false;
+        if (finals && !Finished) {
+            finished = GetFinalGenerator.EndOfRound();
         }
-        // we can give the ide its rights back now
-        // ReSharper restore ConvertIfStatementToSwitchStatement
+
+        if (!TextAlerts || finished) return;
+        
+        var db = new HandballContext();
+        for (var i = 0; i < (TwoCourts ? 2 : 1); i++) {
+            var nextGame = db.Games
+                .Where(g => g.TournamentId == Id && !g.IsBye && !g.Started && g.Court == i)
+                .IncludeRelevant()
+                .OrderBy(g => g.Id).FirstOrDefault();
+            TextHelper.Text(nextGame.Official.Person,
+                $"You are umpiring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
+            if (nextGame.ScorerId != null && nextGame.ScorerId != nextGame.OfficialId) {
+                TextHelper.Text(nextGame.Official.Person,
+                    $"You are scoring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
+            }
+
+            var teams = new[] {nextGame.TeamOne, nextGame.TeamTwo};
+            for (var j = 0; j < teams.Length; j++) {
+                var team = teams[j];
+                var oppTeam = teams[1 - j];
+                TextHelper.Text(team.Captain,
+                    $"Your game against {oppTeam.Name} is beginning soon on court {nextGame.Court + 1}.");
+            }
+        }
+        
     }
 
     public void BeginTournament() {

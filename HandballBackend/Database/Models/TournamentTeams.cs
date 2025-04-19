@@ -31,6 +31,9 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
     [Column("name", TypeName = "TEXT")]
     public string? Name { get; set; }
 
+    [Column("long_name", TypeName = "TEXT")]
+    public string? LongName { get; set; }
+
     [Column("image_url", TypeName = "TEXT")]
     public string? ImageUrl { get; set; }
 

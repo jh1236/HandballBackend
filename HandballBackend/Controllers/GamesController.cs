@@ -17,9 +17,9 @@ public class GamesController : ControllerBase {
         [FromQuery(Name = "id")] int gameNumber
     ) {
         var db = new HandballContext();
-        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).First();
+        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).Select(gE => gE.Id).FirstOrDefault();
 
-        return Utilities.WrapInDictionary("changeCode", query.Id);
+        return Utilities.WrapInDictionary("changeCode", query > 0 ? query : gameNumber);
     }
 
     [HttpGet("{gameNumber:int}")]
@@ -142,7 +142,8 @@ public class GamesController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        var query = db.Games.IncludeRelevant().Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
+        var query = db.Games.IncludeRelevant()
+            .Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
         }
@@ -178,7 +179,7 @@ public class GamesController : ControllerBase {
         [BindRequired, FromQuery(Name = "tournament")]
         string tournamentSearchable,
         [FromQuery] bool returnTournament = false,
-        [FromQuery] bool seperateFinals = false,
+        [FromQuery] bool separateFinals = false,
         [FromQuery] int maxRounds = -1
     ) {
         var db = new HandballContext();
@@ -220,11 +221,13 @@ public class GamesController : ControllerBase {
             fixtures = fixtures.TakeLast(maxRounds).ToList();
         }
 
-        var output = Utilities.WrapInDictionary("fixtures", fixtures);
+        var output = new Dictionary<string, dynamic?>();
 
-        if (seperateFinals) {
+        if (separateFinals) {
             output["fixtures"] = fixtures.Where(f => !f.final).ToArray();
             output["finals"] = fixtures.Where(f => f.final).ToArray();
+        } else {
+            output["fixtures"] = fixtures.ToArray();
         }
 
         if (returnTournament) {

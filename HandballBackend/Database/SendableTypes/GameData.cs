@@ -110,8 +110,8 @@ public class GameData {
     ) {
         id = game.GameNumber;
         tournament = includeTournament ? game.Tournament?.ToSendableData() : null;
-        teamOne = game.TeamOne?.ToGameSendableData(game, includeStats, formatData, isAdmin);
-        teamTwo = game.TeamTwo?.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        teamOne = game.TeamOne.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        teamTwo = game.TeamTwo.ToGameSendableData(game, includeStats, formatData, isAdmin);
         teamOneScore = game.TeamOneScore;
         teamTwoScore = game.TeamTwoScore;
         teamOneTimeouts = game.TeamOneTimeouts;
@@ -127,7 +127,7 @@ public class GameData {
         scorer = game.Scorer?.ToSendableData();
         firstTeamIga = game.TeamOneId == game.IgaSideId;
         firstTeamToServe = game.TeamToServeId == game.TeamOneId;
-        sideToServe = game.SideToServe;
+        sideToServe = game.SideToServe ?? "Left";
         startTime = game.StartTime;
         serveTimer = game.ServeTimer;
         length = game.Length;

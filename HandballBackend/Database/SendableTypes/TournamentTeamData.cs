@@ -14,5 +14,6 @@ public class TournamentTeamData : TeamData {
         imageUrl = tt.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
         imageUrl = tt.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
         name = tt.Name ?? name;
+        extendedName = tt.LongName ?? tt.Name ?? extendedName;
     }
 }

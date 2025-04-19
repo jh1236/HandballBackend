@@ -17,7 +17,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         };
     }
 
-    public virtual void EndOfRound() {
+    public virtual bool EndOfRound() {
         if (fillCourts) {
             AddCourts();
         }
@@ -25,9 +25,11 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         if (fillOfficials) {
             AddUmpires();
         }
+        return false;
     }
 
-    protected void EndTournament(string note = "Thank you for participating in the tournament! We look forward to seeing you next time.") {
+    protected void EndTournament(
+        string note = "Thank you for participating in the tournament! We look forward to seeing you next time.") {
         var db = new HandballContext();
         var tournament = db.Tournaments.Find(tournamentId)!;
         tournament.Finished = true;
@@ -36,31 +38,33 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
     public virtual void BeginTournament() {
-        
+        EndOfRound();
     }
 
 
-    private void AddCourts() {
+    public void AddCourts(int rounds = -1) {
         var db = new HandballContext();
         // Get the highest round number
-        var rounds = db.Games
-            .Where(g => g.TournamentId == tournamentId)
-            .OrderByDescending(g => g.Round)
-            .FirstOrDefault()?.Round ?? 0;
 
-        // Get regular games for the highest round
+        if (rounds == -1) {
+            rounds = db.Games
+                .Where(g => g.TournamentId == tournamentId)
+                .OrderByDescending(g => g.Round)
+                .FirstOrDefault()?.Round ?? 0;
+        }
+
         var games = db.Games
-            .Include(g => g.TeamOne)
-            .Include(g => g.TeamTwo)
             .Where(g => g.TournamentId == tournamentId &&
                         g.Round == rounds &&
                         !g.IsBye &&
                         !g.Started &&
                         !g.IsFinal)
+            .Include(g => g.TeamOne.PlayerGameStats.Where(pgs => pgs.Game.TournamentId == tournamentId)).ThenInclude(pgs => pgs.Game)
+            .Include(g => g.TeamTwo.PlayerGameStats.Where(pgs => pgs.Game.TournamentId == tournamentId)).ThenInclude(pgs => pgs.Game)
             .ToList();
         var tourney = db.Tournaments
             .FirstOrDefault(t => t.Id == tournamentId);
-        // Get final games for the highest round
+
         var finals = db.Games
             .Where(g => g.TournamentId == tournamentId &&
                         g.Round == rounds &&

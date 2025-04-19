@@ -19,7 +19,7 @@ public class GamePlayerData : PersonData {
         : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
     }
 
-    public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false)
+    public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false, bool isAdmin = false)
         : base(pgs.Player) {
         isBestPlayer = pgs.IsBestPlayer;
         cardTime = pgs.CardTime;
@@ -27,8 +27,8 @@ public class GamePlayerData : PersonData {
         sideOfCourt = pgs.SideOfCourt;
         isCaptain = pgs.Id == pgs.Team.CaptainId;
         startSide = pgs.StartSide;
-        prevCards = pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
-            .Select(gE => gE.ToSendableData()).ToList() ?? [];
+        prevCards = isAdmin ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
+            .Select(gE => gE.ToSendableData()).ToList() ?? [] : [];
         if (!includeStats) return;
         stats = new Dictionary<string, dynamic?> {
             ["Elo"] = pgs.InitialElo,

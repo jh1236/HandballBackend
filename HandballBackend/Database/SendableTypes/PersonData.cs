@@ -39,6 +39,7 @@ public class PersonData {
             {"Games Won", 0.0},
             {"Games Lost", 0.0},
             {"Games Played", 0.0},
+            {"Caps", 0.0},
             {"Percentage", 0.0},
             {"Points Scored", 0.0},
             {"Points Served", 0.0},
@@ -78,14 +79,12 @@ public class PersonData {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
-            if (pgs.Game.IsFinal || pgs.Game.IsBye) continue;
+            if (pgs.Game.IsBye) continue;
             var game = pgs.Game;
+            stats["Caps"] += game.Ended && game.TournamentId != 1 ? 1 : 0;
+            if (pgs.Game.IsFinal) continue;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
-            stats["Elo"] = pgs.InitialElo;
-            if (pgs.EloDelta is not null) {
-                stats["Elo"] += pgs.EloDelta;
-            }
 
             stats["B&F Votes"] += pgs.IsBestPlayer ? 1 : 0;
             stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
@@ -108,6 +107,7 @@ public class PersonData {
             stats["Max Serve Streak"] = Math.Max(stats["Max Serve Streak"], pgs.ServeStreak);
         }
 
+        stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
         var gamesPlayed = Math.Max(stats["Games Played"], 1);
         stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1.0);
         stats["Points per Game"] = stats["Points Scored"] / gamesPlayed;

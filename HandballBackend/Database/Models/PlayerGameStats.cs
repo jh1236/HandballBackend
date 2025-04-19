@@ -142,8 +142,8 @@ public class PlayerGameStats {
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
-    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false) {
-        return new GamePlayerData(this, includeStats, formatData);
+    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false, bool isAdmin = false) {
+        return new GamePlayerData(this, includeStats, formatData, isAdmin);
     }
 
     public void ResetStats() {

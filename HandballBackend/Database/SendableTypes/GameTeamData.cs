@@ -22,8 +22,9 @@ public class GameTeamData : TeamData {
         bool isAdmin = false) : base(team) {
         var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
         imageUrl = tt?.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
-        imageUrl = tt?.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        bigImageUrl = tt?.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
         name = tt?.Name ?? name;
+        extendedName = tt?.LongName ?? tt?.Name ?? extendedName;
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)
@@ -45,11 +46,11 @@ public class GameTeamData : TeamData {
         }
 
         captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
         nonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
         substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
 
 
         if (!generateStats) return;

@@ -16,6 +16,9 @@ public class Team : IHasRelevant<Team> {
     [Column("name", TypeName = "TEXT")]
     public string Name { get; set; }
 
+    [Column("long_name", TypeName = "TEXT")]
+    public string? LongName { get; set; }
+
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
     public string SearchableName { get; set; }
@@ -59,7 +62,7 @@ public class Team : IHasRelevant<Team> {
     }
 
     public double Elo() => new[] {Captain?.Elo(), NonCaptain?.Elo(), Substitute?.Elo()}.Where(e => e.HasValue)
-        .Select(e => e!.Value).Average();
+        .Select(e => e!.Value).DefaultIfEmpty(1500.0).Average();
 
     public GameTeamData ToGameSendableData(Game game, bool generateStats = false,
         bool formatData = false, bool isAdmin = false) {
