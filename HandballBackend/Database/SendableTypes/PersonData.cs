@@ -138,7 +138,7 @@ public class PersonData {
         foreach (var stat in stats!.Keys) {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
-                stats[stat] = Math.Round(100.0 * (double) stats[stat], 2) + "%";
+                stats[stat] = stats[stat].ToString("P2");
             } else if (stats[stat] is double or float) {
                 stats[stat] = Math.Round((double) stats[stat], 2);
             }

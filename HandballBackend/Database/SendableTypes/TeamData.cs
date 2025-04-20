@@ -112,7 +112,7 @@ public class TeamData {
         foreach (var stat in stats.Keys) {
             if (stats[stat] == null) continue;
             if (PercentageColumns.Contains(stat)) {
-                stats[stat] = 100.0 * Math.Round((double) stats[stat], 2) + "%";
+                stats[stat] = stats[stat].ToString("P2");
             } else {
                 stats[stat] = Math.Round((double) stats[stat], 2);
             }
