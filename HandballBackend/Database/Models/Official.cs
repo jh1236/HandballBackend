@@ -23,7 +23,7 @@ public class Official : IHasRelevant<Official> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("PersonId")]
     public Person Person { get; set; }

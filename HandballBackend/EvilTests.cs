@@ -16,10 +16,7 @@ internal static class EvilTests {
     public static void EvilTest() {
         init();
         var db = new HandballContext();
-        IQueryable<Team> query = db.Teams;
-        query = Team.GetRelevant(query);
-        query = query.IncludeRelevant();
-        Console.WriteLine(query.ToArray());
+        var gE = db.GameEvents.OrderByDescending(gE => gE.Id).First();
     }
 
     public static void MalevolantTest() {

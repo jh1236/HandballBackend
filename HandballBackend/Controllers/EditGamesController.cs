@@ -214,7 +214,7 @@ public class EditGamesController : ControllerBase {
 
     public class EndGameRequest {
         public int Id { get; set; }
-        public string? BestPlayerSearchable { get; set; }
+        public string? BestPlayer { get; set; }
         public int TeamOneRating { get; set; }
         public int TeamTwoRating { get; set; }
         public string Notes { get; set; } = string.Empty;
@@ -230,7 +230,7 @@ public class EditGamesController : ControllerBase {
     public IActionResult EndGame([FromBody] EndGameRequest request) {
         GameManager.End(
             request.Id,
-            request.BestPlayerSearchable,
+            request.BestPlayer,
             request.TeamOneRating,
             request.TeamTwoRating,
             request.Notes,

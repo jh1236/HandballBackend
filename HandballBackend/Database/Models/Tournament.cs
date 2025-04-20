@@ -65,7 +65,7 @@ public class Tournament {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("badminton_serves")]

@@ -38,7 +38,7 @@ public class Team : IHasRelevant<Team> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("team_color", TypeName = "TEXT")]
     public string? TeamColor { get; set; }

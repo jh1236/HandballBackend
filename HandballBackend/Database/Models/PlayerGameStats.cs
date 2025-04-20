@@ -101,7 +101,7 @@ public class PlayerGameStats {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("is_best_player")]

@@ -141,17 +141,12 @@ public class GameData {
             .Select(a => a.EventType == GameEventType.Fault)
             .LastOrDefault(false);
         changeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
-        timeoutExpirationTime = game.Events
+        var gE = game.Events
             .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
-            .OrderBy(a => a.Id)
-            .Select(a =>
-                    a.EventType == GameEventType.Timeout
-                        ? a.TeamId is null // the event is a timeout
-                            ? a.CreatedAt // the event is an official timeout
-                            : (a.CreatedAt + Config.TimeoutTime) * 1000 // the event is a normal timeout
-                        : -1 // the event is an `end timeout`
-            )
-            .LastOrDefault(-1);
+            .OrderByDescending(a => a.Id).FirstOrDefault();
+        timeoutExpirationTime =
+            gE?.EventType == GameEventType.Timeout ? (gE.CreatedAt + Config.TimeoutTime) * 1000 : -1;
+
         isOfficialTimeout = game.Events
             .Where(a => a.EventType is GameEventType.Timeout)
             .Select(a => a.TeamId is null)

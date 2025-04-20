@@ -509,6 +509,7 @@ public static class GameManager {
         db.Add(notesTeamTwoEvent);
         foreach (var pgs in game.Players) {
             pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
+            pgs.IsBestPlayer = pgs.PlayerId == bestPlayer?.Id;
         }
 
         game.MarkedForReview = markedForReview;

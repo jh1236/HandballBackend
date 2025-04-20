@@ -29,11 +29,13 @@ public class OfficialsController : ControllerBase {
             officials = db.TournamentOfficials
                 .Where(a => a.TournamentId == tournament.Id)
                 .IncludeRelevant()
+                .OrderBy(p => p.Official.Person.SearchableName)
                 .Select(to => to.Official.ToSendableData(tournament, false))
                 .ToArray();
         } else {
             officials = db.Officials
                 .IncludeRelevant()
+                .OrderBy(p => p.Person.SearchableName)
                 .Select(o => o.ToSendableData(null, false))
                 .ToArray();
         }

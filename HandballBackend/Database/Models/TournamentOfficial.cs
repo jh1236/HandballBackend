@@ -30,7 +30,7 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }

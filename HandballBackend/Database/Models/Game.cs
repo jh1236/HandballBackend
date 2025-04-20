@@ -137,7 +137,7 @@ public class Game : IHasRelevant<Game> {
     public string NoteableStatus { get; set; } = "Waiting For Start";
 
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("serve_timer")]
     public int? ServeTimer { get; set; }

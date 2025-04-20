@@ -83,7 +83,7 @@ public class PlayersController : ControllerBase {
         }
 
         var output = Utilities.WrapInDictionary("players",
-            query.Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray());
+            query.OrderBy(p => p.SearchableName).Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray());
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");

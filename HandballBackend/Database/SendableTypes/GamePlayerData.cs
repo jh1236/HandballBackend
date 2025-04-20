@@ -33,7 +33,7 @@ public class GamePlayerData : PersonData {
         stats = new Dictionary<string, dynamic?> {
             ["Elo"] = pgs.InitialElo,
             ["Elo Delta"] = pgs.EloDelta,
-            ["B&F Votes"] = pgs.IsBestPlayer,
+            ["B&F Votes"] = pgs.IsBestPlayer ? 1 : 0,
             ["Games Won"] = pgs.Game.Ended && pgs.Game.WinningTeamId == pgs.TeamId ? 1 : 0,
             ["Games Lost"] = pgs.Game.Ended && pgs.Game.WinningTeamId != pgs.TeamId ? 1 : 0,
             ["Games Played"] = pgs.Game.Ended ? 1 : 0,

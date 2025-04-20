@@ -25,9 +25,6 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Start:
                     SyncStartGame(game, gameEvent);
                     break;
-                case GameEventType.EndGame:
-                    SyncEndGame(game, gameEvent);
-                    break;
                 case GameEventType.Score:
                     SyncScorePoint(game, gameEvent);
                     break;
@@ -58,6 +55,7 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Resolve:
                     game.Resolved = true;
                     break;
+                case GameEventType.EndGame:
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
@@ -224,16 +222,6 @@ internal static class GameEventSynchroniser {
         if (highScore >= 11 && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)) {
             game.SomeoneHasWon = true;
         }
-    }
-
-    private static void SyncEndGame(Game game, GameEvent gameEvent) {
-        game.BestPlayerId = gameEvent.Details;
-        foreach (var pgs in game.Players) {
-            pgs.IsBestPlayer = pgs.PlayerId == gameEvent.Details;
-        }
-
-        game.Notes = gameEvent.Notes;
-        game.Ended = true;
     }
 
 

@@ -26,7 +26,7 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("name", TypeName = "TEXT")]
     public string? Name { get; set; }

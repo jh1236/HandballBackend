@@ -59,7 +59,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = Utilities.GetUnixSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("details")]
     public int? Details { get; set; }
