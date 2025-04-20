@@ -19,7 +19,7 @@ public class GamesController : ControllerBase {
         var db = new HandballContext();
         var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).Select(gE => gE.Id).FirstOrDefault();
 
-        return Utilities.WrapInDictionary("code", query.Id);
+        return Utilities.WrapInDictionary("code", query);
     }
 
     [HttpGet("{gameNumber:int}")]
