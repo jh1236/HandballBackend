@@ -25,9 +25,9 @@ public class AdminGameData {
     public bool resolved { get; set; }
 
     public AdminGameData(Game game) {
-        var teamNotes = game.Events.Where(a => a.EventType is "Note").ToArray();
-        var protests = game.Events.Where(a => a.EventType is "Protest").ToArray();
-        var cardEvemts = game.Events.Where(a => a.IsCard);
+        var teamNotes = game.Events.Where(a => a.EventType is GameEventType.Notes).ToArray();
+        var protests = game.Events.Where(a => a.EventType is GameEventType.Protest).ToArray();
+        var cardEvents = game.Events.Where(a => a.IsCard);
         markedForReview = game.MarkedForReview;
         requiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
         noteableStatus = game.NoteableStatus;
@@ -56,7 +56,7 @@ public class AdminGameData {
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        cards = cardEvemts.Select(a => a.ToSendableData()).ToArray();
+        cards = cardEvents.Select(a => a.ToSendableData()).ToArray();
     }
 }
 
@@ -91,7 +91,7 @@ public class GameData {
     public string status { get; private set; }
     public bool faulted { get; private set; }
     public int changeCode { get; private set; }
-    public int? timeoutExpirationTime { get; private set; }
+    public long? timeoutExpirationTime { get; private set; }
     public bool isOfficialTimeout { get; private set; }
 
     public GameEventData[]? events { get; private set; } = null;
@@ -110,8 +110,8 @@ public class GameData {
     ) {
         id = game.GameNumber;
         tournament = includeTournament ? game.Tournament?.ToSendableData() : null;
-        teamOne = game.TeamOne?.ToGameSendableData(game, includeStats, formatData);
-        teamTwo = game.TeamTwo?.ToGameSendableData(game, includeStats, formatData);
+        teamOne = game.TeamOne.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        teamTwo = game.TeamTwo.ToGameSendableData(game, includeStats, formatData, isAdmin);
         teamOneScore = game.TeamOneScore;
         teamTwoScore = game.TeamTwoScore;
         teamOneTimeouts = game.TeamOneTimeouts;
@@ -127,7 +127,7 @@ public class GameData {
         scorer = game.Scorer?.ToSendableData();
         firstTeamIga = game.TeamOneId == game.IgaSideId;
         firstTeamToServe = game.TeamToServeId == game.TeamOneId;
-        sideToServe = game.SideToServe;
+        sideToServe = game.SideToServe ?? "Left";
         startTime = game.StartTime;
         serveTimer = game.ServeTimer;
         length = game.Length;
@@ -136,31 +136,26 @@ public class GameData {
         isBye = game.IsBye;
         status = isAdmin ? game.Status : game.AdminStatus;
         faulted = game.Events
-            .Where(a => a.EventType is "Fault" or "Score")
+            .Where(a => a.EventType is GameEventType.Fault or GameEventType.Score)
             .OrderBy(a => a.Id)
-            .Select(a => a.EventType == "Fault")
+            .Select(a => a.EventType == GameEventType.Fault)
             .LastOrDefault(false);
         changeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
-        timeoutExpirationTime = game.Events
-            .Where(a => a.EventType is "Timeout" or "End Timeout")
-            .OrderBy(a => a.Id)
-            .Select(a =>
-                    a.EventType == "Timeout"
-                        ? a.TeamId is null // the event is a timeout
-                            ? a.CreatedAt // the event is an official timeout
-                            : a.CreatedAt + Config.TimeoutTime * 1000 // the event is a normal timeout
-                        : -1 // the event is an `end timeout`
-            )
-            .LastOrDefault(-1);
+        var gE = game.Events
+            .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
+            .OrderByDescending(a => a.Id).FirstOrDefault();
+        timeoutExpirationTime =
+            gE?.EventType == GameEventType.Timeout ? (gE.CreatedAt + Config.TimeoutTime) * 1000 : -1;
+
         isOfficialTimeout = game.Events
-            .Where(a => a.EventType is "Timeout")
+            .Where(a => a.EventType is GameEventType.Timeout)
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
         court = game.Court;
 
 
         if (includeGameEvents) {
-            events = game.Events.Select(a => a.ToSendableData(false)).ToArray();
+            events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.id).ToArray();
         }
 
         if (isAdmin) {

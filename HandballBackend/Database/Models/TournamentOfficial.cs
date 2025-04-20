@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
@@ -21,21 +22,53 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
 
     [Required]
     [Column("is_umpire")]
-    public int IsUmpire { get; set; } = 1;
+    public bool IsUmpire { get; set; } = true;
 
     [Required]
     [Column("is_scorer")]
-    public int IsScorer { get; set; } = 1;
+    public bool IsScorer { get; set; } = true;
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
     [ForeignKey("OfficialId")]
     public Official Official { get; set; }
+
+    [NotMapped]
+    public int GamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int CourtOneGamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.Court == 0 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int CourtTwoGamesUmpired {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.Court == 1 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+        }
+    }
+
+    [NotMapped]
+    public int GamesScored {
+        get {
+            var db = new HandballContext();
+            return db.Games.Count(g => g.TournamentId == TournamentId && g.ScorerId == OfficialId);
+        }
+    }
 
     public static IQueryable<TournamentOfficial> GetRelevant(IQueryable<TournamentOfficial> query) {
         return query

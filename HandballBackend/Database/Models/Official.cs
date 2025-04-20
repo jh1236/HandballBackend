@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
@@ -23,13 +23,15 @@ public class Official : IHasRelevant<Official> {
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
-    public OfficialData ToSendableData( Tournament? tournament = null, bool includeStats = false) {
-        return new OfficialData(this);
+    public List<Game> Games { get; set; } = new List<Game>();
+    
+    public OfficialData ToSendableData(Tournament? tournament = null, bool includeStats = false) {
+        return new OfficialData(this, tournament, includeStats);
     }
 
     public static IQueryable<Official> GetRelevant(IQueryable<Official> query) {

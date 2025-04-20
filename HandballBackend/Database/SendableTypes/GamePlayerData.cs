@@ -3,7 +3,6 @@
 
 
 using HandballBackend.Database.Models;
-using HandballBackend.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -14,12 +13,13 @@ public class GamePlayerData : PersonData {
     public string? sideOfCourt { get; set; }
     public bool isCaptain { get; set; }
     public string startSide { get; set; }
+    public List<GameEventData> prevCards { get; set; }
 
     public GamePlayerData(Person player, Game game, bool includeStats = false, bool formatData = false)
         : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
     }
 
-    public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false)
+    public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false, bool isAdmin = false)
         : base(pgs.Player) {
         isBestPlayer = pgs.IsBestPlayer;
         cardTime = pgs.CardTime;
@@ -27,9 +27,13 @@ public class GamePlayerData : PersonData {
         sideOfCourt = pgs.SideOfCourt;
         isCaptain = pgs.Id == pgs.Team.CaptainId;
         startSide = pgs.StartSide;
+        prevCards = isAdmin ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
+            .Select(gE => gE.ToSendableData()).ToList() ?? [] : [];
         if (!includeStats) return;
-        stats = new Dictionary<string, dynamic> {
-            ["B&F Votes"] = pgs.IsBestPlayer,
+        stats = new Dictionary<string, dynamic?> {
+            ["Elo"] = pgs.InitialElo,
+            ["Elo Delta"] = pgs.EloDelta,
+            ["B&F Votes"] = pgs.IsBestPlayer ? 1 : 0,
             ["Games Won"] = pgs.Game.Ended && pgs.Game.WinningTeamId == pgs.TeamId ? 1 : 0,
             ["Games Lost"] = pgs.Game.Ended && pgs.Game.WinningTeamId != pgs.TeamId ? 1 : 0,
             ["Games Played"] = pgs.Game.Ended ? 1 : 0,

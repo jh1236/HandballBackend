@@ -1,10 +1,10 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.Utils;
+using Microsoft.EntityFrameworkCore;
 
-namespace HandballBackend.Models;
+namespace HandballBackend.Database.Models;
 
 [Table("people", Schema = "main")]
 public class Person {
@@ -35,13 +35,54 @@ public class Person {
 
     [Required]
     [Column("created_at")]
-    public int? CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long? CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("permission_level")]
     public int PermissionLevel { get; set; } = 0;
 
+    [Column("phone_number", TypeName = "TEXT")]
+    public string?  PhoneNumber { get; set; }
+
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
+
+    public IEnumerable<GameEvent>? Events { get; set; }
+
+    public double Elo(int? gameId = null, int? tournamentId = null) {
+        if (gameId.HasValue) {
+            var pgs = PlayerGameStats?.First(g => g.GameId == gameId);
+            if (pgs is not null) {
+                if (pgs.EloDelta is not null) {
+                    return (double) (pgs.EloDelta + pgs.InitialElo);
+                }
+
+                return pgs.InitialElo;
+            }
+        }
+
+        if (tournamentId.HasValue) {
+            var pgs = PlayerGameStats?.Where(pgs => pgs.TournamentId == tournamentId)
+                .OrderByDescending(pgs => pgs.GameId)
+                .FirstOrDefault();
+            if (pgs is not null) {
+                if (pgs.EloDelta is not null) {
+                    return (double) (pgs.EloDelta + pgs.InitialElo);
+                }
+
+                return pgs.InitialElo;
+            }
+        }
+
+
+        var player = PlayerGameStats?
+            .OrderByDescending(pgs => pgs.GameId)
+            .FirstOrDefault();
+        if (player is {EloDelta: not null}) {
+            return (double) (player.EloDelta + player.InitialElo);
+        }
+
+        return player?.InitialElo ?? 1500.0;
+    }
 
     public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
         bool formatData = false) {

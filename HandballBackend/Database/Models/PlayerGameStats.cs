@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
 
@@ -97,11 +97,11 @@ public class PlayerGameStats {
     public int CardTime { get; set; } = 0;
 
     [Column("start_side", TypeName = "TEXT")]
-    public string StartSide { get; set; }
+    public string? StartSide { get; set; }
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Required]
     [Column("is_best_player")]
@@ -121,6 +121,12 @@ public class PlayerGameStats {
     [Column("rating")]
     public int? Rating { get; set; }
 
+    [Column("initial_elo")]
+    public double InitialElo { get; set; }
+
+    [Column("elo_delta")]
+    public double? EloDelta { get; set; }
+
     [ForeignKey("GameId")]
     public Game Game { get; set; }
 
@@ -136,7 +142,27 @@ public class PlayerGameStats {
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
-    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false) {
-        return new GamePlayerData(this, includeStats, formatData);
+    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false, bool isAdmin = false) {
+        return new GamePlayerData(this, includeStats, formatData, isAdmin);
+    }
+
+    public void ResetStats() {
+        RoundsOnCourt = 0;
+        RoundsCarded = 0;
+        PointsScored = 0;
+        AcesScored = 0;
+        Faults = 0;
+        DoubleFaults = 0;
+        ServedPoints = 0;
+        ServedPointsWon = 0;
+        ServesReceived = 0;
+        ServesReturned = 0;
+        Warnings = 0;
+        GreenCards = 0;
+        YellowCards = 0;
+        RedCards = 0;
+        CardTime = 0;
+        CardTimeRemaining = 0;
+        IsBestPlayer = false;
     }
 }

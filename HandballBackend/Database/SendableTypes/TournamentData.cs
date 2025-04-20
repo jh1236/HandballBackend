@@ -2,7 +2,6 @@
 // Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 using HandballBackend.Database.Models;
-using HandballBackend.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
@@ -38,5 +37,6 @@ public class TournamentData {
         notes = tournament.Notes;
         ImageUrl = Utilities.FixImageUrl(tournament.ImageUrl);
         usingBadmintonServes = tournament.BadmintonServes;
+        editable = true; //TODO: This is not working
     }
 }

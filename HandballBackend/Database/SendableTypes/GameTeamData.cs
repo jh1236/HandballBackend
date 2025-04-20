@@ -3,6 +3,7 @@
 
 
 using HandballBackend.Database.Models;
+using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -17,11 +18,17 @@ public class GameTeamData : TeamData {
         Team team,
         Game game,
         bool generateStats = false,
-        bool formatData = false) : base(team) {
-        var startGame = game.Events.FirstOrDefault(a => a.EventType == "Start");
+        bool formatData = false,
+        bool isAdmin = false) : base(team) {
+        var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
+        imageUrl = tt?.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
+        bigImageUrl = tt?.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        name = tt?.Name ?? name;
+        extendedName = tt?.LongName ?? tt?.Name ?? extendedName;
+        var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)
-            .FirstOrDefault(a => a.EventType == "Score" && a.TeamToServeId == team.Id);
+            .FirstOrDefault(a => a.EventType == GameEventType.Score && a.TeamToServeId == team.Id);
         if (startGame is null) {
             servingFromLeft = true;
         } else if (game.Tournament.BadmintonServes) {
@@ -32,20 +39,18 @@ public class GameTeamData : TeamData {
             }
         } else {
             if (lastTimeServed is not null) {
-                var lastScore = game.Events
-                    .OrderByDescending(a => a.Id)
-                    .FirstOrDefault(a => a.EventType == "Score");
+                servingFromLeft = (lastTimeServed.SideToServe == "Left");
             } else {
                 servingFromLeft = startGame.TeamToServeId == team.Id;
             }
         }
 
         captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
         nonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
         substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
-            ?.ToSendableData(generateStats, formatData);
+            ?.ToSendableData(generateStats, formatData, isAdmin);
 
 
         if (!generateStats) return;

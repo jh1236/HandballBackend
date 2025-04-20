@@ -1,13 +1,40 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
+public enum GameEventType {
+    Start,
+    EndGame,
+    Score,
+    Fault,
+    Timeout,
+    EndTimeout,
+    Forfeit,
+    Warning,
+    GreenCard,
+    YellowCard,
+    RedCard,
+    Substitute,
+    Notes,
+    Protest,
+    Resolve,
+}
+
 [Table("gameEvents", Schema = "main")]
 public class GameEvent : IHasRelevant<GameEvent> {
+    [NotMapped]
+    public static readonly GameEventType[] CardTypes = {
+        GameEventType.Warning,
+        GameEventType.GreenCard,
+        GameEventType.YellowCard,
+        GameEventType.RedCard
+    };
+
+
     [Key]
     [Column("id")]
     public int Id { get; set; }
@@ -28,11 +55,11 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [Required]
     [Column("event_type", TypeName = "TEXT")]
-    public string EventType { get; set; }
+    public GameEventType EventType { get; set; }
 
     [Required]
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("details")]
     public int? Details { get; set; }
@@ -47,7 +74,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public int? TeamWhoServedId { get; set; }
 
     [Column("side_served", TypeName = "TEXT")]
-    public string SideServed { get; set; }
+    public string? SideServed { get; set; }
 
     [Column("player_to_serve_id")]
     public int? PlayerToServeId { get; set; }
@@ -95,7 +122,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public Game Game { get; set; }
 
     [NotMapped]
-    public bool IsCard => EventType == "Warning" || EventType.EndsWith("Card");
+    public bool IsCard => EventType == GameEventType.Warning || EventType.ToString().EndsWith("Card");
 
     public GameEventData ToSendableData(bool includeGame = false) {
         return new GameEventData(this, includeGame);

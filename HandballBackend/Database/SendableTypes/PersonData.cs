@@ -2,7 +2,6 @@
 // Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 using HandballBackend.Database.Models;
-using HandballBackend.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +21,7 @@ public class PersonData {
         "Serve Return Rate"
     ];
 
-    public Dictionary<string, dynamic>? stats { get; protected set; }
+    public Dictionary<string, dynamic?>? stats { get; protected set; }
 
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
@@ -34,12 +33,13 @@ public class PersonData {
 
         if (!generateStats) return;
 
-        stats = new Dictionary<string, dynamic> {
+        stats = new Dictionary<string, dynamic?> {
             {"B&F Votes", 0.0},
             {"Elo", 0.0},
             {"Games Won", 0.0},
             {"Games Lost", 0.0},
             {"Games Played", 0.0},
+            {"Caps", 0.0},
             {"Percentage", 0.0},
             {"Points Scored", 0.0},
             {"Points Served", 0.0},
@@ -75,14 +75,18 @@ public class PersonData {
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
-        foreach (var pgs in person.PlayerGameStats ?? []) {
+        foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (!pgs.Game.Ranked && tournament?.Ranked == true) continue;
+            if (pgs.Game.IsBye) continue;
             var game = pgs.Game;
+            stats["Caps"] += game.Ended && game.TournamentId != 1 ? 1 : 0;
+            if (pgs.Game.IsFinal) continue;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
-            stats["B&F Votes"] += pgs.IsBestPlayer ? 1 : 0;
+
+            stats["B&F Votes"] += pgs.IsBestPlayer;
             stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
             stats["Games Played"] += game.Ended ? 1 : 0;
@@ -103,6 +107,7 @@ public class PersonData {
             stats["Max Serve Streak"] = Math.Max(stats["Max Serve Streak"], pgs.ServeStreak);
         }
 
+        stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
         var gamesPlayed = Math.Max(stats["Games Played"], 1);
         stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1.0);
         stats["Points per Game"] = stats["Points Scored"] / gamesPlayed;
@@ -135,7 +140,7 @@ public class PersonData {
             if (PercentageColumns.Contains(stat)) {
                 stats[stat] = Math.Round(100.0 * (double) stats[stat], 2) + "%";
             } else if (stats[stat] is double or float) {
-                stats[stat] = Math.Round((double) stats[stat], 2).ToString();
+                stats[stat] = Math.Round((double) stats[stat], 2);
             }
         }
     }

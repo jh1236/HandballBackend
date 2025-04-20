@@ -1,13 +1,22 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.Models;
+using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
 [Table("games", Schema = "main")]
 public class Game : IHasRelevant<Game> {
+    public static readonly string[] ResolvedStatuses = [
+        "Resolved",
+        "In Progress",
+        "Official",
+        "Ended",
+        "Waiting for Start",
+        "Forfeit"
+    ];
+
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
@@ -128,7 +137,7 @@ public class Game : IHasRelevant<Game> {
     public string NoteableStatus { get; set; } = "Waiting For Start";
 
     [Column("created_at")]
-    public int CreatedAt { get; set; } = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [Column("serve_timer")]
     public int? ServeTimer { get; set; }
@@ -163,6 +172,9 @@ public class Game : IHasRelevant<Game> {
 
     public ICollection<PlayerGameStats> Players { get; set; } = new List<PlayerGameStats>();
 
+    [NotMapped]
+    public int LosingTeamId => TeamOneId == WinningTeamId ? TeamTwoId : TeamOneId;
+
     public GameData ToSendableData(
         bool includeTournament = false,
         bool includeGameEvents = false,
@@ -170,7 +182,25 @@ public class Game : IHasRelevant<Game> {
         bool formatData = false,
         bool isAdmin = false
     ) {
-        return new GameData(this,includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
+        return new GameData(this, includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
+    }
+
+    public void Reset() {
+        Started = false;
+        SomeoneHasWon = false;
+        Ended = false;
+        Protested = false;
+        Resolved = false;
+        BestPlayerId = null;
+        TeamOneScore = 0;
+        TeamTwoScore = 0;
+        TeamOneTimeouts = 0;
+        TeamTwoTimeouts = 0;
+        Notes = null;
+        WinningTeamId = null;
+        Status = "Waiting For Start";
+        AdminStatus = "Waiting For Start";
+        NoteableStatus = "Waiting For Start";
     }
 
     public static IQueryable<Game> GetRelevant(IQueryable<Game> query) {
@@ -179,13 +209,16 @@ public class Game : IHasRelevant<Game> {
             .Include(x => x.TeamOne.Captain)
             .Include(x => x.TeamOne.NonCaptain)
             .Include(x => x.TeamOne.Substitute)
+            .Include(t => t.TeamOne.TournamentTeams)
             .Include(x => x.TeamTwo.Captain)
             .Include(x => x.TeamTwo.NonCaptain)
             .Include(x => x.TeamTwo.Substitute)
+            .Include(t => t.TeamTwo.TournamentTeams)
             .Include(x => x.Tournament)
             .Include(x => x.BestPlayer)
             .Include(x => x.Official.Person)
             .Include(x => x.Scorer.Person)
-            .Include(x => x.Players);
+            .Include(x => x.Players)
+            .ThenInclude(pgs => pgs.Player);
     }
 }
