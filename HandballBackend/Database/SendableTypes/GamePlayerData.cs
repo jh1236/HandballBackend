@@ -7,7 +7,7 @@ using HandballBackend.Database.Models;
 namespace HandballBackend.Database.SendableTypes;
 
 public class GamePlayerData : PersonData {
-    public bool isBestPlayer { get; set; }
+    public int BestPlayerVotes { get; set; }
     public int cardTime { get; set; }
     public int cardTimeRemaining { get; set; }
     public string? sideOfCourt { get; set; }
@@ -21,7 +21,7 @@ public class GamePlayerData : PersonData {
 
     public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false, bool isAdmin = false)
         : base(pgs.Player) {
-        isBestPlayer = pgs.IsBestPlayer;
+        BestPlayerVotes = pgs.BestPlayerVotes;
         cardTime = pgs.CardTime;
         cardTimeRemaining = pgs.CardTimeRemaining;
         sideOfCourt = pgs.SideOfCourt;
@@ -33,7 +33,7 @@ public class GamePlayerData : PersonData {
         stats = new Dictionary<string, dynamic?> {
             ["Elo"] = pgs.InitialElo,
             ["Elo Delta"] = pgs.EloDelta,
-            ["B&F Votes"] = pgs.IsBestPlayer ? 1 : 0,
+            ["B&F Votes"] = pgs.BestPlayerVotes,
             ["Games Won"] = pgs.Game.Ended && pgs.Game.WinningTeamId == pgs.TeamId ? 1 : 0,
             ["Games Lost"] = pgs.Game.Ended && pgs.Game.WinningTeamId != pgs.TeamId ? 1 : 0,
             ["Games Played"] = pgs.Game.Ended ? 1 : 0,

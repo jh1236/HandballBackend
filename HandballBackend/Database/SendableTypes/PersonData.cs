@@ -86,7 +86,7 @@ public class PersonData {
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
 
-            stats["B&F Votes"] += pgs.IsBestPlayer;
+            stats["B&F Votes"] += pgs.BestPlayerVotes;
             stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
             stats["Games Played"] += game.Ended ? 1 : 0;

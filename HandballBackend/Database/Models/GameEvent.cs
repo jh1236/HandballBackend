@@ -22,6 +22,7 @@ public enum GameEventType {
     Notes,
     Protest,
     Resolve,
+    Votes
 }
 
 [Table("gameEvents", Schema = "main")]

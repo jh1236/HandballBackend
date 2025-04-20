@@ -472,7 +472,7 @@ public static class GameManager {
 
     public static void End(
         int gameNumber,
-        string? bestPlayerSearchable,
+        List<string> bestPlayerOrder,
         int teamOneRating, int teamTwoRating,
         string notes,
         string? protestReasonTeamOne, string? protestReasonTeamTwo,
@@ -482,14 +482,10 @@ public static class GameManager {
         var db = new HandballContext();
         var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.SomeoneHasWon) throw new InvalidOperationException("The game has not ended!");
-        var bestPlayer = db.People.FirstOrDefault(p => p.SearchableName == bestPlayerSearchable);
+        var playersInOrder = game.Players.OrderBy(p => bestPlayerOrder.IndexOf(p.Player.SearchableName)).ToList();
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
-        if (bestPlayer == null && !isForfeit && game.TeamOne.NonCaptainId is not null &&
-            game.TeamTwo.NonCaptainId is not null) {
-            throw new InvalidOperationException("A Best player has not been provided");
-        }
 
-        var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes, bestPlayer?.Id);
+        var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes);
         db.Add(endEvent);
 
 
@@ -507,9 +503,13 @@ public static class GameManager {
         db.Add(notesTeamOneEvent);
         var notesTeamTwoEvent = SetUpGameEvent(game, GameEventType.Notes, false, null, notesTeamTwo, teamTwoRating);
         db.Add(notesTeamTwoEvent);
-        foreach (var pgs in game.Players) {
+        var votes = 2;
+        foreach (var pgs in playersInOrder) {
             pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
-            pgs.IsBestPlayer = pgs.PlayerId == bestPlayer?.Id;
+            if (votes <= 0) continue;
+            var votesEvent = SetUpGameEvent(game, GameEventType.Votes, true, pgs.PlayerId, details: votes);
+            pgs.BestPlayerVotes = votes--;
+            db.Add(votesEvent);
         }
 
         game.MarkedForReview = markedForReview;
@@ -536,7 +536,6 @@ public static class GameManager {
         game.Status = "Official";
         game.Ended = true;
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
-        game.BestPlayerId = bestPlayer?.Id;
         game.Notes = notes;
         if (game is {Ranked: true, IsFinal: false}) {
             var playingPlayers = game.Players
@@ -555,7 +554,8 @@ public static class GameManager {
         db.SaveChanges();
         if (game.Tournament.TextAlerts) {
             var nextGame = db.Games
-                .Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id > game.Id && g.Court == game.Court)
+                .Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id > game.Id &&
+                            g.Court == game.Court)
                 .IncludeRelevant()
                 .OrderBy(g => g.Id).FirstOrDefault();
             if (nextGame != null) {

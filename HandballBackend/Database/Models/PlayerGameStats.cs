@@ -105,7 +105,7 @@ public class PlayerGameStats {
 
     [Required]
     [Column("is_best_player")]
-    public bool IsBestPlayer { get; set; } = false;
+    public int BestPlayerVotes { get; set; } = 0;
 
     [Required]
     [Column("ace_streak")]
@@ -163,6 +163,6 @@ public class PlayerGameStats {
         RedCards = 0;
         CardTime = 0;
         CardTimeRemaining = 0;
-        IsBestPlayer = false;
+        BestPlayerVotes = 0;
     }
 }
