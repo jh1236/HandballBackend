@@ -12,7 +12,7 @@ public class TournamentTeamData : TeamData {
         bool generatePlayerStats = false, bool formatData = false) : base(tt.Team, tt.Tournament, generateStats,
         generatePlayerStats, formatData) {
         imageUrl = tt.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
-        imageUrl = tt.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        bigImageUrl = tt.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
         name = tt.Name ?? name;
         extendedName = tt.LongName ?? tt.Name ?? extendedName;
     }

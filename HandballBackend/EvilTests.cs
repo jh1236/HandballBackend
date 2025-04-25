@@ -23,7 +23,7 @@ internal static class EvilTests {
         init();
         var db = new HandballContext();
         var tournament = db.Tournaments.Find(10);
-        for (int i = 0; i < 7; i++) {
+        for (var i = 0; i < 7; i++) {
             tournament.GetFinalGenerator.AddCourts(i);
         }
     }
@@ -32,21 +32,20 @@ internal static class EvilTests {
         init();
         var teams = new[] {
             62,
-            125,
             126,
             116,
             127,
             128,
             129,
-            73,
             130,
             131,
             132,
             133,
             134,
+            136
         };
 
-        var officials = new[] {1, 2, 4, 6, 11, 14, 15, 16};
+        var officials = new[] {1, 2, 6, 11, 14, 15, 17};
         CreateTournament(
             "The Ninth SUSS Championship",
             "Pooled",
