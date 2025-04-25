@@ -228,9 +228,9 @@ public static class GameManager {
         var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
-        var gameEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
-        var firstTeam = gameEvent.TeamToServeId == game.TeamOneId;
-        AddPointToGame(db, gameNumber, firstTeam, gameEvent.PlayerToServeId, notes: "Ace");
+        var prevGameEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
+        var firstTeam = prevGameEvent.TeamToServeId == game.TeamOneId;
+        AddPointToGame(db, gameNumber, firstTeam, prevGameEvent.PlayerToServeId, notes: "Ace");
         db.SaveChanges();
     }
 
@@ -559,21 +559,7 @@ public static class GameManager {
                 .IncludeRelevant()
                 .OrderBy(g => g.Id).FirstOrDefault();
             if (nextGame != null) {
-                // if the next game is null, we have likely reached the end of the round
-                TextHelper.Text(nextGame.Official.Person,
-                    $"You are umpiring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
-                if (nextGame.ScorerId != null && nextGame.ScorerId != nextGame.OfficialId) {
-                    TextHelper.Text(nextGame.Scorer.Person,
-                        $"You are scoring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
-                }
-
-                var teams = new[] {nextGame.TeamOne, nextGame.TeamTwo};
-                for (var i = 0; i < teams.Length; i++) {
-                    var team = teams[i];
-                    var oppTeam = teams[1 - i];
-                    TextHelper.Text(team.Captain,
-                        $"Your game against {oppTeam.Name} is beginning soon on court {nextGame.Court + 1}.");
-                }
+                TextHelper.TextPeopleForGame(nextGame);
             }
         }
 

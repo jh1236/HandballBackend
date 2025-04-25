@@ -9,25 +9,43 @@ public static class TextHelper {
     private static string UserName() {
         return File.ReadAllText(@".\Secrets\TwilioAccount.txt");
     }
+
     private static string Key() {
         return File.ReadAllText(@".\Secrets\TwilioKey.txt");
     }
 
     private static bool _hasBeenSetup = false;
 
-    public static void Setup() {
+    private static void Setup() {
         if (_hasBeenSetup) return;
         _hasBeenSetup = true;
         TwilioClient.Init("", Key());
     }
 
+    public static async Task<bool> TextPeopleForGame(Game game) {
+        var tasks = new List<Task<bool>>();
+        tasks.Add(Text(game.Official.Person,
+            $"You are umpiring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}. https://squarers.club/games/{game.GameNumber}"
+        ));
+        if (game.ScorerId != null && game.ScorerId != game.OfficialId) {
+            tasks.Add(Text(game.Official.Person,
+                $"You are scoring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}."));
+        }
+
+        var teams = new[] {game.TeamOne, game.TeamTwo};
+        for (var j = 0; j < teams.Length; j++) {
+            var team = teams[j];
+            var oppTeam = teams[1 - j];
+            tasks.Add(Text(team.Captain,
+                $"Your game against {oppTeam.Name} is beginning soon on court {game.Court + 1}."));
+        }
+
+        await Task.WhenAll(tasks);
+        return tasks.All(t => t.Result);
+    }
+
 
     public static async Task<bool> Text(Person target, string msg) {
-        if (true) {
-            Console.WriteLine($"Texting to {target.Name} ({target.PhoneNumber ?? "No Number"}): {msg}");
-            await Task.Delay(2000);
-            return true;
-        }
         Setup();
         var targetPhoneNumber = target.PhoneNumber;
         if (targetPhoneNumber == null) return false;

@@ -90,20 +90,7 @@ public class Tournament {
                 .Where(g => g.TournamentId == Id && !g.IsBye && !g.Started && g.Court == i)
                 .IncludeRelevant()
                 .OrderBy(g => g.Id).FirstOrDefault();
-            TextHelper.Text(nextGame.Official.Person,
-                $"You are umpiring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
-            if (nextGame.ScorerId != null && nextGame.ScorerId != nextGame.OfficialId) {
-                TextHelper.Text(nextGame.Official.Person,
-                    $"You are scoring the game between {nextGame.TeamOne.Name} and {nextGame.TeamTwo.Name} on court {nextGame.Court + 1}.");
-            }
-
-            var teams = new[] {nextGame.TeamOne, nextGame.TeamTwo};
-            for (var j = 0; j < teams.Length; j++) {
-                var team = teams[j];
-                var oppTeam = teams[1 - j];
-                TextHelper.Text(team.Captain,
-                    $"Your game against {oppTeam.Name} is beginning soon on court {nextGame.Court + 1}.");
-            }
+            
         }
         
     }

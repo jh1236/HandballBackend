@@ -1,4 +1,6 @@
-﻿using HandballBackend.EndpointHelpers.GameManagement;
+﻿using HandballBackend.Database;
+using HandballBackend.EndpointHelpers;
+using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -241,6 +243,19 @@ public class EditGamesController : ControllerBase {
             request.MarkedForReview
         );
 
+        return NoContent();
+    }
+
+    public class AlertRequest {
+        public required int id { get; set; }
+    }
+
+    [HttpPost("alert")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Alert([FromBody] AlertRequest alertRequest) {
+        var db = new HandballContext();
+        var game = db.Games.IncludeRelevant().First(g => alertRequest.id == g.GameNumber);
+        TextHelper.TextPeopleForGame(game);
         return NoContent();
     }
 }

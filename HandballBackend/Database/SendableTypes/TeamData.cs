@@ -76,7 +76,7 @@ public class TeamData {
         foreach (var pgs in team.PlayerGameStats.Where(pgs =>
                      (tournament == null || pgs.TournamentId == tournament.Id)).OrderBy(pgs => pgs.GameId)) {
             if (tournament?.Ranked != false) {
-                if (!pgs.Game.Ranked) continue;
+                if (!pgs.Game.Ranked && nonCaptain != null) continue;
             }
 
             if (pgs.Game.IsFinal) continue;
@@ -100,8 +100,10 @@ public class TeamData {
         }
 
         stats["Point Difference"] = stats["Points Scored"] - stats["Points Against"];
-        stats["Percentage"] = stats["Games Won"] / Math.Max(stats["Games Played"], 1);
+        stats["Percentage"] = stats["Games Won"] / stats["Games Played"];
+        stats["Timeouts per Game"] = stats["Timeouts Called"] / stats["Games Played"];
         stats["Elo"] = elo;
+
 
         if (!formatData) return;
 
@@ -110,11 +112,18 @@ public class TeamData {
 
     public void FormatData() {
         foreach (var stat in stats.Keys) {
-            if (stats[stat] == null) continue;
-            if (PercentageColumns.Contains(stat)) {
-                stats[stat] = stats[stat].ToString("P2");
+            if (stats[stat] == null) {
+                stats[stat] = "-";
+                continue;
+            }
+
+            if (double.IsNaN(stats[stat])) stats[stat] = "-";
+            else if (PercentageColumns.Contains(stat)) {
+                if (double.IsInfinity(stats[stat])) stats[stat] = "\u221e%";
+                else stats[stat] = stats[stat].ToString("P2");
             } else {
-                stats[stat] = Math.Round((double) stats[stat], 2);
+                if (double.IsInfinity(stats[stat])) stats[stat] = "\u221e";
+                else stats[stat] = Math.Round((double) stats[stat], 2);
             }
         }
     }
