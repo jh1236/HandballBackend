@@ -728,8 +728,8 @@ public static class GameManager {
                     TeamId = team.Id,
                     OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId,
                     InitialElo = (prevGame?.InitialElo ?? 1500.0) + (prevGame?.EloDelta ?? 0),
-                    CardTime = carryCardTimes ? (prevGame?.CardTime ?? 0) : 0,
-                    CardTimeRemaining = carryCardTimes ? (prevGame?.CardTimeRemaining ?? 0) : 0
+                    CardTime = carryCardTimes ? Math.Max(prevGame?.CardTime ?? 0, 0) : 0,
+                    CardTimeRemaining = carryCardTimes ? Math.Max(prevGame?.CardTimeRemaining ?? 0, 0) : 0
                 });
             }
         }
