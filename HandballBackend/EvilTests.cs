@@ -11,7 +11,10 @@ namespace HandballBackend;
 internal static class EvilTests {
     public static void init() {
         HandballContext.DbPath = @"G:\Programming\c#\HandballBackend\HandballBackend\resources\database.db";
+        Config.SECRETS_FOLDER = @"G:\Programming\c#\HandballBackend\HandballBackend\secrets";
     }
+
+    
 
     public static void EvilTest() {
         init();
@@ -37,7 +40,6 @@ internal static class EvilTests {
             127,
             128,
             129,
-            130,
             131,
             132,
             133,
@@ -144,6 +146,7 @@ internal static class EvilTests {
                 game = db.Games.FirstOrDefault(g => g.GameNumber == i);
                 continue;
             }
+
             GameManager.StartGame(i, false, null, null, true);
             GameManager.Forfeit(i, false);
             GameManager.End(
@@ -160,7 +163,7 @@ internal static class EvilTests {
             game = db.Games.FirstOrDefault(g => g.GameNumber == i);
         }
     }
-    
+
     public static void ConnivingTest() {
         init();
         Console.WriteLine("Enter the Lowest game Number");
@@ -175,6 +178,7 @@ internal static class EvilTests {
                 game = db.Games.FirstOrDefault(g => g.GameNumber == i);
                 continue;
             }
+
             GameManager.StartGame(i, false, null, null, true);
             GameManager.Forfeit(i, false);
             GameManager.End(
@@ -191,5 +195,21 @@ internal static class EvilTests {
             game = db.Games.FirstOrDefault(g => g.GameNumber == i);
             c = Console.ReadLine().ToLower() != "x";
         }
+    }
+
+    public static void WickedTest() {
+        init();
+        var db = new HandballContext();
+        var people = db.TournamentTeams.Where(tt => tt.TournamentId == 10).IncludeRelevant().Select(t => t.Team).ToArray()
+            .SelectMany(t => t.People).ToList();
+        var tasks = new List<Task>();
+        foreach (var p in people) {
+            Console.WriteLine($"Texting {p.Name}");
+            tasks.Add(TextHelper.Text(p,
+                $"Hi {p.Name.Split(" ")[0]}!\n  Just a reminder that the 9th SUSS Championship is on at 5pm today at Manning Library (2 Conochie Cres). Don't forget to bring a jumper as it is set to get quite cold!\n\nThanks, and as always, Happy Balling!")
+            );
+        }
+
+        Task.WaitAll(tasks.ToArray());
     }
 }

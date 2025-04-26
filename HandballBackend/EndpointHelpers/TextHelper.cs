@@ -7,11 +7,11 @@ namespace HandballBackend.EndpointHelpers;
 
 public static class TextHelper {
     private static string UserName() {
-        return File.ReadAllText(@".\Secrets\TwilioAccount.txt");
+        return File.ReadAllText(Config.SECRETS_FOLDER + "/TwilioAccount.txt");
     }
 
     private static string Key() {
-        return File.ReadAllText(@".\Secrets\TwilioKey.txt");
+        return File.ReadAllText(Config.SECRETS_FOLDER + "/TwilioKey.txt");
     }
 
     private static bool _hasBeenSetup = false;
@@ -19,7 +19,7 @@ public static class TextHelper {
     private static void Setup() {
         if (_hasBeenSetup) return;
         _hasBeenSetup = true;
-        TwilioClient.Init("", Key());
+        TwilioClient.Init(UserName(), Key());
     }
 
     public static async Task<bool> TextPeopleForGame(Game game) {
@@ -54,6 +54,6 @@ public static class TextHelper {
             from: new PhoneNumber("+14093592698"),
             body: msg
         );
-        return true;
+        return m.Status == MessageResource.StatusEnum.Sent;
     }
 }

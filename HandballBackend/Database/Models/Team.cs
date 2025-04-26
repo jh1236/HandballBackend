@@ -56,6 +56,13 @@ public class Team : IHasRelevant<Team> {
 
     public List<TournamentTeam> TournamentTeams { get; set; } = [];
 
+    [NotMapped]
+    public List<Person> People => new List<Person?> {Captain, NonCaptain, Substitute}
+        .Where(p => p != null)
+        .Select(p => p!)
+        .ToList();
+
+
     public TeamData ToSendableData(bool generateStats = false,
         bool generatePlayerStats = false, bool formatData = false, Tournament? tournament = null) {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
