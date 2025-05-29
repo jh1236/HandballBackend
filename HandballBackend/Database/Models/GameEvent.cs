@@ -25,15 +25,15 @@ public enum GameEventType {
     Votes
 }
 
-[Table("gameEvents", Schema = "main")]
+[Table("game_events")]
 public class GameEvent : IHasRelevant<GameEvent> {
     [NotMapped]
-    public static readonly GameEventType[] CardTypes = {
+    public static readonly GameEventType[] CardTypes = [
         GameEventType.Warning,
         GameEventType.GreenCard,
         GameEventType.YellowCard,
         GameEventType.RedCard
-    };
+    ];
 
 
     [Key]

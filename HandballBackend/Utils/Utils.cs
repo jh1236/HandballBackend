@@ -46,6 +46,7 @@ public static partial class Utilities {
         return SplitCamelCase().Replace(input, " $1").Trim();
     }
 
+
     [GeneratedRegex("([A-Z])", RegexOptions.Compiled)]
     private static partial Regex SplitCamelCase();
 

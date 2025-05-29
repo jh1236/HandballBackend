@@ -17,10 +17,12 @@ public class OfficialData : PersonData {
         var playerGameStats =
             official.Games
                 .Where(g => tournament == null || g.TournamentId == tournament.Id)
+                .Where(g => !g.IsBye && (g.Ranked || (!tournament?.Ranked ?? false)))
                 .OrderBy(g => g.Id).SelectMany(g => g.Players);
         var prevGameId = 0;
         stats = new Dictionary<string, float> {
             {"Games Umpired", 0},
+            {"Caps", 0},
             {"Rounds Umpired", 0},
             {"Green Cards Given", 0},
             {"Yellow Cards Given", 0},
@@ -34,6 +36,7 @@ public class OfficialData : PersonData {
                 prevGameId = pgs.GameId;
                 stats["Games Umpired"] += 1;
                 stats["Rounds Umpired"] += pgs.Game.TeamOneScore + pgs.Game.TeamTwoScore;
+                stats["Caps"] += pgs.Game.Ended && pgs.Game.TournamentId != 1 ? 1 : 0;
             }
 
             stats["Green Cards Given"] += pgs.GreenCards;

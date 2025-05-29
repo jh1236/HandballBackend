@@ -11,10 +11,17 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("/api/[controller]")]
 public class OfficialsController : ControllerBase {
+
+
+    public record GetOfficialsResponse {
+        public OfficialData[] officials { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+    
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Dictionary<string, dynamic?>> GetOfficials(
+    public ActionResult<GetOfficialsResponse> GetOfficials(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
@@ -40,22 +47,27 @@ public class OfficialsController : ControllerBase {
                 .ToArray();
         }
 
-        var output = Utilities.WrapInDictionary("officials", officials);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetOfficialsResponse {
+            officials = officials,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 
+    public record GetOfficialResponse {
+        public OfficialData official { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+
+    
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Dictionary<string, dynamic?>> GetSingleOfficial(
+    public ActionResult<GetOfficialResponse> GetSingleOfficial(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
@@ -74,15 +86,14 @@ public class OfficialsController : ControllerBase {
         }
 
 
-        var output = Utilities.WrapInDictionary("official", official.ToSendableData(tournament, true));
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetOfficialResponse {
+            official = official.ToSendableData(tournament, true),
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 }

@@ -20,7 +20,7 @@ public class HandballContext : DbContext {
     public DbSet<TournamentOfficial> TournamentOfficials { get; set; }
     public DbSet<TournamentTeam> TournamentTeams { get; set; }
 
-    public static string DbPath = "./resources/database.db";
+    public readonly string ConnectionString = File.ReadAllText(Config.SECRETS_FOLDER + "/DatabaseConnection.txt");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
@@ -77,5 +77,5 @@ public class HandballContext : DbContext {
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
+        => options.UseNpgsql(ConnectionString);
 }

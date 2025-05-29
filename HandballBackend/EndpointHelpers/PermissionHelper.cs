@@ -61,6 +61,9 @@ public static class PermissionHelper
         }
 
         var realPassword = person.Password;
+        if (realPassword == null) {
+            throw new ArgumentNullException(nameof(personId),"The given person has no password.");
+        }
         return BCrypt.Verify(checkPassword, realPassword);
     }
 

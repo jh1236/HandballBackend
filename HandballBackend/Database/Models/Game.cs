@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
-[Table("games", Schema = "main")]
+[Table("games")]
 public class Game : IHasRelevant<Game> {
     public static readonly string[] ResolvedStatuses = [
         "Resolved",
@@ -18,7 +18,6 @@ public class Game : IHasRelevant<Game> {
     ];
 
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 

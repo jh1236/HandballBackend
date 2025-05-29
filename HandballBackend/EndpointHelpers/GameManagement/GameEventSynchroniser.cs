@@ -104,7 +104,6 @@ internal static class GameEventSynchroniser {
                 throw new ArgumentException("Only card events can be synced as cards");
         }
 
-        player.GreenCards += 1;
         if (player.CardTimeRemaining < 0) return;
         //player isn't already red carded
 

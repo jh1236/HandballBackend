@@ -11,10 +11,16 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class TeamsController : ControllerBase {
+
+    public record GetTeamResponse {
+        public TeamData team { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+    
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<Dictionary<string, dynamic?>> GetSingle(
+    public ActionResult<GetTeamResponse> GetSingle(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool formatData = false,
@@ -25,7 +31,7 @@ public class TeamsController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        TeamData teamData = null;
+        TeamData teamData;
         if (tournament == null) {
             var team = db.Teams
                 .Where(t => t.SearchableName == searchable)
@@ -52,20 +58,24 @@ public class TeamsController : ControllerBase {
             teamData = team.ToSendableData(true, true, formatData);
         }
 
-        var output = Utilities.WrapInDictionary("team", teamData);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetTeamResponse {
+            team = teamData,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 
+    public record GetTeamsResponse {
+        public TeamData[] teams { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+    
     [HttpGet]
-    public ActionResult<Dictionary<string, dynamic?>> GetMultiple(
+    public ActionResult<GetTeamsResponse> GetMultiple(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] List<string>? player = null,
         [FromQuery] bool includeStats = false,
@@ -78,7 +88,7 @@ public class TeamsController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        List<TeamData> teamData = null;
+        TeamData[] teamData = null;
         if (tournament is not null) {
             IQueryable<TournamentTeam> query = db.TournamentTeams
                 .Where(t => t.TournamentId == tournament.Id)
@@ -105,7 +115,7 @@ public class TeamsController : ControllerBase {
             teamData = query.OrderBy(t => !EF.Functions.Like(t.Team.ImageUrl, "/api/%"))
                 .ThenBy(t => EF.Functions.Like(t.Team.SearchableName, "solo_%"))
                 .ThenBy(t => t.Team.SearchableName)
-                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData)).ToList();
+                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData)).ToArray();
         } else {
             //Not null captain removes bye team
             var query = db.Teams.IncludeRelevant();
@@ -130,31 +140,38 @@ public class TeamsController : ControllerBase {
             teamData = query.OrderBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
                 .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
                 .ThenBy(t => t.SearchableName)
-                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToList();
+                .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToArray();
         }
 
 
-        var output = Utilities.WrapInDictionary("teams", teamData);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetTeamsResponse {
+            teams = teamData,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 
-    // TODO: Fix up for pooled tournaments
+
+    public record GetLadderResponse {
+        public TeamData[]? ladder { get; set; }
+        public TeamData[]? poolOne { get; set; }
+        public TeamData[]? poolTwo { get; set; }
+        public bool pooled { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+    
     [HttpGet("ladder")]
-    public ActionResult<Dictionary<string, dynamic?>> GetLadder(
+    public ActionResult<GetLadderResponse> GetLadder(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool formatData = false,
         [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
 
-        TeamData[]? ladder = null;
+        TeamData[]? ladder;
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
@@ -163,14 +180,23 @@ public class TeamsController : ControllerBase {
 
         if (tournament is not null) {
             (ladder, poolOne, poolTwo) = LadderHelper.GetTournamentLadder(db, tournament);
+            if (tournament.Editable) {
+                ladder = ladder?.Where(t => t.stats!["Games Played"] > 0).ToArray();
+                poolOne = poolOne?.Where(t => t.stats!["Games Played"] > 0).ToArray();
+                poolTwo = poolTwo?.Where(t => t.stats!["Games Played"] > 1).ToArray();
+            }
         } else {
             //Not null captain removes bye team
             var query = db.Teams.IncludeRelevant()
                 .Include(t => t.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
-                .Where(t => t.Captain != null);
-
-            ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null)).ToArray());
+                .Where(t => t.Captain != null
+                            && t.Captain.SearchableName != "lachlan_banks"
+                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "lachlan_banks")
+                            && (t.Substitute == null || t.Substitute.SearchableName != "lachlan_banks"));
+            ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
+                .ToArray());
+            ladder = ladder.Where(t => t.stats!["Games Played"] > 0).ToArray();
         }
 
 
@@ -194,19 +220,17 @@ public class TeamsController : ControllerBase {
             }
         }
 
-        var output = Utilities.WrapInDictionary("ladder", ladder);
-        output["poolOne"] = poolOne;
-        output["poolTwo"] = poolTwo;
-        output["pooled"] = poolTwo is not null;
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
 
-        return output;
+        return new GetLadderResponse {
+            ladder = ladder,
+            poolOne = poolOne,
+            poolTwo = poolTwo,
+            pooled = poolOne is not null,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 }

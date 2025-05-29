@@ -6,10 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
-[Table("officials", Schema = "main")]
+[Table("officials")]
 public class Official : IHasRelevant<Official> {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 

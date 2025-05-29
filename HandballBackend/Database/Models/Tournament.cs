@@ -7,10 +7,9 @@ using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
 
-[Table("tournaments", Schema = "main")]
+[Table("tournaments")]
 public class Tournament {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 
@@ -21,7 +20,11 @@ public class Tournament {
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
     public string SearchableName { get; set; }
-
+    
+    [Required]
+    [Column("editable")]
+    public bool Editable { get; set; }
+    
     [Required]
     [Column("fixtures_type", TypeName = "TEXT")]
     public string FixturesType { get; set; }

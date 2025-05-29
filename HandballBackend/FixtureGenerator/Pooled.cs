@@ -9,7 +9,7 @@ public class Pooled : AbstractFixtureGenerator {
     private readonly int _tournamentId;
 
 
-    public Pooled(int tournamentId) : base(tournamentId, true, false, true) {
+    public Pooled(int tournamentId) : base(tournamentId, true, true) {
         _tournamentId = tournamentId;
     }
 

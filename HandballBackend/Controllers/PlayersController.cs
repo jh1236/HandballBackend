@@ -9,11 +9,17 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class PlayersController : ControllerBase {
+    public record GetPlayerResponse {
+        public PersonData player { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+
+
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<Dictionary<string, dynamic?>> GetSingle(
+    public ActionResult<GetPlayerResponse> GetSingle(
         string searchable,
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -33,22 +39,27 @@ public class PlayersController : ControllerBase {
             return NotFound();
         }
 
-        var output = Utilities.WrapInDictionary("player", player);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetPlayerResponse {
+            player = player,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
+
+    public record GetPlayersResponse {
+        public PersonData[] players { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<Dictionary<string, dynamic?>> GetMulti(
+    public ActionResult<GetPlayersResponse> GetMulti(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] string? team = null,
@@ -77,28 +88,36 @@ public class PlayersController : ControllerBase {
         } else {
             query = db.People
                 .Include(t => t.PlayerGameStats)!
-                .ThenInclude(pgs => pgs.Game);
+                .ThenInclude(pgs => pgs.Game)
+                .Where(p => p.SearchableName != "lachlan_banks");
         }
 
-        var output = Utilities.WrapInDictionary("players",
-            query.OrderBy(p => p.SearchableName)
-                .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray());
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
+        var playerSendable = query.OrderBy(p => p.SearchableName)
+            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray();
+        if ((tournament == null || tournament.Editable) && includeStats) {
+            playerSendable = playerSendable.Where(p => p.stats!["Games Played"] > 0).ToArray();
+        }
 
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
 
-        return output;
+        return new GetPlayersResponse {
+            players = playerSendable,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 
+    public record GetStatsResponse {
+        public Dictionary<string, dynamic?>? stats { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
+    
     [HttpGet("stats")]
-    public ActionResult<Dictionary<string, dynamic?>> GetAverage(
+    public ActionResult<GetStatsResponse> GetAverage(
         [FromQuery] bool formatData = false,
-        [FromQuery] string? tournamentSearchable = null,
+        [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false,
         [FromQuery] int? gameNumber = null) {
         var db = new HandballContext();
@@ -106,7 +125,7 @@ public class PlayersController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        List<Dictionary<string, dynamic?>> statsList = [];
+        List<Dictionary<string, dynamic?>> statsList;
         if (gameNumber is not null) {
             statsList = db.PlayerGameStats
                 .Where(pgs => pgs.Game.GameNumber == gameNumber.Value)
@@ -171,15 +190,14 @@ public class PlayersController : ControllerBase {
             }
         }
 
-        var output = Utilities.WrapInDictionary("stats", ret);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetStatsResponse {
+            stats = ret,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 }

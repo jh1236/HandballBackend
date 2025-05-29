@@ -13,9 +13,17 @@ public class AuthController : ControllerBase {
         public bool longSession { get; set; } = false;
     }
 
+    public class LoginResponse {
+        public string token { get; set; }
+        public int userID { get; set; }
+        public long timeout { get; set; }
+        public string username { get; set; }
+        public int permissionLevel { get; set; }
+    }
+    
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Dictionary<string, dynamic>> Login(
+    public ActionResult<LoginResponse> Login(
         [FromBody] LoginRequest loginRequest
     ) {
         var userId = loginRequest.userID;
@@ -27,12 +35,12 @@ public class AuthController : ControllerBase {
             return Unauthorized();
         }
 
-        var response = new Dictionary<string, dynamic> {
-            ["token"] = user.SessionToken,
-            ["userID"] = user.Id,
-            ["timeout"] = user.TokenTimeout!,
-            ["username"] = user.Name,
-            ["permissionLevel"] = user.PermissionLevel
+        var response = new LoginResponse {
+            token = user.SessionToken,
+            userID = user.Id,
+            timeout = user.TokenTimeout!.Value * 1000L, //convert to ms for frontend
+            username = user.Name,
+            permissionLevel = user.PermissionLevel
         };
         return response;
     }

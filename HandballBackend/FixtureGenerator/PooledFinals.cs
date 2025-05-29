@@ -1,8 +1,5 @@
-﻿using HandballBackend.Database;
-using HandballBackend.Database.Models;
-using HandballBackend.EndpointHelpers;
+﻿using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;
-using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
 
@@ -10,7 +7,7 @@ public class PooledFinals : AbstractFixtureGenerator {
     private readonly int _tournamentId;
 
 
-    public PooledFinals(int tournamentId) : base(tournamentId, true, false, true) {
+    public PooledFinals(int tournamentId) : base(tournamentId, true, true) {
         _tournamentId = tournamentId;
     }
 
@@ -23,7 +20,9 @@ public class PooledFinals : AbstractFixtureGenerator {
         if (finalsGames.Count > 2) { // each round is 2 games, so > 2 means we've had both rounds
             EndTournament();
             return true;
-        } else if (finalsGames.Count != 0) {
+        }
+
+        if (finalsGames.Count != 0) {
             GameManager.CreateGame(_tournamentId, finalsGames[0].LosingTeamId, finalsGames[1].LosingTeamId,
                 isFinal: true, round: finalsGames[0].Round + 1);
             GameManager.CreateGame(_tournamentId, finalsGames[0].WinningTeamId!.Value,

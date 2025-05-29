@@ -12,18 +12,29 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class GamesController : ControllerBase {
+    public record ChangeCodeResponse {
+        public int code { get; set; }
+    }
+
     [HttpGet("change_code")]
-    public ActionResult<Dictionary<string, dynamic?>> GetChangeCode(
+    public ActionResult<ChangeCodeResponse> GetChangeCode(
         [FromQuery(Name = "id")] int gameNumber
     ) {
         var db = new HandballContext();
-        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id).Select(gE => gE.Id).FirstOrDefault();
+        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id)
+            .Select(gE => gE.Id).FirstOrDefault();
 
-        return Utilities.WrapInDictionary("code", query);
+        return new ChangeCodeResponse {
+            code = query
+        };
+    }
+
+    public record GetGameResponse {
+        public GameData game { get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
-    public ActionResult<Dictionary<string, dynamic?>> GetSingleGame(
+    public ActionResult<GetGameResponse> GetSingleGame(
         int gameNumber,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeStats = false,
@@ -32,23 +43,36 @@ public class GamesController : ControllerBase {
         var db = new HandballContext();
         var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
 
-
-        var game = db.Games.IncludeRelevant()
+        var game = db.Games
+            .IncludeRelevant()
             .Include(g => g.Events)
             .Include(g => g.Players)
-            .ThenInclude(pgs => pgs.Player.Events.Where(e => GameEvent.CardTypes.Contains(e.EventType)))
-            .ThenInclude(gE => gE.Game)
+            .ThenInclude(pgs => pgs.Player)
             .FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
             return NotFound();
         }
 
-        return Utilities.WrapInDictionary("game",
-            game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin));
+        var cards = db.GameEvents.Where(gE =>
+            gE.TournamentId == game.TournamentId
+            && GameEvent.CardTypes.Contains(gE.EventType)
+            && gE.TeamId == game.TeamOneId || gE.TeamId == game.TeamTwoId).Include(gE => gE.Game);
+        foreach (var pgs in game.Players) {
+            pgs.Player.Events = cards.Where(gE => pgs.PlayerId == gE.PlayerId).ToList();
+        }
+
+        return new GetGameResponse {
+            game = game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin)
+        };
+    }
+
+    public record GetGamesResponse {
+        public GameData[] games { get; set; }
+        public TournamentData? tournament { get; set; }
     }
 
     [HttpGet]
-    public ActionResult<Dictionary<string, dynamic?>> GetMulti(
+    public ActionResult<GetGamesResponse> GetMulti(
         [FromQuery(Name = "tournament")] string? tournamentSearchable,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeByes = false,
@@ -108,27 +132,40 @@ public class GamesController : ControllerBase {
         }
 
         if (includeGameEvents) {
-            query = query.Include(g => g.Events);
+            query = query.Include(g => g.Events).ThenInclude(gE => gE.Player);
+        } else if (isAdmin) {
+            query = query.Include(x => x.Events
+                    .Where(gE => gE.EventType == GameEventType.Notes ||
+                                 gE.EventType == GameEventType.Protest ||
+                                 gE.EventType == GameEventType.EndGame ||
+                                 GameEvent.CardTypes.Contains(gE.EventType))
+                )
+                .ThenInclude(gE => gE.Player);
         }
 
-        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
+        var games = query.OrderBy(g => g.Id)
+            .Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
             .ToArray();
 
-        var output = Utilities.WrapInDictionary("games", games);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetGamesResponse {
+            games = games,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
+    }
+
+    public record GetNoteableResponse {
+        public GameData[] games { get; set; }
+        public TournamentData? tournament { get; set; }
     }
 
     [HttpGet("noteable")]
-    public ActionResult<Dictionary<string, dynamic?>> GetNoteable(
-        [FromQuery(Name = "tournament")] string tournamentSearchable,
+    public ActionResult<GetNoteableResponse> GetNoteable(
+        [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool returnTournament = false,
         [FromQuery] bool formatData = false,
@@ -136,7 +173,9 @@ public class GamesController : ControllerBase {
         [FromQuery] int limit = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
+            return Unauthorized("You must have permission to use Umpire Manager.");
+        }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
@@ -158,24 +197,28 @@ public class GamesController : ControllerBase {
         query = query.Include(g => g.Events);
 
 
-        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
+        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
             .ToArray();
 
-        var output = Utilities.WrapInDictionary("games", games);
-        if (returnTournament) {
-            if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
-            }
-
-            output["tournament"] = tournament.ToSendableData();
+        if (returnTournament && tournament is null) {
+            return BadRequest("Cannot return null tournament");
         }
 
-        return output;
+
+        return new GetNoteableResponse {
+            games = games,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
     }
 
+    public record GetFixturesResponse {
+        public FixturesRound[] fixtures { get; set; }
+        public FixturesRound[]? finals { get; set; }
+        public TournamentData? tournament { get; set; }
+    }
 
     [HttpGet("fixtures")]
-    public ActionResult<Dictionary<string, dynamic?>> GetFixtures(
+    public ActionResult<GetFixturesResponse> GetFixtures(
         [BindRequired, FromQuery(Name = "tournament")]
         string tournamentSearchable,
         [FromQuery] bool returnTournament = false,
@@ -221,28 +264,27 @@ public class GamesController : ControllerBase {
             fixtures = fixtures.TakeLast(maxRounds).ToList();
         }
 
-        var output = new Dictionary<string, dynamic?>();
-
+        var output = new GetFixturesResponse();
         if (separateFinals) {
-            output["fixtures"] = fixtures.Where(f => !f.final).ToArray();
-            output["finals"] = fixtures.Where(f => f.final).ToArray();
+            output.fixtures = fixtures.Where(f => !f.final).ToArray();
+            output.finals = fixtures.Where(f => f.final).ToArray();
         } else {
-            output["fixtures"] = fixtures.ToArray();
+            output.fixtures = fixtures.ToArray();
         }
 
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");
             }
-
-            output["tournament"] = tournament.ToSendableData();
+            output.tournament = tournament.ToSendableData();
         }
+
 
         return output;
     }
 }
 
-internal class FixturesRound(List<GameData>? games = null, bool isFinal = false) {
+public class FixturesRound(List<GameData>? games = null, bool isFinal = false) {
     public List<GameData> games { get; set; } = games == null ? [] : games;
     public bool final { get; set; } = isFinal;
 

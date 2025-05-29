@@ -7,26 +7,38 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("/api/[controller]")]
 public class TournamentsController : ControllerBase {
+    public record GetTournamentsRepsonse {
+        public TournamentData[] tournaments { get; set; }
+    }
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Dictionary<string, dynamic?>> GetTournaments() {
+    public ActionResult<GetTournamentsRepsonse> GetTournaments() {
         var db = new HandballContext();
         var tournaments = db.Tournaments
-            .Select(a => a.ToSendableData())
+            .OrderBy(t => t.Id)
+            .Select(t => t.ToSendableData())
             .ToArray();
-        return Utilities.WrapInDictionary("tournaments", tournaments);
+        return new GetTournamentsRepsonse {
+            tournaments = tournaments
+        };
+    }
+
+    public record GetTournamentResponse {
+        public TournamentData tournament { get; set; }
     }
 
     [HttpGet("{searchable}")]
-    public ActionResult<Dictionary<string, dynamic?>> GetTournament(string searchable)
-    {
+    public ActionResult<GetTournamentResponse> GetTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
-        if (tournament is null)
-        {
+        if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
-        return Utilities.WrapInDictionary("tournament", tournament.ToSendableData());
+
+        return new GetTournamentResponse {
+            tournament = tournament.ToSendableData()
+        };
     }
 }

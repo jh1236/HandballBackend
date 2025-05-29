@@ -1,4 +1,6 @@
-﻿namespace HandballBackend.Utils;
+﻿using HandballBackend.Database.Models;
+
+namespace HandballBackend.Utils;
 
 /*
  * K = 40.0
@@ -34,5 +36,8 @@ public static class EloCalculator {
         var pa = Probability(opponentElo, myElo);
         var delta = K * (win ? 1 - pa : -pa);
         return delta;
+    }
+
+    public static void CalculateElos(Game game, bool isForfeit) {
     }
 }

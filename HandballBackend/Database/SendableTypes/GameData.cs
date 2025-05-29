@@ -27,19 +27,12 @@ public class AdminGameData {
     public AdminGameData(Game game) {
         var teamNotes = game.Events.Where(a => a.EventType is GameEventType.Notes).ToArray();
         var protests = game.Events.Where(a => a.EventType is GameEventType.Protest).ToArray();
-        var cardEvents = game.Events.Where(a => a.IsCard);
         markedForReview = game.MarkedForReview;
         requiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
         noteableStatus = game.NoteableStatus;
         notes = (game.Notes?.Trim().Length ?? 0) > 0 ? game.Notes!.Trim() : "";
-        teamOneRating = teamNotes
-            .Where(ge => ge.TeamId == game.TeamOneId)
-            .Select(gE => gE.Details ?? 3)
-            .FirstOrDefault(3);
-        teamTwoRating = teamNotes
-            .Where(ge => ge.TeamId == game.TeamTwoId)
-            .Select(gE => gE.Details ?? 3)
-            .FirstOrDefault(3);
+        teamOneRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamOneId)?.Rating ?? 3;
+        teamTwoRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamTwoId)?.Rating ?? 3;
         teamOneNotes = teamNotes
             .Where(ge => ge.TeamId == game.TeamOneId && ge.Notes != null)
             .Select(gE => gE.Notes)
@@ -56,7 +49,9 @@ public class AdminGameData {
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        cards = cardEvents.Select(a => a.ToSendableData()).ToArray();
+        cards = game.Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
+            .Select(a => a.ToSendableData())
+            .ToArray();
     }
 }
 
@@ -160,6 +155,7 @@ public class GameData {
 
         if (isAdmin) {
             admin = new AdminGameData(game);
+            status = game.AdminStatus;
         }
     }
 }

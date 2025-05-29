@@ -6,10 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
-[Table("people", Schema = "main")]
+[Table("people")]
 public class Person {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 
@@ -46,7 +45,17 @@ public class Person {
 
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
-    public IEnumerable<GameEvent>? Events { get; set; }
+    public List<GameEvent>? Events { get; set; }
+
+    public string InitialLastName {
+        get {
+            if (!Name.Contains(' ')) return Name;
+            return Name[0] +". "+ string.Join(" ", Name.Split(" ")[1..]);
+        }
+    }
+
+    [Column("availability")]
+    public int? Availability { get; set; }
 
     public double Elo(int? gameId = null, int? tournamentId = null) {
         if (gameId.HasValue) {

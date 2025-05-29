@@ -17,7 +17,7 @@ public class PersonData {
         "Percentage of Points Scored",
         "Percentage",
         "Percentage of Points Scored For Team",
-        "Percentage of Points Served Won",
+        "Percentage of Served Points Won",
         "Serve Return Rate",
         "Serve Fault Rate",
         "Serve Ace Rate",
@@ -48,6 +48,7 @@ public class PersonData {
             {"Games Started Substitute", 0.0},
             {"Caps", 0.0},
             {"Percentage", 0.0},
+            {"Penalty Points", 0.0},
             {"Points Scored", 0.0},
             {"Points Served", 0.0},
             {"Aces Scored", 0.0},
@@ -78,7 +79,7 @@ public class PersonData {
             {"Max Serve Streak", 0.0},
             {"Max Ace Streak", 0.0},
             {"Serve Return Rate", 0.0},
-            {"Votes per 100 games", 0.0}
+            {"Votes per 100 Games", 0.0}
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
@@ -108,6 +109,7 @@ public class PersonData {
             stats["Green Cards"] += pgs.GreenCards;
             stats["Yellow Cards"] += pgs.YellowCards;
             stats["Red Cards"] += pgs.RedCards;
+            stats["Penalty Points"] += 2 * pgs.GreenCards + 6 * pgs.YellowCards + 12 * pgs.RedCards;
             stats["Rounds on Court"] += pgs.RoundsOnCourt;
             stats["Rounds Carded"] += pgs.RoundsCarded;
             stats["Cards"] += pgs.GreenCards + pgs.YellowCards + pgs.RedCards;

@@ -460,7 +460,7 @@ public static class GameManager {
     public static void Delete(int gameNumber) {
         var db = new HandballContext();
         var game = db.Games.Include(game => game.Tournament).FirstOrDefault(g => g.GameNumber == gameNumber);
-        if (!game.Tournament.GetFixtureGenerator.Editable) {
+        if (!game.Tournament.Editable) {
             throw new InvalidOperationException("The game is not in an editable tournament");
         }
 
@@ -512,11 +512,13 @@ public static class GameManager {
             db.Add(votesEvent);
         }
 
+        var protested = !string.IsNullOrEmpty(protestReasonTeamOne) || !string.IsNullOrEmpty(protestReasonTeamTwo);
         game.MarkedForReview = markedForReview;
+        game.Protested = protested;
 
         if (game.Players.Any(i => i.RedCards != 0)) {
             game.AdminStatus = "Red Card Awarded";
-        } else if (!string.IsNullOrEmpty(protestReasonTeamOne) || !string.IsNullOrEmpty(protestReasonTeamTwo)) {
+        } else if (protested) {
             game.AdminStatus = "Protested";
         } else if (markedForReview) {
             game.AdminStatus = "Marked for Review";
@@ -537,7 +539,12 @@ public static class GameManager {
         game.Ended = true;
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         game.Notes = notes;
-        if (game is {Ranked: true, IsFinal: false}) {
+        if (game is {
+                Ranked:
+                true,
+                IsFinal:
+                false
+            }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
             var teamOneElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
@@ -736,5 +743,19 @@ public static class GameManager {
 
         db.SaveChanges();
         return game;
+    }
+
+    public static void Resolve(int gameNumber) {
+        var db = new HandballContext();
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
+        if (!game.Ended) throw new InvalidOperationException("The game has not ended");
+        if (Game.ResolvedStatuses.Contains(game.AdminStatus))
+            throw new InvalidOperationException("The game is resolved");
+        var gameEvent = SetUpGameEvent(game, GameEventType.Resolve, null, null);
+        game.AdminStatus = "Resolved";
+        game.Resolved = true;
+        db.Add(gameEvent);
+        GameEventSynchroniser.SyncTimeout(game, gameEvent);
+        db.SaveChanges();
     }
 }

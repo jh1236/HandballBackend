@@ -5,10 +5,9 @@ using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
 
-[Table("playerGameStats", Schema = "main")]
+[Table("player_game_stats")]
 public class PlayerGameStats {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 

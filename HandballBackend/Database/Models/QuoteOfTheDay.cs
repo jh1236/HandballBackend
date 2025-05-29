@@ -4,10 +4,9 @@ using HandballBackend.Database.SendableTypes;
 
 namespace HandballBackend.Database.Models;
 
-[Table("quoteOfTheDay")]
+[Table("quote_of_the_day")]
 public class QuoteOfTheDay {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 
