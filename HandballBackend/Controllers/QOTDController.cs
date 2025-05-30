@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using HandballBackend.Database.SendableTypes;
+﻿using HandballBackend.Database.SendableTypes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HandballBackend.Controllers;

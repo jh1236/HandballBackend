@@ -1,7 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-using System.Drawing;
+﻿using System.Drawing;
 using System.Text.Json.Serialization;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
@@ -10,21 +7,21 @@ namespace HandballBackend.Database.SendableTypes;
 
 public class TeamData {
     [JsonIgnore]
-    public int id { get; protected set; }
+    public int Id { get; protected set; }
 
-    public string name { get; protected set; }
-    public string extendedName { get; protected set; }
-    public string searchableName { get; protected set; }
-    public string? imageUrl { get; protected set; }
-    public string? bigImageUrl { get; protected set; }
-    public PersonData? captain { get; protected set; }
-    public PersonData? nonCaptain { get; protected set; }
-    public PersonData? substitute { get; protected set; }
-    public string? teamColor { get; protected set; }
-    public int[]? teamColorAsRGBABecauseDigbyIsLazy { get; protected set; }
-    public double elo { get; protected set; }
+    public string Name { get; protected set; }
+    public string ExtendedName { get; protected set; }
+    public string SearchableName { get; protected set; }
+    public string? ImageUrl { get; protected set; }
+    public string? BigImageUrl { get; protected set; }
+    public PersonData? Captain { get; protected set; }
+    public PersonData? NonCaptain { get; protected set; }
+    public PersonData? Substitute { get; protected set; }
+    public string? TeamColor { get; protected set; }
+    public int[]? TeamColorAsRGBABecauseDigbyIsLazy { get; protected set; }
+    public double Elo { get; protected set; }
 
-    public Dictionary<string, dynamic>? stats { get; protected set; }
+    public Dictionary<string, dynamic>? Stats { get; protected set; }
 
     private static int[] GenerateRgba(string backgroundColor) {
         var color = ColorTranslator.FromHtml(backgroundColor);
@@ -40,26 +37,26 @@ public class TeamData {
 
     public TeamData(Team team, Tournament? tournament = null, bool generateStats = false,
         bool generatePlayerStats = false, bool formatData = false) {
-        id = team.Id;
-        name = team.Name;
-        extendedName = team.LongName ?? team.Name;
-        searchableName = team.SearchableName;
-        imageUrl = Utilities.FixImageUrl(team.ImageUrl);
-        bigImageUrl = Utilities.FixImageUrl(team.BigImageUrl);
-        captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
-        nonCaptain =
+        Id = team.Id;
+        Name = team.Name;
+        ExtendedName = team.LongName ?? team.Name;
+        SearchableName = team.SearchableName;
+        ImageUrl = Utilities.FixImageUrl(team.ImageUrl);
+        BigImageUrl = Utilities.FixImageUrl(team.BigImageUrl);
+        Captain = team.Captain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
+        NonCaptain =
             team.NonCaptain?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
-        substitute =
+        Substitute =
             team.Substitute?.ToSendableData(tournament, generateStats && generatePlayerStats, team, formatData);
-        teamColor = team.TeamColor;
-        teamColorAsRGBABecauseDigbyIsLazy = teamColor != null ? GenerateRgba(teamColor) : null;
+        TeamColor = team.TeamColor;
+        TeamColorAsRGBABecauseDigbyIsLazy = TeamColor != null ? GenerateRgba(TeamColor) : null;
 
 
         if (!generateStats) return;
 
-        elo = team.Elo();
+        Elo = team.Elo();
 
-        stats = new Dictionary<string, dynamic> {
+        Stats = new Dictionary<string, dynamic> {
             {"Games Played", 0.0},
             {"Games Won", 0.0},
             {"Games Lost", 0.0},
@@ -76,33 +73,33 @@ public class TeamData {
         foreach (var pgs in team.PlayerGameStats.Where(pgs =>
                      (tournament == null || pgs.TournamentId == tournament.Id)).OrderBy(pgs => pgs.GameId)) {
             if (tournament?.Ranked != false) {
-                if (!pgs.Game.Ranked && nonCaptain != null) continue;
+                if (!pgs.Game.Ranked && NonCaptain != null) continue;
             }
 
             if (pgs.Game.IsFinal) continue;
             if (gameId < pgs.GameId) {
                 gameId = pgs.GameId;
-                stats["Games Played"] += pgs.Game.Ended ? 1 : 0;
-                stats["Games Won"] += pgs.Game.Ended && pgs.Game.WinningTeamId == team.Id ? 1 : 0;
-                stats["Games Lost"] += pgs.Game.Ended && pgs.Game.WinningTeamId != team.Id ? 1 : 0;
-                stats["Timeouts Called"] +=
+                Stats["Games Played"] += pgs.Game.Ended ? 1 : 0;
+                Stats["Games Won"] += pgs.Game.Ended && pgs.Game.WinningTeamId == team.Id ? 1 : 0;
+                Stats["Games Lost"] += pgs.Game.Ended && pgs.Game.WinningTeamId != team.Id ? 1 : 0;
+                Stats["Timeouts Called"] +=
                     pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamOneTimeouts : pgs.Game.TeamTwoTimeouts;
-                stats["Points Against"] =
+                Stats["Points Against"] =
                     pgs.Game.TeamOneId == team.Id ? pgs.Game.TeamTwoScore : pgs.Game.TeamOneScore;
             }
 
-            stats["Green Cards"] += pgs.GreenCards;
-            stats["Yellow Cards"] += pgs.YellowCards;
-            stats["Red Cards"] += pgs.RedCards;
-            stats["Faults"] += pgs.Faults;
-            stats["Double Faults"] += pgs.DoubleFaults;
-            stats["Points Scored"] += pgs.PointsScored;
+            Stats["Green Cards"] += pgs.GreenCards;
+            Stats["Yellow Cards"] += pgs.YellowCards;
+            Stats["Red Cards"] += pgs.RedCards;
+            Stats["Faults"] += pgs.Faults;
+            Stats["Double Faults"] += pgs.DoubleFaults;
+            Stats["Points Scored"] += pgs.PointsScored;
         }
 
-        stats["Point Difference"] = stats["Points Scored"] - stats["Points Against"];
-        stats["Percentage"] = stats["Games Won"] / stats["Games Played"];
-        stats["Timeouts per Game"] = stats["Timeouts Called"] / stats["Games Played"];
-        stats["Elo"] = elo;
+        Stats["Point Difference"] = Stats["Points Scored"] - Stats["Points Against"];
+        Stats["Percentage"] = Stats["Games Won"] / Stats["Games Played"];
+        Stats["Timeouts per Game"] = Stats["Timeouts Called"] / Stats["Games Played"];
+        Stats["Elo"] = Elo;
 
 
         if (!formatData) return;
@@ -111,19 +108,19 @@ public class TeamData {
     }
 
     public void FormatData() {
-        foreach (var stat in stats.Keys) {
-            if (stats[stat] == null) {
-                stats[stat] = "-";
+        foreach (var stat in Stats.Keys) {
+            if (Stats[stat] == null) {
+                Stats[stat] = "-";
                 continue;
             }
 
-            if (double.IsNaN(stats[stat])) stats[stat] = "-";
+            if (double.IsNaN(Stats[stat])) Stats[stat] = "-";
             else if (PercentageColumns.Contains(stat)) {
-                if (double.IsInfinity(stats[stat])) stats[stat] = "\u221e%";
-                else stats[stat] = stats[stat].ToString("P2");
+                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e%";
+                else Stats[stat] = Stats[stat].ToString("P2");
             } else {
-                if (double.IsInfinity(stats[stat])) stats[stat] = "\u221e";
-                else stats[stat] = Math.Round((double) stats[stat], 2);
+                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e";
+                else Stats[stat] = Math.Round((double) Stats[stat], 2);
             }
         }
     }

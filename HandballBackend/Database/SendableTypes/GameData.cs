@@ -1,8 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-
-using HandballBackend.Database.Models;
+﻿using HandballBackend.Database.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 
@@ -11,88 +7,88 @@ public class AdminGameData {
         "Resolved", "In Progress", "Official", "Ended", "Waiting For Start", "Forfeit", "Bye"
     };
 
-    public bool markedForReview { get; set; }
-    public bool requiresAction { get; set; }
-    public string noteableStatus { get; set; }
-    public string notes { get; set; }
-    public int teamOneRating { get; set; }
-    public int teamTwoRating { get; set; }
-    public string? teamOneNotes { get; set; }
-    public string? teamTwoNotes { get; set; }
-    public string? teamOneProtest { get; set; }
-    public string? teamTwoProtest { get; set; }
-    public GameEventData[] cards { get; set; }
-    public bool resolved { get; set; }
+    public bool MarkedForReview { get; set; }
+    public bool RequiresAction { get; set; }
+    public string NoteableStatus { get; set; }
+    public string Notes { get; set; }
+    public int TeamOneRating { get; set; }
+    public int TeamTwoRating { get; set; }
+    public string? TeamOneNotes { get; set; }
+    public string? TeamTwoNotes { get; set; }
+    public string? TeamOneProtest { get; set; }
+    public string? TeamTwoProtest { get; set; }
+    public GameEventData[] Cards { get; set; }
+    public bool Resolved { get; set; }
 
     public AdminGameData(Game game) {
         var teamNotes = game.Events.Where(a => a.EventType is GameEventType.Notes).ToArray();
         var protests = game.Events.Where(a => a.EventType is GameEventType.Protest).ToArray();
-        markedForReview = game.MarkedForReview;
-        requiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
-        noteableStatus = game.NoteableStatus;
-        notes = (game.Notes?.Trim().Length ?? 0) > 0 ? game.Notes!.Trim() : "";
-        teamOneRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamOneId)?.Rating ?? 3;
-        teamTwoRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamTwoId)?.Rating ?? 3;
-        teamOneNotes = teamNotes
+        MarkedForReview = game.MarkedForReview;
+        RequiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
+        NoteableStatus = game.NoteableStatus;
+        Notes = (game.Notes?.Trim().Length ?? 0) > 0 ? game.Notes!.Trim() : "";
+        TeamOneRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamOneId)?.Rating ?? 3;
+        TeamTwoRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamTwoId)?.Rating ?? 3;
+        TeamOneNotes = teamNotes
             .Where(ge => ge.TeamId == game.TeamOneId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        teamTwoNotes = teamNotes
+        TeamTwoNotes = teamNotes
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        teamOneProtest = protests
+        TeamOneProtest = protests
             .Where(ge => ge.TeamId == game.TeamOneId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        teamTwoProtest = protests
+        TeamTwoProtest = protests
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        cards = game.Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
+        Cards = game.Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
             .Select(a => a.ToSendableData())
             .ToArray();
+        Resolved = game.Resolved;
     }
 }
 
 public class GameData {
-    public int id { get; private set; }
-    public TournamentData? tournament { get; private set; }
-    public GameTeamData teamOne { get; private set; }
-    public GameTeamData teamTwo { get; private set; }
-    public int teamOneScore { get; private set; }
-    public int teamTwoScore { get; private set; }
-    public int teamOneTimeouts { get; private set; }
-    public int teamTwoTimeouts { get; private set; }
-    public bool firstTeamWinning { get; private set; }
-    public bool started { get; private set; }
-    public bool someoneHasWon { get; private set; }
-    public bool ended { get; private set; }
-    public bool protested { get; private set; }
-    public bool resolved { get; private set; }
-    public bool ranked { get; private set; }
-    public PersonData? bestPlayer { get; private set; }
-    public OfficialData? official { get; private set; }
-    public OfficialData? scorer { get; private set; }
-    public bool firstTeamIga { get; private set; }
-    public bool firstTeamToServe { get; private set; }
-    public string sideToServe { get; private set; }
-    public int? startTime { get; private set; }
-    public int? serveTimer { get; private set; }
-    public int? length { get; private set; }
-    public bool isFinal { get; private set; }
-    public int round { get; private set; }
-    public bool isBye { get; private set; }
-    public string status { get; private set; }
-    public bool faulted { get; private set; }
-    public int changeCode { get; private set; }
-    public long? timeoutExpirationTime { get; private set; }
-    public bool isOfficialTimeout { get; private set; }
+    public int Id { get; private set; }
+    public TournamentData? Tournament { get; private set; }
+    public GameTeamData TeamOne { get; private set; }
+    public GameTeamData TeamTwo { get; private set; }
+    public int TeamOneScore { get; private set; }
+    public int TeamTwoScore { get; private set; }
+    public int TeamOneTimeouts { get; private set; }
+    public int TeamTwoTimeouts { get; private set; }
+    public bool FirstTeamWinning { get; private set; }
+    public bool Started { get; private set; }
+    public bool SomeoneHasWon { get; private set; }
+    public bool Ended { get; private set; }
+    public bool Protested { get; private set; }
+    public bool Ranked { get; private set; }
+    public PersonData? BestPlayer { get; private set; }
+    public OfficialData? Official { get; private set; }
+    public OfficialData? Scorer { get; private set; }
+    public bool FirstTeamIga { get; private set; }
+    public bool FirstTeamToServe { get; private set; }
+    public string SideToServe { get; private set; }
+    public int? StartTime { get; private set; }
+    public int? ServeTimer { get; private set; }
+    public int? Length { get; private set; }
+    public bool IsFinal { get; private set; }
+    public int Round { get; private set; }
+    public bool IsBye { get; private set; }
+    public string Status { get; private set; }
+    public bool Faulted { get; private set; }
+    public int ChangeCode { get; private set; }
+    public long? TimeoutExpirationTime { get; private set; }
+    public bool IsOfficialTimeout { get; private set; }
 
-    public GameEventData[]? events { get; private set; } = null;
+    public GameEventData[]? Events { get; private set; }
 
-    public AdminGameData admin { get; private set; }
-    public int court { get; private set; }
+    public AdminGameData? Admin { get; private set; }
+    public int Court { get; private set; }
 
 
     public GameData(
@@ -103,59 +99,59 @@ public class GameData {
         bool formatData = false,
         bool isAdmin = false
     ) {
-        id = game.GameNumber;
-        tournament = includeTournament ? game.Tournament?.ToSendableData() : null;
-        teamOne = game.TeamOne.ToGameSendableData(game, includeStats, formatData, isAdmin);
-        teamTwo = game.TeamTwo.ToGameSendableData(game, includeStats, formatData, isAdmin);
-        teamOneScore = game.TeamOneScore;
-        teamTwoScore = game.TeamTwoScore;
-        teamOneTimeouts = game.TeamOneTimeouts;
-        teamTwoTimeouts = game.TeamTwoTimeouts;
-        firstTeamWinning = game.WinningTeamId == game.TeamOneId;
-        started = game.Started;
-        someoneHasWon = game.SomeoneHasWon;
-        ended = game.Ended;
-        protested = game.Protested;
-        ranked = game.Ranked;
-        bestPlayer = game.BestPlayer?.ToSendableData();
-        official = game.Official?.ToSendableData();
-        scorer = game.Scorer?.ToSendableData();
-        firstTeamIga = game.TeamOneId == game.IgaSideId;
-        firstTeamToServe = game.TeamToServeId == game.TeamOneId;
-        sideToServe = game.SideToServe ?? "Left";
-        startTime = game.StartTime;
-        serveTimer = game.ServeTimer;
-        length = game.Length;
-        isFinal = game.IsFinal;
-        round = game.Round;
-        isBye = game.IsBye;
-        status = isAdmin ? game.Status : game.AdminStatus;
-        faulted = game.Events
+        Id = game.GameNumber;
+        Tournament = includeTournament ? game.Tournament.ToSendableData() : null;
+        TeamOne = game.TeamOne.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        TeamTwo = game.TeamTwo.ToGameSendableData(game, includeStats, formatData, isAdmin);
+        TeamOneScore = game.TeamOneScore;
+        TeamTwoScore = game.TeamTwoScore;
+        TeamOneTimeouts = game.TeamOneTimeouts;
+        TeamTwoTimeouts = game.TeamTwoTimeouts;
+        FirstTeamWinning = game.WinningTeamId == game.TeamOneId;
+        Started = game.Started;
+        SomeoneHasWon = game.SomeoneHasWon;
+        Ended = game.Ended;
+        Protested = game.Protested;
+        Ranked = game.Ranked;
+        BestPlayer = game.BestPlayer?.ToSendableData();
+        Official = game.Official?.ToSendableData();
+        Scorer = game.Scorer?.ToSendableData();
+        FirstTeamIga = game.TeamOneId == game.IgaSideId;
+        FirstTeamToServe = game.TeamToServeId == game.TeamOneId;
+        SideToServe = game.SideToServe ?? "Left";
+        StartTime = game.StartTime;
+        ServeTimer = game.ServeTimer;
+        Length = game.Length;
+        IsFinal = game.IsFinal;
+        Round = game.Round;
+        IsBye = game.IsBye;
+        Status = isAdmin ? game.Status : game.AdminStatus;
+        Faulted = game.Events
             .Where(a => a.EventType is GameEventType.Fault or GameEventType.Score)
             .OrderBy(a => a.Id)
             .Select(a => a.EventType == GameEventType.Fault)
             .LastOrDefault(false);
-        changeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
-        var gE = game.Events
+        ChangeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
+        var lastTimeoutEvent = game.Events
             .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
             .OrderByDescending(a => a.Id).FirstOrDefault();
-        timeoutExpirationTime =
-            gE?.EventType == GameEventType.Timeout ? (gE.CreatedAt + Config.TimeoutTime) * 1000 : -1;
+        TimeoutExpirationTime =
+            lastTimeoutEvent?.EventType == GameEventType.Timeout ? (lastTimeoutEvent.CreatedAt + Config.TimeoutTime) * 1000 : -1;
 
-        isOfficialTimeout = game.Events
+        IsOfficialTimeout = game.Events
             .Where(a => a.EventType is GameEventType.Timeout)
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
-        court = game.Court;
+        Court = game.Court;
 
 
         if (includeGameEvents) {
-            events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.id).ToArray();
+            Events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.Id).ToArray();
         }
 
         if (isAdmin) {
-            admin = new AdminGameData(game);
-            status = game.AdminStatus;
+            Admin = new AdminGameData(game);
+            Status = game.AdminStatus;
         }
     }
 }

@@ -11,12 +11,11 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class TeamsController : ControllerBase {
-
     public record GetTeamResponse {
-        public TeamData team { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required TeamData Team { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
-    
+
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -64,16 +63,16 @@ public class TeamsController : ControllerBase {
 
 
         return new GetTeamResponse {
-            team = teamData,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Team = teamData,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetTeamsResponse {
-        public TeamData[] teams { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required TeamData[] Teams { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
-    
+
     [HttpGet]
     public ActionResult<GetTeamsResponse> GetMultiple(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -88,7 +87,7 @@ public class TeamsController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        TeamData[] teamData = null;
+        TeamData[] teamData;
         if (tournament is not null) {
             IQueryable<TournamentTeam> query = db.TournamentTeams
                 .Where(t => t.TournamentId == tournament.Id)
@@ -150,20 +149,20 @@ public class TeamsController : ControllerBase {
 
 
         return new GetTeamsResponse {
-            teams = teamData,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Teams = teamData,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
 
     public record GetLadderResponse {
-        public TeamData[]? ladder { get; set; }
-        public TeamData[]? poolOne { get; set; }
-        public TeamData[]? poolTwo { get; set; }
-        public bool pooled { get; set; }
-        public TournamentData? tournament { get; set; }
+        public TeamData[]? Ladder { get; set; }
+        public TeamData[]? PoolOne { get; set; }
+        public TeamData[]? PoolTwo { get; set; }
+        public bool Pooled { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
-    
+
     [HttpGet("ladder")]
     public ActionResult<GetLadderResponse> GetLadder(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -181,9 +180,9 @@ public class TeamsController : ControllerBase {
         if (tournament is not null) {
             (ladder, poolOne, poolTwo) = LadderHelper.GetTournamentLadder(db, tournament);
             if (tournament.Editable) {
-                ladder = ladder?.Where(t => t.stats!["Games Played"] > 0).ToArray();
-                poolOne = poolOne?.Where(t => t.stats!["Games Played"] > 0).ToArray();
-                poolTwo = poolTwo?.Where(t => t.stats!["Games Played"] > 1).ToArray();
+                ladder = ladder?.Where(t => t.Stats!["Games Played"] > 0).ToArray();
+                poolOne = poolOne?.Where(t => t.Stats!["Games Played"] > 0).ToArray();
+                poolTwo = poolTwo?.Where(t => t.Stats!["Games Played"] > 1).ToArray();
             }
         } else {
             //Not null captain removes bye team
@@ -196,7 +195,7 @@ public class TeamsController : ControllerBase {
                             && (t.Substitute == null || t.Substitute.SearchableName != "lachlan_banks"));
             ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
                 .ToArray());
-            ladder = ladder.Where(t => t.stats!["Games Played"] > 0).ToArray();
+            ladder = ladder.Where(t => t.Stats!["Games Played"] > 0).ToArray();
         }
 
 
@@ -226,11 +225,11 @@ public class TeamsController : ControllerBase {
 
 
         return new GetLadderResponse {
-            ladder = ladder,
-            poolOne = poolOne,
-            poolTwo = poolTwo,
-            pooled = poolOne is not null,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Ladder = ladder,
+            PoolOne = poolOne,
+            PoolTwo = poolTwo,
+            Pooled = poolOne is not null,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 }

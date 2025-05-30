@@ -11,10 +11,10 @@ public class TournamentTeamData : TeamData {
     public TournamentTeamData(TournamentTeam tt, bool generateStats = false,
         bool generatePlayerStats = false, bool formatData = false) : base(tt.Team, tt.Tournament, generateStats,
         generatePlayerStats, formatData) {
-        imageUrl = tt.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
-        bigImageUrl = tt.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
-        name = tt.Name ?? name;
-        teamColor = tt.TeamColor ?? teamColor;
-        extendedName = tt.LongName ?? tt.Name ?? extendedName;
+        ImageUrl = tt.ImageUrl == null ? ImageUrl : Utilities.FixImageUrl(tt.ImageUrl);
+        BigImageUrl = tt.BigImageUrl == null ? BigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        Name = tt.Name ?? Name;
+        TeamColor = tt.TeamColor ?? TeamColor;
+        ExtendedName = tt.LongName ?? tt.Name ?? ExtendedName;
     }
 }

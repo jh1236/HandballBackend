@@ -13,7 +13,7 @@ namespace HandballBackend.Controllers;
 [Route("api/[controller]")]
 public class GamesController : ControllerBase {
     public record ChangeCodeResponse {
-        public int code { get; set; }
+        public int Code { get; set; }
     }
 
     [HttpGet("change_code")]
@@ -25,12 +25,12 @@ public class GamesController : ControllerBase {
             .Select(gE => gE.Id).FirstOrDefault();
 
         return new ChangeCodeResponse {
-            code = query
+            Code = query
         };
     }
 
     public record GetGameResponse {
-        public GameData game { get; set; }
+        public GameData Game { get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
@@ -62,13 +62,13 @@ public class GamesController : ControllerBase {
         }
 
         return new GetGameResponse {
-            game = game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin)
+            Game = game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin)
         };
     }
 
     public record GetGamesResponse {
-        public GameData[] games { get; set; }
-        public TournamentData? tournament { get; set; }
+        public GameData[] Games { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
     [HttpGet]
@@ -153,14 +153,14 @@ public class GamesController : ControllerBase {
 
 
         return new GetGamesResponse {
-            games = games,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Games = games,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetNoteableResponse {
-        public GameData[] games { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required GameData[] Games { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
     [HttpGet("noteable")]
@@ -206,15 +206,15 @@ public class GamesController : ControllerBase {
 
 
         return new GetNoteableResponse {
-            games = games,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Games = games,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetFixturesResponse {
-        public FixturesRound[] fixtures { get; set; }
-        public FixturesRound[]? finals { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required FixturesRound[] Fixtures { get; set; }
+        public FixturesRound[]? Finals { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
     [HttpGet("fixtures")]
@@ -242,7 +242,7 @@ public class GamesController : ControllerBase {
         List<FixturesRound> fixtures = [];
 
         foreach (var game in games) {
-            var roundIndex = game.round - 1;
+            var roundIndex = game.Round - 1;
             while (fixtures.Count < roundIndex) {
                 // creates all before the current round
                 fixtures.Add(new FixturesRound());
@@ -250,9 +250,9 @@ public class GamesController : ControllerBase {
 
             if (fixtures.Count == roundIndex) {
                 //create the current round
-                fixtures.Add(new FixturesRound([game], game.isFinal));
+                fixtures.Add(new FixturesRound([game], game.IsFinal));
             } else {
-                fixtures[game.round - 1].games.Add(game);
+                fixtures[game.Round - 1].Games.Add(game);
             }
         }
 
@@ -264,19 +264,17 @@ public class GamesController : ControllerBase {
             fixtures = fixtures.TakeLast(maxRounds).ToList();
         }
 
-        var output = new GetFixturesResponse();
-        if (separateFinals) {
-            output.fixtures = fixtures.Where(f => !f.final).ToArray();
-            output.finals = fixtures.Where(f => f.final).ToArray();
-        } else {
-            output.fixtures = fixtures.ToArray();
-        }
+        var output = new GetFixturesResponse() {
+            Fixtures = separateFinals ? fixtures.Where(f => !f.Final).ToArray() : fixtures.ToArray(),
+            Finals = separateFinals ? fixtures?.Where(f => f.Final).ToArray() : null
+        };
 
         if (returnTournament) {
             if (tournament is null) {
                 return BadRequest("Cannot return null tournament");
             }
-            output.tournament = tournament.ToSendableData();
+
+            output.Tournament = tournament.ToSendableData();
         }
 
 
@@ -285,10 +283,10 @@ public class GamesController : ControllerBase {
 }
 
 public class FixturesRound(List<GameData>? games = null, bool isFinal = false) {
-    public List<GameData> games { get; set; } = games == null ? [] : games;
-    public bool final { get; set; } = isFinal;
+    public List<GameData> Games { get; private set; } = games ?? [];
+    public bool Final { get; set; } = isFinal;
 
     public void Sort() {
-        games = FixturesHelper.SortFixtures(games);
+        Games = FixturesHelper.SortFixtures(Games);
     }
 }

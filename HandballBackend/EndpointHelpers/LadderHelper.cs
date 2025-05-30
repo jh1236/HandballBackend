@@ -27,30 +27,30 @@ public static class LadderHelper {
 
     public static TeamData[] SortTeams(TeamData[] teams) {
         return teams
-            .OrderByDescending(t => t.stats!["Percentage"])
-            .ThenByDescending(t => t.stats!["Point Difference"])
-            .ThenByDescending(t => t.stats!["Points Scored"])
-            .ThenBy(t => t.stats!["Red Cards"])
-            .ThenBy(t => t.stats!["Yellow Cards"])
-            .ThenBy(t => t.stats!["Green Cards"])
-            .ThenBy(t => t.stats!["Double Faults"])
-            .ThenBy(t => t.stats!["Faults"])
-            .ThenBy(t => t.stats!["Timeouts Called"])
+            .OrderByDescending(t => t.Stats!["Percentage"])
+            .ThenByDescending(t => t.Stats!["Point Difference"])
+            .ThenByDescending(t => t.Stats!["Points Scored"])
+            .ThenBy(t => t.Stats!["Red Cards"])
+            .ThenBy(t => t.Stats!["Yellow Cards"])
+            .ThenBy(t => t.Stats!["Green Cards"])
+            .ThenBy(t => t.Stats!["Double Faults"])
+            .ThenBy(t => t.Stats!["Faults"])
+            .ThenBy(t => t.Stats!["Timeouts Called"])
             .ToArray();
     }
 
     public static TeamData[] SortTeamsNoTournament(TeamData[] teams) {
         return teams
-            .OrderByDescending(t => t.stats!["Percentage"])
-            .ThenByDescending(t => t.stats!["Games Played"])
-            .ThenByDescending(t => t.stats!["Point Difference"])
-            .ThenByDescending(t => t.stats!["Points Scored"])
-            .ThenBy(t => t.stats!["Red Cards"])
-            .ThenBy(t => t.stats!["Yellow Cards"])
-            .ThenBy(t => t.stats!["Green Cards"])
-            .ThenBy(t => t.stats!["Double Faults"])
-            .ThenBy(t => t.stats!["Faults"])
-            .ThenBy(t => t.stats!["Timeouts Called"])
+            .OrderByDescending(t => t.Stats!["Percentage"])
+            .ThenByDescending(t => t.Stats!["Games Played"])
+            .ThenByDescending(t => t.Stats!["Point Difference"])
+            .ThenByDescending(t => t.Stats!["Points Scored"])
+            .ThenBy(t => t.Stats!["Red Cards"])
+            .ThenBy(t => t.Stats!["Yellow Cards"])
+            .ThenBy(t => t.Stats!["Green Cards"])
+            .ThenBy(t => t.Stats!["Double Faults"])
+            .ThenBy(t => t.Stats!["Faults"])
+            .ThenBy(t => t.Stats!["Timeouts Called"])
             .ToArray();
     }
 }

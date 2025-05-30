@@ -10,8 +10,8 @@ namespace HandballBackend.Controllers;
 [Route("api/[controller]")]
 public class PlayersController : ControllerBase {
     public record GetPlayerResponse {
-        public PersonData player { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required PersonData Player { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
 
@@ -45,14 +45,14 @@ public class PlayersController : ControllerBase {
 
 
         return new GetPlayerResponse {
-            player = player,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Player = player,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetPlayersResponse {
-        public PersonData[] players { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required PersonData[] Players { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
 
@@ -95,7 +95,7 @@ public class PlayersController : ControllerBase {
         var playerSendable = query.OrderBy(p => p.SearchableName)
             .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray();
         if ((tournament == null || tournament.Editable) && includeStats) {
-            playerSendable = playerSendable.Where(p => p.stats!["Games Played"] > 0).ToArray();
+            playerSendable = playerSendable.Where(p => p.Stats!["Games Played"] > 0).ToArray();
         }
 
         if (returnTournament && tournament is null) {
@@ -104,14 +104,14 @@ public class PlayersController : ControllerBase {
 
 
         return new GetPlayersResponse {
-            players = playerSendable,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Players = playerSendable,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetStatsResponse {
-        public Dictionary<string, dynamic?>? stats { get; set; }
-        public TournamentData? tournament { get; set; }
+        public Dictionary<string, dynamic?>? Stats { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
     
     [HttpGet("stats")]
@@ -131,7 +131,7 @@ public class PlayersController : ControllerBase {
                 .Where(pgs => pgs.Game.GameNumber == gameNumber.Value)
                 .Include(pgs => pgs.Game)
                 .ToArray()
-                .Select(pgs => pgs.ToSendableData(true).stats!).ToList();
+                .Select(pgs => pgs.ToSendableData(true).Stats!).ToList();
         } else if (tournament is not null) {
             statsList = db.People
                 .Where(p => p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id))
@@ -144,7 +144,7 @@ public class PlayersController : ControllerBase {
                 )
                 .ThenInclude(pgs => pgs.Game)
                 .ToArray()
-                .Select(p => p.ToSendableData(tournament, true).stats!).ToList();
+                .Select(p => p.ToSendableData(tournament, true).Stats!).ToList();
         } else {
             statsList = db.People
                 .Include(p => p.PlayerGameStats!
@@ -155,7 +155,7 @@ public class PlayersController : ControllerBase {
                 )
                 .ThenInclude(pgs => pgs.Game)
                 .ToArray()
-                .Select(p => p.ToSendableData(null, true).stats!).ToList();
+                .Select(p => p.ToSendableData(null, true).Stats!).ToList();
         }
 
         var ret = new Dictionary<string, dynamic?>();
@@ -196,8 +196,8 @@ public class PlayersController : ControllerBase {
 
 
         return new GetStatsResponse {
-            stats = ret,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Stats = ret,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 }

@@ -30,9 +30,9 @@ public class PooledFinals : AbstractFixtureGenerator {
         } else {
             var (_, poolOne, poolTwo) = LadderHelper.GetTournamentLadder(db, tournament);
             var lastGame = db.Games.Where(g => g.TournamentId == _tournamentId).OrderByDescending(g => g.Id).First();
-            GameManager.CreateGame(_tournamentId, poolOne![0].id, poolTwo![1].id, isFinal: true,
+            GameManager.CreateGame(_tournamentId, poolOne![0].Id, poolTwo![1].Id, isFinal: true,
                 round: lastGame.Round + 1);
-            GameManager.CreateGame(_tournamentId, poolTwo[0].id, poolOne[1].id, isFinal: true,
+            GameManager.CreateGame(_tournamentId, poolTwo[0].Id, poolOne[1].Id, isFinal: true,
                 round: lastGame.Round + 1);
         }
 

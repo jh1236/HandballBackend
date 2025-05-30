@@ -8,7 +8,7 @@ namespace HandballBackend.Controllers;
 [Route("/api/[controller]")]
 public class TournamentsController : ControllerBase {
     public record GetTournamentsRepsonse {
-        public TournamentData[] tournaments { get; set; }
+        public required TournamentData[] Tournaments { get; set; }
     }
 
     [HttpGet]
@@ -20,12 +20,12 @@ public class TournamentsController : ControllerBase {
             .Select(t => t.ToSendableData())
             .ToArray();
         return new GetTournamentsRepsonse {
-            tournaments = tournaments
+            Tournaments = tournaments
         };
     }
 
     public record GetTournamentResponse {
-        public TournamentData tournament { get; set; }
+        public required TournamentData Tournament { get; set; }
     }
 
     [HttpGet("{searchable}")]
@@ -38,7 +38,7 @@ public class TournamentsController : ControllerBase {
         }
 
         return new GetTournamentResponse {
-            tournament = tournament.ToSendableData()
+            Tournament = tournament.ToSendableData()
         };
     }
 }

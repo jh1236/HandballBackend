@@ -1,19 +1,15 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-
-using HandballBackend.Database.Models;
+﻿using HandballBackend.Database.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 
 public class GamePlayerData : PersonData {
     public int BestPlayerVotes { get; set; }
-    public int cardTime { get; set; }
-    public int cardTimeRemaining { get; set; }
-    public string? sideOfCourt { get; set; }
-    public bool isCaptain { get; set; }
-    public string startSide { get; set; }
-    public List<GameEventData> prevCards { get; set; }
+    public int CardTime { get; set; }
+    public int CardTimeRemaining { get; set; }
+    public string? SideOfCourt { get; set; }
+    public bool IsCaptain { get; set; }
+    public string? StartSide { get; set; }
+    public List<GameEventData> PrevCards { get; set; }
 
     public GamePlayerData(Person player, Game game, bool includeStats = false, bool formatData = false)
         : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
@@ -22,15 +18,17 @@ public class GamePlayerData : PersonData {
     public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false, bool isAdmin = false)
         : base(pgs.Player) {
         BestPlayerVotes = pgs.BestPlayerVotes;
-        cardTime = pgs.CardTime;
-        cardTimeRemaining = pgs.CardTimeRemaining;
-        sideOfCourt = pgs.SideOfCourt;
-        isCaptain = pgs.Id == pgs.Team.CaptainId;
-        startSide = pgs.StartSide;
-        prevCards = isAdmin ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
-            .Select(gE => gE.ToSendableData()).ToList() ?? [] : [];
+        CardTime = pgs.CardTime;
+        CardTimeRemaining = pgs.CardTimeRemaining;
+        SideOfCourt = pgs.SideOfCourt;
+        IsCaptain = pgs.Id == pgs.Team.CaptainId;
+        StartSide = pgs.StartSide;
+        PrevCards = isAdmin
+            ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
+                .Select(gE => gE.ToSendableData()).ToList() ?? []
+            : [];
         if (!includeStats) return;
-        stats = new Dictionary<string, dynamic?> {
+        Stats = new Dictionary<string, dynamic?> {
             ["Elo"] = pgs.InitialElo,
             ["Elo Delta"] = pgs.EloDelta,
             ["B&F Votes"] = pgs.BestPlayerVotes,

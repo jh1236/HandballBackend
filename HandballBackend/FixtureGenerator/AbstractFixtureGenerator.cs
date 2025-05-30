@@ -78,8 +78,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
         // Sort games by combined wins of both teams
         games = games.OrderByDescending(g =>
-                g.TeamOne.ToSendableData(true, tournament: tourney).stats!["Games Won"] +
-                g.TeamTwo.ToSendableData(true, tournament: tourney).stats!["Games Won"])
+                g.TeamOne.ToSendableData(true, tournament: tourney).Stats!["Games Won"] +
+                g.TeamTwo.ToSendableData(true, tournament: tourney).Stats!["Games Won"])
             .ToList();
 
         // Assign courts (0 for first half, 1 for second half)

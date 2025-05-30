@@ -4,9 +4,9 @@ namespace HandballBackend.EndpointHelpers;
 
 public static class FixturesHelper {
     public static List<GameData> SortFixtures(List<GameData> games) {
-        var courtOneGames = games.Where(g => g.court == 0).ToArray();
-        var courtTwoGames = games.Where(g => g.court == 1).ToArray();
-        var byes = games.Where(g => g.isBye);
+        var courtOneGames = games.Where(g => g.Court == 0).ToArray();
+        var courtTwoGames = games.Where(g => g.Court == 1).ToArray();
+        var byes = games.Where(g => g.IsBye);
         var output = new List<GameData>();
         for (var i = 0; i < Math.Max(courtOneGames.Length, courtTwoGames.Length); i++) {
             if (i < courtOneGames.Length) {

@@ -1,15 +1,8 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-
-using HandballBackend.Database.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using HandballBackend.Database.Models;
 
 namespace HandballBackend.Database.SendableTypes;
 
 public class OfficialData : PersonData {
-    public new Dictionary<string, float> stats { get; private set; }
-
     public OfficialData(Official official, Tournament? tournament = null, bool includeStats = false) : base(
         official.Person) {
         if (!includeStats) return;
@@ -20,7 +13,7 @@ public class OfficialData : PersonData {
                 .Where(g => !g.IsBye && (g.Ranked || (!tournament?.Ranked ?? false)))
                 .OrderBy(g => g.Id).SelectMany(g => g.Players);
         var prevGameId = 0;
-        stats = new Dictionary<string, float> {
+        Stats = new Dictionary<string, dynamic?> {
             {"Games Umpired", 0},
             {"Caps", 0},
             {"Rounds Umpired", 0},
@@ -34,17 +27,17 @@ public class OfficialData : PersonData {
         foreach (var pgs in playerGameStats) {
             if (pgs.GameId > prevGameId) {
                 prevGameId = pgs.GameId;
-                stats["Games Umpired"] += 1;
-                stats["Rounds Umpired"] += pgs.Game.TeamOneScore + pgs.Game.TeamTwoScore;
-                stats["Caps"] += pgs.Game.Ended && pgs.Game.TournamentId != 1 ? 1 : 0;
+                Stats["Games Umpired"] += 1;
+                Stats["Rounds Umpired"] += pgs.Game.TeamOneScore + pgs.Game.TeamTwoScore;
+                Stats["Caps"] += pgs.Game.Ended && pgs.Game.TournamentId != 1 ? 1 : 0;
             }
 
-            stats["Green Cards Given"] += pgs.GreenCards;
-            stats["Yellow Cards Given"] += pgs.YellowCards;
-            stats["Red Cards Given"] += pgs.RedCards;
-            stats["Cards Given"] += pgs.GreenCards + pgs.YellowCards + pgs.RedCards;
-            stats["Faults Called"] += pgs.Faults;
-            stats["Double Faults Called"] += pgs.DoubleFaults;
+            Stats["Green Cards Given"] += pgs.GreenCards;
+            Stats["Yellow Cards Given"] += pgs.YellowCards;
+            Stats["Red Cards Given"] += pgs.RedCards;
+            Stats["Cards Given"] += pgs.GreenCards + pgs.YellowCards + pgs.RedCards;
+            Stats["Faults Called"] += pgs.Faults;
+            Stats["Double Faults Called"] += pgs.DoubleFaults;
         }
     }
 }

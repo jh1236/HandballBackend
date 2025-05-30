@@ -1,42 +1,38 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-using HandballBackend.Database.Models;
+﻿using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
-//TODO: editable
 public class TournamentData {
-    public string name { get; private set; }
-    public string searchableName { get; private set; }
-    public bool editable { get; private set; }
-    public string fixturesType { get; private set; }
-    public string finalsType { get; private set; }
-    public bool ranked { get; private set; }
-    public bool twoCourts { get; private set; }
-    public bool hasScorer { get; private set; }
-    public bool finished { get; private set; }
-    public bool inFinals { get; private set; }
-    public bool isPooled { get; private set; }
-    public string notes { get; private set; }
+    public string Name { get; private set; }
+    public string SearchableName { get; private set; }
+    public bool Editable { get; private set; }
+    public string FixturesType { get; private set; }
+    public string FinalsType { get; private set; }
+    public bool Ranked { get; private set; }
+    public bool TwoCourts { get; private set; }
+    public bool HasScorer { get; private set; }
+    public bool Finished { get; private set; }
+    public bool InFinals { get; private set; }
+    public bool IsPooled { get; private set; }
+    public string Notes { get; private set; }
     public string ImageUrl { get; private set; }
-    public bool usingBadmintonServes { get; private set; }
+    public bool UsingBadmintonServes { get; private set; }
 
     public TournamentData(Tournament tournament, bool isAdmin = false) {
-        name = tournament.Name;
-        searchableName = tournament.SearchableName;
-        fixturesType = tournament.FixturesType;
-        finalsType = tournament.FinalsType;
-        ranked = tournament.Ranked;
-        twoCourts = tournament.TwoCourts;
-        hasScorer = tournament.HasScorer;
-        finished = tournament.Finished;
-        inFinals = tournament.InFinals;
-        isPooled = tournament.IsPooled;
-        notes = tournament.Notes;
+        Name = tournament.Name;
+        SearchableName = tournament.SearchableName;
+        FixturesType = tournament.FixturesType;
+        FinalsType = tournament.FinalsType;
+        Ranked = tournament.Ranked;
+        TwoCourts = tournament.TwoCourts;
+        HasScorer = tournament.HasScorer;
+        Finished = tournament.Finished;
+        InFinals = tournament.InFinals;
+        IsPooled = tournament.IsPooled;
+        Notes = tournament.Notes ?? string.Empty;
         ImageUrl = Utilities.FixImageUrl(tournament.ImageUrl);
-        usingBadmintonServes = tournament.BadmintonServes;
-        editable = true; //TODO: This is not working
+        UsingBadmintonServes = tournament.BadmintonServes;
+        Editable = tournament.Editable;
     }
 }

@@ -8,7 +8,7 @@ using HandballBackend.Utils;
 namespace HandballBackend.Database.SendableTypes;
 
 public class GameTeamData : TeamData {
-    public bool servingFromLeft { get; private set; } = true;
+    public bool servingFromLeft { get; private set; }
 
     public new GamePlayerData? captain { get; set; }
     public new GamePlayerData? nonCaptain { get; set; }
@@ -21,10 +21,10 @@ public class GameTeamData : TeamData {
         bool formatData = false,
         bool isAdmin = false) : base(team) {
         var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
-        imageUrl = tt?.ImageUrl == null ? imageUrl : Utilities.FixImageUrl(tt.ImageUrl);
-        bigImageUrl = tt?.BigImageUrl == null ? bigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
-        name = tt?.Name ?? name;
-        extendedName = tt?.LongName ?? tt?.Name ?? extendedName;
+        ImageUrl = tt?.ImageUrl == null ? ImageUrl : Utilities.FixImageUrl(tt.ImageUrl);
+        BigImageUrl = tt?.BigImageUrl == null ? BigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        Name = tt?.Name ?? Name;
+        ExtendedName = tt?.LongName ?? tt?.Name ?? ExtendedName;
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
         var lastTimeServed = game.Events
             .OrderByDescending(a => a.Id)
@@ -55,7 +55,7 @@ public class GameTeamData : TeamData {
 
         if (!generateStats) return;
 
-        stats = new Dictionary<string, dynamic> {
+        Stats = new Dictionary<string, dynamic> {
             ["Timeouts Called"] = game.TeamOneId == team.Id ? game.TeamOneTimeouts : game.TeamTwoTimeouts,
             ["Points Against"] = game.TeamOneId == team.Id ? game.TeamTwoScore : game.TeamOneScore,
             ["Green Cards"] = 0.0,
@@ -68,12 +68,12 @@ public class GameTeamData : TeamData {
 
 
         foreach (var pgs in game.Players.Where(pgs => pgs.TeamId == team.Id)) {
-            stats["Green Cards"] += pgs.GreenCards;
-            stats["Yellow Cards"] += pgs.YellowCards;
-            stats["Red Cards"] += pgs.RedCards;
-            stats["Faults"] += pgs.Faults;
-            stats["Double Faults"] += pgs.DoubleFaults;
-            stats["Points Scored"] += pgs.PointsScored;
+            Stats["Green Cards"] += pgs.GreenCards;
+            Stats["Yellow Cards"] += pgs.YellowCards;
+            Stats["Red Cards"] += pgs.RedCards;
+            Stats["Faults"] += pgs.Faults;
+            Stats["Double Faults"] += pgs.DoubleFaults;
+            Stats["Points Scored"] += pgs.PointsScored;
         }
 
         if (!formatData) return;

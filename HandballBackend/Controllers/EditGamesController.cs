@@ -10,13 +10,13 @@ namespace HandballBackend.Controllers;
 [Route("api/games/update")]
 public class EditGamesController : ControllerBase {
     public class CreateRequest {
-        public required string tournament { get; set; }
-        public string? teamOne { get; set; } = null;
-        public string? teamTwo { get; set; } = null;
-        public string[]? playersOne { get; set; } = null;
-        public string[]? playersTwo { get; set; } = null;
-        public required string official { get; set; }
-        public string? scorer { get; set; } = null;
+        public required string Tournament { get; set; }
+        public string? TeamOne { get; set; } = null;
+        public string? TeamTwo { get; set; } = null;
+        public string[]? PlayersOne { get; set; } = null;
+        public string[]? PlayersTwo { get; set; } = null;
+        public required string Official { get; set; }
+        public string? Scorer { get; set; } = null;
     }
 
     [HttpPost("create")]
@@ -26,32 +26,33 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
+
         var db = new HandballContext();
-        if (!Utilities.TournamentOrElse(db, create.tournament, out var tournament)) {
+        if (!Utilities.TournamentOrElse(db, create.Tournament, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
-        var official = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.official);
+        var official = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.Official);
         if (official == null) {
             return BadRequest("Official not found");
         }
 
-        var g = GameManager.CreateGame(tournament!.Id, create.playersOne, create.playersTwo, create.teamOne,
-            create.teamTwo,
+        var g = GameManager.CreateGame(tournament!.Id, create.PlayersOne, create.PlayersTwo, create.TeamOne,
+            create.TeamTwo,
             official.Id);
         return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}",
             Utilities.WrapInDictionary("game", g.ToSendableData()));
     }
 
     public class StartRequest {
-        public required int id { get; set; }
-        public required bool swapService { get; set; }
-        public required string[] teamOne { get; set; }
-        public required string[] teamTwo { get; set; }
-        public required bool teamOneIGA { get; set; }
+        public required int Id { get; set; }
+        public required bool SwapService { get; set; }
+        public required string[] TeamOne { get; set; }
+        public required string[] TeamTwo { get; set; }
+        public required bool TeamOneIga { get; set; }
 
-        public string? official { get; set; } = null;
-        public string? scorer { get; set; } = null;
+        public string? Official { get; set; } = null;
+        public string? Scorer { get; set; } = null;
     }
 
     [HttpPost("start")]
@@ -62,17 +63,18 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.StartGame(startRequest.id, startRequest.swapService, startRequest.teamOne, startRequest.teamTwo,
-            startRequest.teamOneIGA, startRequest.official, startRequest.scorer);
+
+        GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne, startRequest.TeamTwo,
+            startRequest.TeamOneIga, startRequest.Official, startRequest.Scorer);
         return NoContent();
     }
 
     public class ScorePointRequest {
-        public required int id { get; set; }
-        public required bool firstTeam { get; set; }
-        public bool? leftPlayer { get; set; }
-        public string? playerSearchable { get; set; }
-        public string? method { get; set; }
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
+        public bool? LeftPlayer { get; set; }
+        public string? PlayerSearchable { get; set; }
+        public string? Method { get; set; }
     }
 
     [HttpPost("score")]
@@ -81,12 +83,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        if (!string.IsNullOrEmpty(scorePointRequest.playerSearchable)) {
-            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
-                scorePointRequest.playerSearchable, scorePointRequest.method);
-        } else if (scorePointRequest.leftPlayer.HasValue) {
-            GameManager.ScorePoint(scorePointRequest.id, scorePointRequest.firstTeam,
-                scorePointRequest.leftPlayer.Value, scorePointRequest.method);
+
+        if (!string.IsNullOrEmpty(scorePointRequest.PlayerSearchable)) {
+            GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
+                scorePointRequest.PlayerSearchable, scorePointRequest.Method);
+        } else if (scorePointRequest.LeftPlayer.HasValue) {
+            GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
+                scorePointRequest.LeftPlayer.Value, scorePointRequest.Method);
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -95,13 +98,13 @@ public class EditGamesController : ControllerBase {
     }
 
     public class CardRequest {
-        public required int id { get; set; }
-        public required bool firstTeam { get; set; }
-        public bool? leftPlayer { get; set; }
-        public string? playerSearchable { get; set; }
-        public string color { get; set; }
-        public string? reason { get; set; }
-        public int duration { get; set; }
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
+        public bool? LeftPlayer { get; set; }
+        public string? PlayerSearchable { get; set; }
+        public string Color { get; set; }
+        public string? Reason { get; set; }
+        public int Duration { get; set; }
     }
 
     [HttpPost("card")]
@@ -111,12 +114,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        if (!string.IsNullOrEmpty(cardRequest.playerSearchable)) {
-            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.playerSearchable, cardRequest.color,
-                cardRequest.duration, cardRequest.reason ?? "Not Provided");
-        } else if (cardRequest.leftPlayer.HasValue) {
-            GameManager.Card(cardRequest.id, cardRequest.firstTeam, cardRequest.leftPlayer.Value, cardRequest.color,
-                cardRequest.duration, cardRequest.reason ?? "Not Provided");
+
+        if (!string.IsNullOrEmpty(cardRequest.PlayerSearchable)) {
+            GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable, cardRequest.Color,
+                cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
+        } else if (cardRequest.LeftPlayer.HasValue) {
+            GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.LeftPlayer.Value, cardRequest.Color,
+                cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -125,7 +129,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class AceRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("ace")]
@@ -134,12 +138,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Ace(aceRequest.id);
+
+        GameManager.Ace(aceRequest.Id);
         return NoContent();
     }
 
     public class FaultRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("fault")]
@@ -148,13 +153,14 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Fault(faultRequest.id);
+
+        GameManager.Fault(faultRequest.Id);
         return NoContent();
     }
 
     public class TimeoutRequest {
-        public required int id { get; set; }
-        public required bool firstTeam { get; set; }
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
     }
 
     [HttpPost("timeout")]
@@ -163,13 +169,14 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Timeout(timeoutRequest.id, timeoutRequest.firstTeam);
+
+        GameManager.Timeout(timeoutRequest.Id, timeoutRequest.FirstTeam);
         return NoContent();
     }
 
     public class ForfeitRequest {
-        public required int id { get; set; }
-        public required bool firstTeam { get; set; }
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
     }
 
     [HttpPost("forfeit")]
@@ -178,12 +185,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Forfeit(forfeitRequest.id, forfeitRequest.firstTeam);
+
+        GameManager.Forfeit(forfeitRequest.Id, forfeitRequest.FirstTeam);
         return NoContent();
     }
 
     public class EndTimeoutRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("endTimeout")]
@@ -192,15 +200,16 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.EndTimeout(endTimeoutRequest.id);
+
+        GameManager.EndTimeout(endTimeoutRequest.Id);
         return NoContent();
     }
 
     public class SubstituteRequest {
-        public required int id { get; set; }
-        public required bool firstTeam { get; set; }
-        public string? playerSearchable { get; set; }
-        public bool? leftPlayer { get; set; }
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
+        public string? PlayerSearchable { get; set; }
+        public bool? LeftPlayer { get; set; }
     }
 
     [HttpPost("substitute")]
@@ -209,12 +218,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        if (!string.IsNullOrEmpty(substituteRequest.playerSearchable)) {
-            GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam,
-                substituteRequest.playerSearchable);
-        } else if (substituteRequest.leftPlayer.HasValue) {
-            GameManager.Substitute(substituteRequest.id, substituteRequest.firstTeam,
-                substituteRequest.leftPlayer.Value);
+
+        if (!string.IsNullOrEmpty(substituteRequest.PlayerSearchable)) {
+            GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
+                substituteRequest.PlayerSearchable);
+        } else if (substituteRequest.LeftPlayer.HasValue) {
+            GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
+                substituteRequest.LeftPlayer.Value);
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -223,7 +233,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class UndoRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("undo")]
@@ -232,12 +242,13 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Undo(undoRequest.id);
+
+        GameManager.Undo(undoRequest.Id);
         return NoContent();
     }
 
     public class DeleteRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("delete")]
@@ -246,13 +257,14 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
-        GameManager.Delete(deleteRequest.id);
+
+        GameManager.Delete(deleteRequest.Id);
         return NoContent();
     }
 
     public class EndGameRequest {
         public int Id { get; set; }
-        public List<string> Votes { get; set; }
+        public required List<string> Votes { get; set; }
         public int TeamOneRating { get; set; }
         public int TeamTwoRating { get; set; }
         public string Notes { get; set; } = string.Empty;
@@ -269,6 +281,7 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
             return Unauthorized();
         }
+
         GameManager.End(
             request.Id,
             request.Votes,
@@ -286,7 +299,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class AlertRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("alert")]
@@ -295,14 +308,15 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
             return Unauthorized();
         }
+
         var db = new HandballContext();
-        var game = db.Games.IncludeRelevant().First(g => alertRequest.id == g.GameNumber);
+        var game = db.Games.IncludeRelevant().First(g => alertRequest.Id == g.GameNumber);
         TextHelper.TextPeopleForGame(game);
         return NoContent();
     }
-    
+
     public class ResolveRequest {
-        public required int id { get; set; }
+        public required int Id { get; set; }
     }
 
     [HttpPost("resolve")]
@@ -311,7 +325,8 @@ public class EditGamesController : ControllerBase {
         if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
             return Unauthorized();
         }
-        GameManager.Resolve(resolveRequest.id);
+
+        GameManager.Resolve(resolveRequest.Id);
         return NoContent();
     }
 }

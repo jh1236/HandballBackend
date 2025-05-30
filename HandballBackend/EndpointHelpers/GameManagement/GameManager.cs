@@ -755,7 +755,6 @@ public static class GameManager {
         game.AdminStatus = "Resolved";
         game.Resolved = true;
         db.Add(gameEvent);
-        GameEventSynchroniser.SyncTimeout(game, gameEvent);
         db.SaveChanges();
     }
 }

@@ -14,8 +14,8 @@ public class OfficialsController : ControllerBase {
 
 
     public record GetOfficialsResponse {
-        public OfficialData[] officials { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required OfficialData[] Officials { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
     
     [HttpGet]
@@ -53,13 +53,13 @@ public class OfficialsController : ControllerBase {
 
 
         return new GetOfficialsResponse {
-            officials = officials,
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Officials = officials,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
     public record GetOfficialResponse {
-        public OfficialData official { get; set; }
+        public required OfficialData Official { get; set; }
         public TournamentData? tournament { get; set; }
     }
 
@@ -92,7 +92,7 @@ public class OfficialsController : ControllerBase {
 
 
         return new GetOfficialResponse {
-            official = official.ToSendableData(tournament, true),
+            Official = official.ToSendableData(tournament, true),
             tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
