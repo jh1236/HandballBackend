@@ -94,7 +94,7 @@ public class Person {
     }
 
     public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
-        bool formatData = false) {
-        return new PersonData(this, tournament, generateStats, team, formatData);
+        bool formatData = false, bool admin = false) {
+        return new PersonData(this, tournament, generateStats, team, formatData, admin);
     }
 }

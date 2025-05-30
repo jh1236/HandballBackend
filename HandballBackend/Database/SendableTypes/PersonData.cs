@@ -25,7 +25,7 @@ public class PersonData {
 
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
-        bool format = false) {
+        bool format = false, bool admin = false) {
         Name = person.Name;
         SearchableName = person.SearchableName;
         ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
@@ -34,51 +34,53 @@ public class PersonData {
         if (!generateStats) return;
 
         Stats = new Dictionary<string, dynamic?> {
-            {"B&F Votes", 0.0},
-            {"Elo", 0.0},
-            {"Games Won", 0.0},
-            {"Games Lost", 0.0},
-            {"Games Played", 0.0},
-            {"Games Started Left", 0.0},
-            {"Games Started Right", 0.0},
-            {"Games Started Substitute", 0.0},
-            {"Caps", 0.0},
-            {"Percentage", 0.0},
-            {"Penalty Points", 0.0},
-            {"Points Scored", 0.0},
-            {"Points Served", 0.0},
-            {"Aces Scored", 0.0},
-            {"Faults", 0.0},
-            {"Double Faults", 0.0},
-            {"Green Cards", 0.0},
-            {"Yellow Cards", 0.0},
-            {"Red Cards", 0.0},
-            {"Rounds on Court", 0.0},
-            {"Rounds Carded", 0.0},
-            {"Points per Game", 0.0},
-            {"Points per Loss", 0.0},
-            {"Aces per Game", 0.0},
-            {"Faults per Game", 0.0},
-            {"Cards", 0.0},
-            {"Cards per Game", 0.0},
-            {"Points per Card", 0.0},
-            {"Serves per Game", 0.0},
-            {"Serves per Ace", 0.0},
-            {"Serves per Fault", 0.0},
-            {"Serve Ace Rate", 0.0},
-            {"Serve Fault Rate", 0.0},
-            {"Percentage of Points Scored", 0.0},
-            {"Percentage of Points Scored For Team", 0.0},
-            {"Percentage of Points Served Won", 0.0},
-            {"Serves Received", 0.0},
-            {"Serves Returned", 0.0},
-            {"Max Serve Streak", 0.0},
-            {"Max Ace Streak", 0.0},
-            {"Serve Return Rate", 0.0},
-            {"Votes per 100 Games", 0.0}
+            ["B&F Votes"] = 0.0,
+            ["Elo"] = 0.0,
+            ["Games Won"] = 0.0,
+            ["Games Lost"] = 0.0,
+            ["Games Played"] = 0.0,
+            ["Games Started Left"] = 0.0,
+            ["Games Started Right"] = 0.0,
+            ["Games Started Substitute"] = 0.0,
+            ["Caps"] = 0.0,
+            ["Percentage"] = 0.0,
+            ["Penalty Points"] = 0.0,
+            ["Points Scored"] = 0.0,
+            ["Points Served"] = 0.0,
+            ["Aces Scored"] = 0.0,
+            ["Faults"] = 0.0,
+            ["Double Faults"] = 0.0,
+            ["Green Cards"] = 0.0,
+            ["Yellow Cards"] = 0.0,
+            ["Red Cards"] = 0.0,
+            ["Rounds on Court"] = 0.0,
+            ["Rounds Carded"] = 0.0,
+            ["Points per Game"] = 0.0,
+            ["Points per Loss"] = 0.0,
+            ["Aces per Game"] = 0.0,
+            ["Faults per Game"] = 0.0,
+            ["Cards"] = 0.0,
+            ["Cards per Game"] = 0.0,
+            ["Points per Card"] = 0.0,
+            ["Serves per Game"] = 0.0,
+            ["Serves per Ace"] = 0.0,
+            ["Serves per Fault"] = 0.0,
+            ["Serve Ace Rate"] = 0.0,
+            ["Serve Fault Rate"] = 0.0,
+            ["Percentage of Points Scored"] = 0.0,
+            ["Percentage of Points Scored For Team"] = 0.0,
+            ["Percentage of Points Served Won"] = 0.0,
+            ["Serves Received"] = 0.0,
+            ["Serves Returned"] = 0.0,
+            ["Max Serve Streak"] = 0.0,
+            ["Max Ace Streak"] = 0.0,
+            ["Serve Return Rate"] = 0.0,
+            ["Votes per 100 Games"] = 0.0,
+            ["Average Rating"] = 0.0
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
+        var ratedGames = 0;
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
@@ -106,6 +108,11 @@ public class PersonData {
             Stats["Yellow Cards"] += pgs.YellowCards;
             Stats["Red Cards"] += pgs.RedCards;
             Stats["Penalty Points"] += 2 * pgs.GreenCards + 6 * pgs.YellowCards + 12 * pgs.RedCards;
+            if (pgs.Rating is not null) {
+                Stats["Average Rating"] += pgs.Rating;
+                ratedGames++;
+            }
+
             Stats["Rounds on Court"] += pgs.RoundsOnCourt;
             Stats["Rounds Carded"] += pgs.RoundsCarded;
             Stats["Cards"] += pgs.GreenCards + pgs.YellowCards + pgs.RedCards;
@@ -140,6 +147,7 @@ public class PersonData {
         Stats["Serves per Fault"] = Stats["Points Served"] / Stats["Faults"];
         Stats["Serve Ace Rate"] = Stats["Aces Scored"] / Stats["Points Served"];
         Stats["Serve Fault Rate"] = Stats["Faults"] / Stats["Points Served"];
+        Stats["Average Rating"] /= ratedGames;
         Stats["Percentage of Points Scored"] =
             Stats["Points Scored"] / Math.Max(Stats["Rounds on Court"], 1);
         Stats["Percentage of Points Scored For Team"] = Stats["Points Scored"] / Math.Max(teamPoints, 1);
@@ -151,6 +159,11 @@ public class PersonData {
         Stats["Percentage of Rounds Carded"] =
             Stats["Rounds Carded"] / (Stats["Rounds on Court"] + Stats["Rounds Carded"]);
         Stats["Rounds Per Game"] = Stats["Rounds on Court"] / gamesPlayed;
+        if (!admin) {
+            Stats.Remove("Penalty Points");
+            Stats.Remove("Average Rating");
+        }
+
         if (!format) return;
 
         FormatData();

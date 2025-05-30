@@ -1,5 +1,6 @@
 ﻿using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -30,11 +31,13 @@ public class PlayersController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
+        var admin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+
         var player = db.People
             .Where(t => t.SearchableName == searchable)
             .Include(t => t.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
-            .Select(t => t.ToSendableData(tournament, true, null, formatData)).FirstOrDefault();
+            .Select(t => t.ToSendableData(tournament, true, null, formatData, admin)).FirstOrDefault();
         if (player is null) {
             return NotFound();
         }
@@ -92,8 +95,9 @@ public class PlayersController : ControllerBase {
                 .Where(p => p.SearchableName != "lachlan_banks");
         }
 
+        var admin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
         var playerSendable = query.OrderBy(p => p.SearchableName)
-            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData)).ToArray();
+            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, admin)).ToArray();
         if ((tournament == null || tournament.Editable) && includeStats) {
             playerSendable = playerSendable.Where(p => p.Stats!["Games Played"] > 0).ToArray();
         }

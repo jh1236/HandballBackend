@@ -1,18 +1,14 @@
-﻿// ReSharper disable InconsistentNaming
-// Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
-
-
-using HandballBackend.Database.Models;
+﻿using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
 
 public class GameTeamData : TeamData {
-    public bool servingFromLeft { get; private set; }
+    public bool ServingFromLeft { get; private set; }
 
-    public new GamePlayerData? captain { get; set; }
-    public new GamePlayerData? nonCaptain { get; set; }
-    public new GamePlayerData? substitute { get; set; }
+    public new GamePlayerData? Captain { get; set; }
+    public new GamePlayerData? NonCaptain { get; set; }
+    public new GamePlayerData? Substitute { get; set; }
 
     public GameTeamData(
         Team team,
@@ -30,26 +26,26 @@ public class GameTeamData : TeamData {
             .OrderByDescending(a => a.Id)
             .FirstOrDefault(a => a.EventType == GameEventType.Score && a.TeamToServeId == team.Id);
         if (startGame is null) {
-            servingFromLeft = true;
+            ServingFromLeft = true;
         } else if (game.Tournament.BadmintonServes) {
             if (lastTimeServed is not null) {
-                servingFromLeft = lastTimeServed.SideToServe == "Left";
+                ServingFromLeft = lastTimeServed.SideToServe == "Left";
             } else {
-                servingFromLeft = true;
+                ServingFromLeft = true;
             }
         } else {
             if (lastTimeServed is not null) {
-                servingFromLeft = (lastTimeServed.SideToServe == "Left");
+                ServingFromLeft = (lastTimeServed.SideToServe == "Left");
             } else {
-                servingFromLeft = startGame.TeamToServeId == team.Id;
+                ServingFromLeft = startGame.TeamToServeId == team.Id;
             }
         }
 
-        captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
+        Captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
-        nonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
+        NonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
-        substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
+        Substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
 
 
