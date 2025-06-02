@@ -20,11 +20,11 @@ public class Tournament {
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
     public string SearchableName { get; set; }
-    
+
     [Required]
     [Column("editable")]
     public bool Editable { get; set; }
-    
+
     [Required]
     [Column("fixtures_type", TypeName = "TEXT")]
     public string FixturesType { get; set; }
@@ -80,22 +80,9 @@ public class Tournament {
             finals = GetFixtureGenerator.EndOfRound();
         }
 
-        var finished = false;
         if (finals && !Finished) {
-            finished = GetFinalGenerator.EndOfRound();
+            GetFinalGenerator.EndOfRound();
         }
-
-        if (!TextAlerts || finished) return;
-        
-        var db = new HandballContext();
-        for (var i = 0; i < (TwoCourts ? 2 : 1); i++) {
-            var nextGame = db.Games
-                .Where(g => g.TournamentId == Id && !g.IsBye && !g.Started && g.Court == i)
-                .IncludeRelevant()
-                .OrderBy(g => g.Id).FirstOrDefault();
-            
-        }
-        
     }
 
     public void BeginTournament() {
