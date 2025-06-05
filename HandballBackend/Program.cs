@@ -1,5 +1,8 @@
+using HandballBackend;
+using HandballBackend.Authentication;
 using HandballBackend.Converters;
 using HandballBackend.Utils;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +18,13 @@ builder.Services.AddControllers().AddJsonOptions(options => {
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpLogging(o => { });
-
+builder.Services.AddAuthentication(options => {
+        options.DefaultAuthenticateScheme = "TokenAuthentication";
+        options.DefaultChallengeScheme = "TokenAuthentication";
+    })
+    .AddScheme<AuthenticationSchemeOptions, TokenAuthenticator>(
+        "TokenAuthentication", null);
+builder.Services.AddAuthorization(Policies.RegisterPolicies);
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
         policy => { policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); });

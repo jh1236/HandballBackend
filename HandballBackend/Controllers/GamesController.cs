@@ -41,7 +41,7 @@ public class GamesController : ControllerBase {
         [FromQuery] bool formatData = false
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = HttpContext.User.IsInRole(PermissionType.UmpireManager.ToString());
 
         var game = db.Games
             .IncludeRelevant()
@@ -174,7 +174,7 @@ public class GamesController : ControllerBase {
     ) {
         var db = new HandballContext();
         if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
-            return Unauthorized("You must have permission to use Umpire Manager.");
+            return Unauthorized("You must have permission to use IsUmpire Manager.");
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
