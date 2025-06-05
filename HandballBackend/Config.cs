@@ -3,5 +3,6 @@
 public static class Config {
     public const int TimeoutTime = 30;
     public const string MY_ADDRESS = "https://api.squarers.club";
-    public static string SECRETS_FOLDER = "./Secrets/";
+    public static string SECRETS_FOLDER = "./secrets/";
+    public static bool REQUEST_LOGGING = false;
 }
