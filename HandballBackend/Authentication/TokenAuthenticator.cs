@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
@@ -18,13 +19,18 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
             return AuthenticateResult.NoResult();
         }
 
-        if (PermissionHelper.TryGetUser(out var person)) {
+        var token = Request.Headers.Authorization.ToString().Split(" ")[1];
+        var person = PermissionHelper.PersonByToken(token);
+
+        if (person == null || person.TokenTimeout < Utilities.GetUnixSeconds()) {
             return AuthenticateResult.Fail("Invalid Token");
         }
 
         List<Claim> claims = [
-            new Claim(ClaimTypes.NameIdentifier, person.SearchableName),
-            new Claim(ClaimTypes.Name, person.Name)
+            new Claim(CustomClaimTypes.SearchableName, person.SearchableName),
+            new Claim(ClaimTypes.Name, person.Name),
+            new Claim(CustomClaimTypes.UserId, person.Id.ToString()),
+            new Claim(CustomClaimTypes.Token, person.SessionToken!)
         ];
         claims.AddRange(Enum.GetValues(typeof(PermissionType))
             .Cast<PermissionType>()

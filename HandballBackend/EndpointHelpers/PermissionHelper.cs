@@ -14,7 +14,6 @@ public enum PermissionType {
 }
 
 public static class PermissionHelper {
-
     public static int ToInt(this PermissionType permissionType) {
         return permissionType switch {
             PermissionType.LoggedIn => 0,
@@ -24,6 +23,7 @@ public static class PermissionHelper {
             _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
         };
     }
+
     public static PermissionType IntToPermissionType(int permissionType) {
         return permissionType switch {
             1 => PermissionType.LoggedIn,
@@ -107,34 +107,6 @@ public static class PermissionHelper {
         return authHeader["Bearer ".Length..].Trim();
     }
 
-    private static Person? GetPersonFromToken(string? token) {
-        var db = new HandballContext();
-        if (token == null) {
-            return null;
-        }
-
-        var person = db.People.FirstOrDefault(p => p.SessionToken == token);
-
-        if (person == null) return null;
-
-        if (person.TokenTimeout < Time()) {
-            ResetTokenForPerson(person.Id);
-            return null;
-        }
-
-        return person;
-    }
-
-    public static Person? GetUser() {
-        return GetPersonFromToken(GetToken());
-    }
-
-    public static bool HasPermission(PermissionType permission) {
-        var perms = permission.ToInt();
-        var user = GetUser();
-        if (user == null) return false;
-        return user.PermissionLevel >= perms;
-    }
 
     public static void SetPassword(int personId, string password) {
         var db = new HandballContext();
@@ -175,19 +147,25 @@ public static class PermissionHelper {
         return person;
     }
 
-    public static void Logout() {
-        var personId = GetUser()?.Id;
-        if (personId is null) {
-            throw new KeyNotFoundException("You're not logged in ya nonce");
-            return;
+    public static Person? PersonByToken(string? token) {
+        var db = new HandballContext();
+        if (token == null) {
+            return null;
         }
 
-        ResetTokenForPerson((int) personId);
+        var person = db.People.FirstOrDefault(p => p.SessionToken == token);
+
+        if (person == null) return null;
+
+        if (person.TokenTimeout < Time()) {
+            ResetTokenForPerson(person.Id);
+            return null;
+        }
+
+        return person;
     }
 
-    public static bool TryGetUser(out Person user) {
-        var ret = GetUser();
-        user = ret;
-        return ret != null;
+    public static void Logout(int id) {
+        ResetTokenForPerson(id);
     }
 }

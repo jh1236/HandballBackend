@@ -184,10 +184,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("endTimeout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult EndTimeout([FromBody] EndTimeoutRequest endTimeoutRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.EndTimeout(endTimeoutRequest.Id);
         return NoContent();
     }
