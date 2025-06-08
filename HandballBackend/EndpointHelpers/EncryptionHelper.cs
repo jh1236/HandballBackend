@@ -12,7 +12,8 @@ public static class EncryptionHelper {
     public static string Encrypt(string plaintext) {
         using var aesAlg = Aes.Create();
         aesAlg.Key = Key();
-        aesAlg.GenerateIV();
+        //TODO: this is NOT secure!! however, if we randomly generate this IV, we can not search the database by phone #
+        aesAlg.IV = Key();
         var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
         using var msEncrypt = new MemoryStream();
         msEncrypt.Write(aesAlg.IV, 0, aesAlg.IV.Length);
