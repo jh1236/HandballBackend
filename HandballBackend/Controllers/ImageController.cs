@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net.Http.Headers;
+using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HandballBackend.Controllers;
 
@@ -40,6 +42,7 @@ public class ImageController : ControllerBase {
 
 
     [HttpPost("people/upload")]
+    [Authorize(Policy = Policies.IsAdmin)]
     public IActionResult Post(List<IFormFile> file) {
         var size = file.Sum(f => f.Length);
         var db = new HandballContext();
