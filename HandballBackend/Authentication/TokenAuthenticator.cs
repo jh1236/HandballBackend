@@ -13,7 +13,6 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
         UrlEncoder encoder) : base(options, logger, encoder) {
     }
 
-    //RiderIgnore
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
         if (!Request.Headers.ContainsKey("Authorization")) {
             return AuthenticateResult.NoResult();
