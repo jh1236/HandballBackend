@@ -52,6 +52,7 @@ public class AuthController(IAuthorizationService authorizationService) : Contro
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize]
+    [HttpPost("logout")]
     public Task<IActionResult> Logout() {
         var userId = int.Parse(HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value);
         PermissionHelper.Logout(userId);
