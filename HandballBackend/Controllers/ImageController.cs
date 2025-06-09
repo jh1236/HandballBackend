@@ -41,23 +41,30 @@ public class ImageController : ControllerBase {
     }
 
 
+    //Set the method to be a Http POST method (meaning that it has a body)
     [HttpPost("people/upload")]
+    //Set the method to only be usable as an Admin
     [Authorize(Policy = Policies.IsAdmin)]
     public IActionResult Post(List<IFormFile> file) {
-        var size = file.Sum(f => f.Length);
+        // Handball Contexts are used to access the db
         var db = new HandballContext();
-        Console.WriteLine($"FileName: {file.First().FileName}");
-        // full path to file in temp location
-        foreach (var formFile in file.Where(formFile => formFile.Length > 0)) {
-            var image = ImageHelper.SaveImageWithCircle(formFile.OpenReadStream(), formFile.FileName);
-            var single = db.People.Single(p => p.SearchableName == formFile.FileName);
-            single.ImageUrl = image;
-            single.BigImageUrl = $"{image}&big=true";
+        if (file.Count != 1) {
+            //when we receive a file it's a list for some reason; we only want 1 file
+            return BadRequest("Only one image is allowed");
         }
 
-        // process uploaded file
-        // Don't rely on or trust the FileName property without validation.
+        var formFile = file.First();
+        //do some voodoo shit on the image to make it circle; also saves it.
+        var image = ImageHelper.SaveImageWithCircle(formFile.OpenReadStream(), formFile.FileName);
+        // get the person by searchable name
+        var person = db.People.Single(p => p.SearchableName == formFile.FileName);
+        // set their image paths
+        person.ImageUrl = image;
+        person.BigImageUrl = $"{image}&big=true";
+
+
+        // Save the changes (duh.)
         db.SaveChanges();
-        return Ok(new {count = file.Count, size});
+        return Ok();
     }
 }
