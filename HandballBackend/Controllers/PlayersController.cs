@@ -1,7 +1,9 @@
-﻿using HandballBackend.Database.Models;
+﻿using HandballBackend.Authentication;
+using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +11,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlayersController : ControllerBase {
+public class PlayersController(IAuthorizationService authorizationService) : ControllerBase {
     public record GetPlayerResponse {
         public required PersonData Player { get; set; }
         public TournamentData? Tournament { get; set; }
@@ -20,7 +22,7 @@ public class PlayersController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<GetPlayerResponse> GetSingle(
+    public async Task<ActionResult<GetPlayerResponse>> GetSingle(
         string searchable,
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -31,13 +33,13 @@ public class PlayersController : ControllerBase {
             return BadRequest("Invalid tournament");
         }
 
-        var admin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
 
         var player = db.People
             .Where(t => t.SearchableName == searchable)
             .Include(t => t.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
-            .Select(t => t.ToSendableData(tournament, true, null, formatData, admin)).FirstOrDefault();
+            .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
         if (player is null) {
             return NotFound();
         }
@@ -62,7 +64,7 @@ public class PlayersController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<GetPlayersResponse> GetMulti(
+    public async Task<ActionResult<GetPlayersResponse>> GetMulti(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] string? team = null,
@@ -95,9 +97,10 @@ public class PlayersController : ControllerBase {
                 .Where(p => p.SearchableName != "lachlan_banks");
         }
 
-        var admin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+
         var playerSendable = query.OrderBy(p => p.SearchableName)
-            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, admin)).ToArray();
+            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
         if ((tournament == null || tournament.Editable) && includeStats) {
             playerSendable = playerSendable.Where(p => p.Stats!["Games Played"] > 0).ToArray();
         }
@@ -117,7 +120,7 @@ public class PlayersController : ControllerBase {
         public Dictionary<string, dynamic?>? Stats { get; set; }
         public TournamentData? Tournament { get; set; }
     }
-    
+
     [HttpGet("stats")]
     public ActionResult<GetStatsResponse> GetAverage(
         [FromQuery] bool formatData = false,

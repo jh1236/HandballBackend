@@ -5,11 +5,13 @@ namespace HandballBackend.FixtureGenerator;
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool fillCourts) {
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
         return name switch {
-            "OneRoundEditable" => new OneRound(tournamentId),
+            "OneRound" => new OneRound(tournamentId),
             "Pooled" => new Pooled(tournamentId),
-            "PooledFinals" => new PooledFinals(tournamentId),
             "RoundRobin" => new RoundRobin(tournamentId),
             "Swiss" => new Swiss(tournamentId),
+            "PooledFinals" => new PooledFinals(tournamentId),
+            "BasicFinals" => new BasicFinals(tournamentId),
+            "TopThreeFinals" => new TopThreeFinals(tournamentId),
             _ => throw new ArgumentOutOfRangeException(nameof(name), name, null)
         };
     }
@@ -137,7 +139,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
             // Pair games from both courts
             var maxCount = Math.Max(courtOneGames.Count, courtTwoGames.Count);
-            for (int i = 0; i < maxCount; i++) {
+            for (var i = 0; i < maxCount; i++) {
                 var game1 = i < courtOneGames.Count ? courtOneGames[i] : null;
                 var game2 = i < courtTwoGames.Count ? courtTwoGames[i] : null;
                 var games = new[] {game1, game2}.Where(g => g != null).ToList();

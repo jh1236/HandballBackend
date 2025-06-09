@@ -41,7 +41,7 @@ public class Person {
     public int PermissionLevel { get; set; } = 0;
 
     [Column("phone_number", TypeName = "TEXT")]
-    public string?  PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; }
 
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
@@ -50,7 +50,7 @@ public class Person {
     public string InitialLastName {
         get {
             if (!Name.Contains(' ')) return Name;
-            return Name[0] +". "+ string.Join(" ", Name.Split(" ")[1..]);
+            return Name[0] + ". " + string.Join(" ", Name.Split(" ")[1..]);
         }
     }
 

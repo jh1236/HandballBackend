@@ -1,8 +1,10 @@
-﻿using HandballBackend.Database;
+﻿using HandballBackend.Authentication;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GamesController : ControllerBase {
+public class GamesController(IAuthorizationService authorizationService) : ControllerBase {
     public record ChangeCodeResponse {
         public int Code { get; set; }
     }
@@ -41,7 +43,7 @@ public class GamesController : ControllerBase {
         [FromQuery] bool formatData = false
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = HttpContext.User.IsInRole(PermissionType.UmpireManager.ToString());
 
         var game = db.Games
             .IncludeRelevant()
@@ -72,7 +74,7 @@ public class GamesController : ControllerBase {
     }
 
     [HttpGet]
-    public ActionResult<GetGamesResponse> GetMulti(
+    public async Task<ActionResult<GetGamesResponse>> GetMulti(
         [FromQuery(Name = "tournament")] string? tournamentSearchable,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeByes = false,
@@ -86,7 +88,7 @@ public class GamesController : ControllerBase {
         [FromQuery] int limit = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
@@ -164,6 +166,7 @@ public class GamesController : ControllerBase {
     }
 
     [HttpGet("noteable")]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<GetNoteableResponse> GetNoteable(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
@@ -173,9 +176,6 @@ public class GamesController : ControllerBase {
         [FromQuery] int limit = -1
     ) {
         var db = new HandballContext();
-        if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
-            return Unauthorized("You must have permission to use Umpire Manager.");
-        }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
@@ -218,7 +218,7 @@ public class GamesController : ControllerBase {
     }
 
     [HttpGet("fixtures")]
-    public ActionResult<GetFixturesResponse> GetFixtures(
+    public async Task<ActionResult<GetFixturesResponse>> GetFixtures(
         [BindRequired, FromQuery(Name = "tournament")]
         string tournamentSearchable,
         [FromQuery] bool returnTournament = false,
@@ -226,7 +226,7 @@ public class GamesController : ControllerBase {
         [FromQuery] int maxRounds = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = PermissionHelper.HasPermission(PermissionType.UmpireManager);
+        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
