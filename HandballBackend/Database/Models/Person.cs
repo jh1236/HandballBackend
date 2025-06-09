@@ -26,6 +26,9 @@ public class Person {
     [Column("image_url", TypeName = "TEXT")]
     public string? ImageUrl { get; set; }
 
+    [Column("big_image_url", TypeName = "TEXT")]
+    public string? BigImageUrl { get; set; }
+
     [Column("session_token", TypeName = "TEXT")]
     public string? SessionToken { get; set; }
 
