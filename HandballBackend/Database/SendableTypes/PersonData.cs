@@ -29,7 +29,7 @@ public class PersonData {
         Name = person.Name;
         SearchableName = person.SearchableName;
         ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
-        BigImageUrl = Utilities.FixImageUrl(person.ImageUrl); //TODO: fix this later
+        BigImageUrl = Utilities.FixImageUrl(person.BigImageUrl);
 
         if (!generateStats) return;
 
