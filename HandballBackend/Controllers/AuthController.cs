@@ -1,4 +1,7 @@
+using System.Security.Claims;
+using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 //TODO: change frontend to use /api/AuthController
@@ -6,7 +9,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController : ControllerBase {
+public class AuthController(IAuthorizationService authorizationService) : ControllerBase {
     public class LoginRequest {
         public required int UserID { get; set; }
         public required string Password { get; set; }
@@ -14,10 +17,10 @@ public class AuthController : ControllerBase {
     }
 
     public class LoginResponse {
-        public string Token { get; set; }
+        public required string Token { get; set; }
         public int UserID { get; set; }
         public long Timeout { get; set; }
-        public string Username { get; set; }
+        public required string Username { get; set; }
         public int PermissionLevel { get; set; }
     }
 
@@ -45,15 +48,13 @@ public class AuthController : ControllerBase {
         return response;
     }
 
-    [HttpGet("logout")]
+
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Logout() {
-        if (!PermissionHelper.HasPermission(PermissionType.LoggedIn)) {
-            return BadRequest("You must be logged in to log out.");
-        }
-
-        PermissionHelper.Logout();
-        return NoContent();
+    [Authorize]
+    public Task<IActionResult> Logout() {
+        var userId = int.Parse(HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value);
+        PermissionHelper.Logout(userId);
+        return Task.FromResult<IActionResult>(NoContent());
     }
 }

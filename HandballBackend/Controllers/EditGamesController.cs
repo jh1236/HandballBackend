@@ -1,16 +1,22 @@
-﻿using HandballBackend.Database;
+﻿using HandballBackend.Authentication;
+using HandballBackend.Database;
+using HandballBackend.Database.Models;
+using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Twilio.Jwt.Taskrouter;
 
 namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/games/update")]
+[Authorize(Roles = nameof(PermissionType.Umpire))]
 public class EditGamesController : ControllerBase {
     public class CreateRequest {
-        public required string Tournament { get; set; }
+        public required string Tournament { get; init; }
         public string? TeamOne { get; set; } = null;
         public string? TeamTwo { get; set; } = null;
         public string[]? PlayersOne { get; set; } = null;
@@ -19,29 +25,38 @@ public class EditGamesController : ControllerBase {
         public string? Scorer { get; set; } = null;
     }
 
+    public class CreateResponse {
+        public required GameData Game { get; set; }
+    }
+
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult CreateGame([FromBody] CreateRequest create) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, create.Tournament, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
 
         var official = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.Official);
+        var scorer = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.Scorer);
         if (official == null) {
             return BadRequest("Official not found");
         }
 
-        var g = GameManager.CreateGame(tournament!.Id, create.PlayersOne, create.PlayersTwo, create.TeamOne,
+        var g = GameManager.CreateGame(
+            tournament!.Id,
+            create.PlayersOne,
+            create.PlayersTwo,
+            create.TeamOne,
             create.TeamTwo,
-            official.Id);
-        return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}",
-            Utilities.WrapInDictionary("game", g.ToSendableData()));
+            official.Id,
+            scorer?.Id ?? -1
+        );
+
+        return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}", new CreateResponse {
+            Game = g.ToSendableData()
+        });
     }
 
     public class StartRequest {
@@ -60,10 +75,6 @@ public class EditGamesController : ControllerBase {
     public IActionResult Start(
         [FromBody] StartRequest startRequest
     ) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne, startRequest.TeamTwo,
             startRequest.TeamOneIga, startRequest.Official, startRequest.Scorer);
         return NoContent();
@@ -80,10 +91,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("score")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         if (!string.IsNullOrEmpty(scorePointRequest.PlayerSearchable)) {
             GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
                 scorePointRequest.PlayerSearchable, scorePointRequest.Method);
@@ -102,7 +109,7 @@ public class EditGamesController : ControllerBase {
         public required bool FirstTeam { get; set; }
         public bool? LeftPlayer { get; set; }
         public string? PlayerSearchable { get; set; }
-        public string Color { get; set; }
+        public required string Color { get; set; }
         public string? Reason { get; set; }
         public int Duration { get; set; }
     }
@@ -111,10 +118,6 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult Card([FromBody] CardRequest cardRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         if (!string.IsNullOrEmpty(cardRequest.PlayerSearchable)) {
             GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable, cardRequest.Color,
                 cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
@@ -135,10 +138,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("ace")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Ace([FromBody] AceRequest aceRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Ace(aceRequest.Id);
         return NoContent();
     }
@@ -150,10 +149,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("fault")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Fault([FromBody] FaultRequest faultRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Fault(faultRequest.Id);
         return NoContent();
     }
@@ -166,10 +161,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("timeout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Timeout([FromBody] TimeoutRequest timeoutRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Timeout(timeoutRequest.Id, timeoutRequest.FirstTeam);
         return NoContent();
     }
@@ -182,10 +173,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("forfeit")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Forfeit([FromBody] ForfeitRequest forfeitRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Forfeit(forfeitRequest.Id, forfeitRequest.FirstTeam);
         return NoContent();
     }
@@ -197,10 +184,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("endTimeout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult EndTimeout([FromBody] EndTimeoutRequest endTimeoutRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.EndTimeout(endTimeoutRequest.Id);
         return NoContent();
     }
@@ -215,10 +198,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("substitute")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Substitute([FromBody] SubstituteRequest substituteRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         if (!string.IsNullOrEmpty(substituteRequest.PlayerSearchable)) {
             GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
                 substituteRequest.PlayerSearchable);
@@ -239,10 +218,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("undo")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Undo([FromBody] UndoRequest undoRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Undo(undoRequest.Id);
         return NoContent();
     }
@@ -254,10 +229,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Delete([FromBody] DeleteRequest deleteRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.Delete(deleteRequest.Id);
         return NoContent();
     }
@@ -278,10 +249,6 @@ public class EditGamesController : ControllerBase {
     [HttpPost("end")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult EndGame([FromBody] EndGameRequest request) {
-        if (!PermissionHelper.HasPermission(PermissionType.Umpire)) {
-            return Unauthorized();
-        }
-
         GameManager.End(
             request.Id,
             request.Votes,
@@ -303,12 +270,9 @@ public class EditGamesController : ControllerBase {
     }
 
     [HttpPost("alert")]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Alert([FromBody] AlertRequest alertRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
-            return Unauthorized();
-        }
-
         var db = new HandballContext();
         var game = db.Games.IncludeRelevant().First(g => alertRequest.Id == g.GameNumber);
         TextHelper.TextPeopleForGame(game);
@@ -321,11 +285,8 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("resolve")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public IActionResult Resolve([FromBody] ResolveRequest resolveRequest) {
-        if (!PermissionHelper.HasPermission(PermissionType.UmpireManager)) {
-            return Unauthorized();
-        }
-
         GameManager.Resolve(resolveRequest.Id);
         return NoContent();
     }
