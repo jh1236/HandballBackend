@@ -1,4 +1,5 @@
 using HandballBackend;
+using HandballBackend.Arguments;
 using HandballBackend.Authentication;
 using HandballBackend.Converters;
 using HandballBackend.Utils;
@@ -30,11 +31,13 @@ builder.Services.AddCors(options => {
         policy => { policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); });
 });
 
+ArgsHandler.Parse(args, builder);
+
 var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) {
+if (app.Environment.IsDevelopment() || Config.REQUEST_LOGGING) {
     app.UseMiddleware<RequestLogger>();
 }
 
