@@ -13,7 +13,7 @@ public class PersonData {
         "Percentage of Points Scored",
         "Percentage",
         "Percentage of Points Scored For Team",
-        "Percentage of Served Points Won",
+        "Percentage of Points Served Won",
         "Serve Return Rate",
         "Serve Fault Rate",
         "Serve Ace Rate",
@@ -152,14 +152,16 @@ public class PersonData {
             Stats["Points Scored"] / Math.Max(Stats["Rounds on Court"], 1);
         Stats["Percentage of Points Scored For Team"] = Stats["Points Scored"] / Math.Max(teamPoints, 1);
         Stats["Percentage of Games Started Left"] = Stats["Games Started Left"] / gamesPlayed;
-        Stats["Percentage of Served Points Won"] =
+        Stats["Percentage of Points Served Won"] =
             servedPointsWon / Math.Max(Stats["Points Served"], 1);
         Stats["Serve Return Rate"] = Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
         Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
         Stats["Percentage of Rounds Carded"] =
             Stats["Rounds Carded"] / (Stats["Rounds on Court"] + Stats["Rounds Carded"]);
-        Stats["Rounds Per Game"] = Stats["Rounds on Court"] / gamesPlayed;
-        if (!admin) {
+        Stats["Rounds per Game"] = Stats["Rounds on Court"] / gamesPlayed;
+        if (admin) {
+            Stats["Penalty Points per Game"] = Stats["Penalty Points"] / gamesPlayed;
+        } else {
             Stats.Remove("Penalty Points");
             Stats.Remove("Average Rating");
         }
