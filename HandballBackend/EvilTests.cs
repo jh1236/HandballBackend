@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Unicode;
+﻿using System.Web.WebPages;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
@@ -247,8 +246,8 @@ internal static class EvilTests {
         db.SaveChanges();
     }
 
-    
-public static void ListPhoneNumbers() {
+
+    public static void ListPhoneNumbers() {
         init();
         var db = new HandballContext();
         var people = db.People;
@@ -256,8 +255,10 @@ public static void ListPhoneNumbers() {
             Console.WriteLine($"{p.PhoneNumber} - {p.Name}");
         }
     }
-public static void VillanousTest() {
+
+    public static void VillanousTest() {
         init();
+        return;
         var db = new HandballContext();
         var people = db.People.OrderBy(p => p.SearchableName == "kaliha_bhuiyan" ? 0 : 1);
         var taskList = new List<Task>();
@@ -270,5 +271,18 @@ public static void VillanousTest() {
                                             $"\n You have been invited to the 10th Squarers' United Sporting Syndicate Handball Championship. This event will be hosted at 5pm on the 13th of July. The event will be located at the Manning Library (2 Conochie Cr.). Please respond YES if you are available, or NO if you are not." +
                                             $"\nThanks, and happy balling!"));
         }
+    }
+
+    public static void NastyTest() {
+        init();
+        var db = new HandballContext();
+        foreach (var p in db.People) {
+            if (p.PhoneNumber == null) continue;
+            Console.Write($"Password for {p.Name}:");
+            var input = Console.ReadLine()!;
+            if (input.IsEmpty()) continue;
+            PermissionHelper.SetPassword(p.Id, input);
+        }
+        db.SaveChanges();
     }
 }
