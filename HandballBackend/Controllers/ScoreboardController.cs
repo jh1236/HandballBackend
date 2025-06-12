@@ -1,23 +1,87 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using HandballBackend.Database;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class ScoreboardController : ControllerBase {
-    public Dictionary<int, List<WebSocket>> Sockets = new();
+    private static Random _random = new Random();
+
+    public static Dictionary<int, List<WebSocket>> Sockets = new();
+    private static IOptions<JsonOptions> _jsonOptions = null!;
+
+    public ScoreboardController(IOptions<JsonOptions> jsonOptions) {
+        _jsonOptions = jsonOptions;
+    }
 
 
+    private static async Task SendAsync(WebSocket socket, object message) {
+        var serializedMessage = JsonSerializer.Serialize(message, options: _jsonOptions.Value.JsonSerializerOptions);
+        await SendAsync(socket, serializedMessage);
+    }
 
+    private static async Task SendAsync(WebSocket socket, string message) {
+        var bytes = Encoding.UTF8.GetBytes(message);
+        var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
+        await socket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
+    }
+
+    private async Task ManageReceive(WebSocket socket, int gameId) {
+        var buffer = new ArraySegment<byte>(new byte[4 * 1024]);
+        while (socket.State == WebSocketState.Open) {
+            var result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+            if (result.MessageType != WebSocketMessageType.Text) continue;
+            var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+            Console.WriteLine(message);
+            switch (message) {
+                case "update":
+                    await UpdateSocket(socket, gameId);
+                    break;
+            }
+        }
+
+        Sockets[gameId].Remove(socket);
+    }
+
+    private static async Task UpdateSocket(WebSocket socket, int gameId) {
+        var db = new HandballContext();
+        var game = db.Games
+            .IncludeRelevant()
+            .Include(g => g.Events)
+            .Include(g => g.Players)
+            .ThenInclude(pgs => pgs.Player).Single(g => g.GameNumber == gameId);
+        Console.WriteLine(game.Tournament?.Name);
+        await SendAsync(socket,
+            new {type = "update", game = game.ToSendableData(true, true, formatData: true)});
+    }
+
+    public static async Task SendGame(int gameId) {
+        if (!Sockets.TryGetValue(gameId, out var sockets)) return;
+        var tasks = sockets.Select(ws => UpdateSocket(ws, gameId)).ToList();
+        await Task.WhenAll(tasks);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> GetScoreboard(int gameId) {
         if (!HttpContext.WebSockets.IsWebSocketRequest) {
+            Console.WriteLine("Not a WebSocket request. Headers:");
             return BadRequest();
         }
 
         using var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        return Ok();
+        if (Sockets.TryGetValue(gameId, out var list)) {
+            list.Add(ws);
+        } else {
+            Sockets.Add(gameId, new List<WebSocket> {ws});
+        }
+
+        await ManageReceive(ws, gameId);
+        return new EmptyResult();
     }
 }

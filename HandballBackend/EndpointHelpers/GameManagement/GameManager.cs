@@ -1,4 +1,5 @@
-﻿using HandballBackend.Database;
+﻿using HandballBackend.Controllers;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,11 @@ public static class GameManager {
         GameEventType.Protest,
         GameEventType.Resolve,
     ];
+
+
+    private static void BroadcastUpdate(int gameId) {
+        _ = ScoreboardController.SendGame(gameId);
+    }
 
     private static GameEvent SetUpGameEvent(Game game, GameEventType type, bool? firstTeam, int? playerId,
         string? notes = null, int? details = null) {
@@ -186,6 +192,7 @@ public static class GameManager {
         db.GameEvents.Add(startEvent);
         GameEventSynchroniser.SyncStartGame(game, startEvent);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void ScorePoint(int gameNumber, bool firstTeam, bool leftPlayer, string? scoreMethod) {
@@ -207,6 +214,7 @@ public static class GameManager {
 
         AddPointToGame(db, gameNumber, firstTeam, player, notes: scoreMethod);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void ScorePoint(int gameNumber, bool firstTeam, string playerSearchable, string? scoreMethod) {
@@ -221,6 +229,7 @@ public static class GameManager {
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable);
         AddPointToGame(db, gameNumber, firstTeam, player.PlayerId, notes: scoreMethod);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Ace(int gameNumber) {
@@ -232,6 +241,7 @@ public static class GameManager {
         var firstTeam = prevGameEvent.TeamToServeId == game.TeamOneId;
         AddPointToGame(db, gameNumber, firstTeam, prevGameEvent.PlayerToServeId, notes: "Ace");
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Fault(int gameNumber) {
@@ -252,6 +262,7 @@ public static class GameManager {
 
         GameEventSynchroniser.SyncFault(game, gameEvent);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Timeout(int gameNumber, bool firstTeam) {
@@ -263,6 +274,7 @@ public static class GameManager {
         db.Add(gameEvent);
         GameEventSynchroniser.SyncTimeout(game, gameEvent);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Forfeit(int gameNumber, bool firstTeam) {
@@ -274,6 +286,7 @@ public static class GameManager {
         db.Add(gameEvent);
         GameEventSynchroniser.SyncForfeit(game, gameEvent);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void EndTimeout(int gameNumber) {
@@ -284,6 +297,7 @@ public static class GameManager {
         var gameEvent = SetUpGameEvent(game, GameEventType.EndTimeout, null, null);
         db.Add(gameEvent);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Substitute(int gameNumber, bool firstTeam, string playerSearchable) {
@@ -316,6 +330,7 @@ public static class GameManager {
         db.Add(gameEvent);
         // GameEventSynchroniser.SyncSubstitute(game, gameEvent);  //Doesn't exist
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Substitute(int gameNumber, bool firstTeam, bool leftPlayer) {
@@ -355,6 +370,7 @@ public static class GameManager {
         db.Add(gameEvent);
         // GameEventSynchroniser.SyncSubstitute(game, gameEvent);  //Doesn't exist
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Card(int gameNumber, bool firstTeam, string playerSearchable, string color, int duration,
@@ -365,6 +381,7 @@ public static class GameManager {
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable).PlayerId;
         CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Card(int gameNumber, bool firstTeam, bool leftPlayer, string color, int duration,
@@ -383,6 +400,7 @@ public static class GameManager {
         CardInternal(db, gameNumber, firstTeam, player, color, duration, reason);
 
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     private static void CardInternal(HandballContext db, int gameId, bool firstTeam, int playerId, string color,
@@ -455,6 +473,7 @@ public static class GameManager {
         db = new HandballContext();
         GameEventSynchroniser.SyncGame(db, gameNumber);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void Delete(int gameNumber) {
@@ -468,6 +487,7 @@ public static class GameManager {
         db.PlayerGameStats.Where(pgs => pgs.GameId == game.Id).ExecuteDelete();
         db.Remove(game);
         db.SaveChanges();
+        BroadcastUpdate(gameNumber);
     }
 
     public static void End(
@@ -575,6 +595,7 @@ public static class GameManager {
         if (!remainingGames) {
             game.Tournament.EndRound();
         }
+        BroadcastUpdate(gameNumber);
     }
 
     public static Game CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,
