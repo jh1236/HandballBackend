@@ -23,6 +23,7 @@ public static class GameManager {
     private static readonly GameEventType[] IGNORED_BY_UNDO = [
         GameEventType.Notes,
         GameEventType.EndTimeout,
+        GameEventType.Votes,
         GameEventType.Protest,
         GameEventType.Resolve,
     ];
