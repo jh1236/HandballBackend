@@ -110,11 +110,12 @@ internal static class GameEventSynchroniser {
         if (gameEvent.Details > 0) {
             //the card is not a red or warning
             player.CardTimeRemaining += gameEvent.Details ?? 0;
-            player.CardTime = player.CardTimeRemaining;
         } else if (gameEvent.Details < 0) {
             //red card
             player.CardTimeRemaining = -1;
         }
+
+        player.CardTime = player.CardTimeRemaining;
     }
 
 
