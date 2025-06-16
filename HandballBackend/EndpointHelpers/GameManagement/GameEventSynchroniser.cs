@@ -57,6 +57,7 @@ internal static class GameEventSynchroniser {
                     break;
                 case GameEventType.EndGame:
                 case GameEventType.Notes:
+                case GameEventType.Votes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
                     break;
@@ -155,12 +156,17 @@ internal static class GameEventSynchroniser {
         }
 
         player.PointsScored += 1;
-        var playerWhoServed =
-            playersOnCourt.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId)!;
-        playerWhoServed.ServedPoints += 1;
-        if (playerWhoServed.TeamId == gameEvent.TeamId) {
-            playerWhoServed.ServedPointsWon += 1;
+        if (gameEvent.TeamWhoServedId is not null) {
+            var playerWhoServed = //doing this like this means that it won't give served points to carded players
+                playersOnCourt.Where(pgs => pgs.TeamId == gameEvent.TeamWhoServedId)
+                    .OrderByDescending(pgs => pgs.CardTimeRemaining == 0)
+                    .ThenBy(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId).First();
+            playerWhoServed.ServedPoints += 1;
+            if (playerWhoServed.TeamId == gameEvent.TeamId) {
+                playerWhoServed.ServedPointsWon += 1;
+            }
         }
+
 
         if (gameEvent.PlayerWhoServedId == gameEvent.PlayerToServeId) {
             serveStreak += 1;

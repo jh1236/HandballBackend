@@ -283,6 +283,29 @@ internal static class EvilTests {
             if (input.IsEmpty()) continue;
             PermissionHelper.SetPassword(p.Id, input);
         }
+
+        db.SaveChanges();
+    }
+
+    public static void ViciousTest() {
+        init();
+        var db = new HandballContext();
+        var prevGame = -1;
+        foreach (var g in db.Games.IncludeRelevant().ToArray()) {
+            if (g.GameNumber < 0) continue;
+            if (g.GameNumber >= prevGame + 50) {
+                Console.WriteLine($"Game {g.GameNumber}");
+                prevGame = g.GameNumber - g.GameNumber % 50;
+            }
+
+            try {
+                GameEventSynchroniser.SyncGame(db, g.GameNumber);
+            } catch (Exception e) {
+                Console.WriteLine($"Game {g.GameNumber}: {e.Message}");
+                throw;
+            }
+        }
+
         db.SaveChanges();
     }
 }
