@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using HandballBackend.Database;
+using HandballBackend.Database.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -41,7 +42,7 @@ public class ScoreboardController : ControllerBase {
             Console.WriteLine(message);
             switch (message) {
                 case "update":
-                    await UpdateSocket(socket, gameId);
+                    await SocketSendUpdate(socket, gameId);
                     break;
             }
         }
@@ -49,21 +50,30 @@ public class ScoreboardController : ControllerBase {
         Sockets[gameId].Remove(socket);
     }
 
-    private static async Task UpdateSocket(WebSocket socket, int gameId) {
+    private static async Task SocketSendEvent(WebSocket socket, GameEvent e) {
+        await SendAsync(socket, new {type = "event", Event = e.ToSendableData()});
+    }
+
+    private static async Task SocketSendUpdate(WebSocket socket, int gameId) {
         var db = new HandballContext();
         var game = db.Games
             .IncludeRelevant()
             .Include(g => g.Events)
             .Include(g => g.Players)
             .ThenInclude(pgs => pgs.Player).Single(g => g.GameNumber == gameId);
-        Console.WriteLine(game.Tournament?.Name);
         await SendAsync(socket,
             new {type = "update", game = game.ToSendableData(true, true, formatData: true)});
     }
 
     public static async Task SendGame(int gameId) {
         if (!Sockets.TryGetValue(gameId, out var sockets)) return;
-        var tasks = sockets.Select(ws => UpdateSocket(ws, gameId)).ToList();
+        var tasks = sockets.Select(ws => SocketSendUpdate(ws, gameId)).ToList();
+        await Task.WhenAll(tasks);
+    }
+
+    public static async Task SendGameUpdate(int gameId, GameEvent e) {
+        if (!Sockets.TryGetValue(gameId, out var sockets)) return;
+        var tasks = sockets.Select(ws => SocketSendEvent(ws, e)).ToList();
         await Task.WhenAll(tasks);
     }
 
