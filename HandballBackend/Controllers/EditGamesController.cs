@@ -100,7 +100,6 @@ public class EditGamesController : ControllerBase {
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
-
         return NoContent();
     }
 
@@ -127,7 +126,6 @@ public class EditGamesController : ControllerBase {
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
-
         return NoContent();
     }
 
