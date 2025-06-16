@@ -1,4 +1,5 @@
-﻿using HandballBackend.Database;
+﻿using System.Runtime.CompilerServices;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -23,11 +24,13 @@ public static class GameManager {
     private static readonly GameEventType[] IGNORED_BY_UNDO = [
         GameEventType.Notes,
         GameEventType.EndTimeout,
+        GameEventType.Votes,
         GameEventType.Protest,
         GameEventType.Resolve,
     ];
 
-    private static GameEvent SetUpGameEvent(Game game, GameEventType type, bool? firstTeam, int? playerId,
+
+    internal static GameEvent SetUpGameEvent(Game game, GameEventType type, bool? firstTeam, int? playerId,
         string? notes = null, int? details = null) {
         int? teamId = firstTeam != null ? (firstTeam.Value ? game.TeamOneId : game.TeamTwoId) : null;
         var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
@@ -483,7 +486,6 @@ public static class GameManager {
         var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
         if (!game.SomeoneHasWon) throw new InvalidOperationException("The game has not ended!");
         var playersInOrder = game.Players.OrderBy(p => bestPlayerOrder.IndexOf(p.Player.SearchableName)).ToList();
-        var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
 
         var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes);
         db.Add(endEvent);
@@ -507,38 +509,16 @@ public static class GameManager {
         foreach (var pgs in playersInOrder) {
             pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
             if (votes <= 0) continue;
-            var votesEvent = SetUpGameEvent(game, GameEventType.Votes, true, pgs.PlayerId, details: votes);
-            pgs.BestPlayerVotes = votes--;
+            var votesEvent = SetUpGameEvent(game, GameEventType.Votes, true, pgs.PlayerId, details: votes--);
             db.Add(votesEvent);
+            GameEventSynchroniser.SyncVotes(game, votesEvent);
         }
 
-        var protested = !string.IsNullOrEmpty(protestReasonTeamOne) || !string.IsNullOrEmpty(protestReasonTeamTwo);
+        var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
+
         game.MarkedForReview = markedForReview;
-        game.Protested = protested;
-
-        if (game.Players.Any(i => i.RedCards != 0)) {
-            game.AdminStatus = "Red Card Awarded";
-        } else if (protested) {
-            game.AdminStatus = "Protested";
-        } else if (markedForReview) {
-            game.AdminStatus = "Marked for Review";
-        } else if (game.Players.Any(i => i.YellowCards != 0)) {
-            game.AdminStatus = "Yellow Card Awarded";
-        } else if (teamOneRating == 1 || teamTwoRating == 1) {
-            game.AdminStatus = "Unsportsmanlike Conduct";
-        } else if (isForfeit) {
-            game.AdminStatus = "Forfeit";
-        } else {
-            game.AdminStatus = "Official";
-        }
-
-
-        game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
-        game.NoteableStatus = game.AdminStatus;
-        game.Status = "Official";
-        game.Ended = true;
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
-        game.Notes = notes;
+        GameEventSynchroniser.SyncGameEnd(game, endEvent);
         if (game is {
                 Ranked:
                 true,
