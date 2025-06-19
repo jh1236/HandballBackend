@@ -55,7 +55,7 @@ public class ImageController : ControllerBase {
 
         var formFile = file.First();
         //do some voodoo shit on the image to make it circle; also saves it.
-        var image = ImageHelper.SaveImageWithCircle(formFile.OpenReadStream(), formFile.FileName);
+        var image = ImageHelper.SavePlayerImageWithCircle(formFile.OpenReadStream(), formFile.FileName);
         // get the person by searchable name
         var person = db.People.Single(p => p.SearchableName == formFile.FileName);
         // set their image paths
