@@ -293,9 +293,9 @@ internal static class EvilTests {
         var prevGame = -1;
         foreach (var g in db.Games.IncludeRelevant().ToArray()) {
             if (g.GameNumber < 0) continue;
-            if (g.GameNumber >= prevGame + 50) {
+            if (g.GameNumber >= prevGame) {
                 Console.WriteLine($"Game {g.GameNumber}");
-                prevGame = g.GameNumber - g.GameNumber % 50;
+                prevGame = g.GameNumber - g.GameNumber % 50 + 50;
             }
 
             try {
@@ -304,6 +304,44 @@ internal static class EvilTests {
                 Console.WriteLine($"Game {g.GameNumber}: {e.Message}");
                 throw;
             }
+        }
+
+        db.SaveChanges();
+    }
+
+
+    public static void VotesFixerer() {
+        init();
+        var db = new HandballContext();
+        var gamesToFix =
+            db.Games.Where(g => g.Ended && !g.IsBye && g.Events.All(gE => gE.EventType != GameEventType.Votes));
+        var prevGame = -1;
+        foreach (var game in gamesToFix.Include(game => game.Events).Include(game => game.Players)) {
+            if (game.GameNumber >= prevGame) {
+                Console.WriteLine($"Game {game.GameNumber}");
+                prevGame = game.GameNumber - game.GameNumber % 50 + 50;
+            }
+
+            var endEvent = game.Events.First(e => e.EventType == GameEventType.EndGame);
+            var bestPlayerId = endEvent.Details;
+            if (bestPlayerId is null) continue;
+            if (!game.Ranked || (endEvent.TeamOneLeftId == endEvent.TeamOneRightId ||
+                                 endEvent.TeamTwoLeftId == endEvent.TeamTwoRightId)) {
+                endEvent.Details = null;
+                continue;
+            }
+
+            if (game.Players.All(pgs => pgs.PlayerId != bestPlayerId)) {
+                Console.WriteLine($"WTF?!: game {game.GameNumber} has players " +
+                                  string.Join(", ", game.Players.Select(p => p.PlayerId.ToString())) +
+                                  $" but best player {bestPlayerId}");
+            }
+
+            var pgs = game.Players.First(pgs => pgs.PlayerId == bestPlayerId);
+            var newEvent = GameManager.SetUpGameEvent(game, GameEventType.Votes, pgs.TeamId == game.TeamOneId,
+                pgs.PlayerId, details: 2);
+            newEvent.CreatedAt = endEvent.CreatedAt;
+            db.Add(newEvent);
         }
 
         db.SaveChanges();
