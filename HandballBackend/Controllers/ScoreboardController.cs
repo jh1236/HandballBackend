@@ -12,7 +12,7 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ScoreboardController : ControllerBase {
-    private static Random _random = new Random();
+    private static Random _random = new();
 
     public static Dictionary<int, List<WebSocket>> Sockets = new();
     private static IOptions<JsonOptions> _jsonOptions = null!;
@@ -39,7 +39,6 @@ public class ScoreboardController : ControllerBase {
             var result = await socket.ReceiveAsync(buffer, CancellationToken.None);
             if (result.MessageType != WebSocketMessageType.Text) continue;
             var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
-            Console.WriteLine(message);
             switch (message) {
                 case "update":
                     await SocketSendUpdate(socket, gameId);
@@ -80,7 +79,6 @@ public class ScoreboardController : ControllerBase {
     [HttpGet]
     public async Task<IActionResult> GetScoreboard(int gameId) {
         if (!HttpContext.WebSockets.IsWebSocketRequest) {
-            Console.WriteLine("Not a WebSocket request. Headers:");
             return BadRequest();
         }
 
@@ -88,7 +86,7 @@ public class ScoreboardController : ControllerBase {
         if (Sockets.TryGetValue(gameId, out var list)) {
             list.Add(ws);
         } else {
-            Sockets.Add(gameId, new List<WebSocket> {ws});
+            Sockets.Add(gameId, [ws]);
         }
 
         await ManageReceive(ws, gameId);
