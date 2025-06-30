@@ -21,6 +21,6 @@ public static class Policies {
         options.AddPolicy(IsAdmin, policy => policy
             .RequireAssertion(c =>
                 c.User.HasClaim(c =>
-                    c.Type == ClaimTypes.Role && int.Parse(c.Value) == PermissionType.Admin.ToInt())));
+                    c.Type == ClaimTypes.Role && c.Value == PermissionType.Admin.ToString())));
     }
 }

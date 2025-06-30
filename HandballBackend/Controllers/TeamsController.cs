@@ -111,8 +111,8 @@ public class TeamsController : ControllerBase {
                 }
             }
 
-            teamData = query.OrderBy(t => !EF.Functions.Like(t.Team.ImageUrl, "/api/%"))
-                .ThenBy(t => EF.Functions.Like(t.Team.SearchableName, "solo_%"))
+            teamData = query.OrderBy(t => EF.Functions.Like(t.Team.SearchableName, "solo_%"))
+                .ThenBy(t => !EF.Functions.Like(t.Team.ImageUrl, "/api/%"))
                 .ThenBy(t => t.Team.SearchableName)
                 .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData)).ToArray();
         } else {
@@ -136,8 +136,8 @@ public class TeamsController : ControllerBase {
                 }
             }
 
-            teamData = query.OrderBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
-                .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
+            teamData = query.OrderBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
+                .ThenBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
                 .ThenBy(t => t.SearchableName)
                 .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToArray();
         }
@@ -190,9 +190,9 @@ public class TeamsController : ControllerBase {
                 .Include(t => t.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
                 .Where(t => t.Captain != null
-                            && t.Captain.SearchableName != "lachlan_banks"
-                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "lachlan_banks")
-                            && (t.Substitute == null || t.Substitute.SearchableName != "lachlan_banks"));
+                            && t.Captain.SearchableName != "worstie"
+                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "worstie")
+                            && (t.Substitute == null || t.Substitute.SearchableName != "worstie"));
             ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
                 .ToArray());
             ladder = ladder.Where(t => t.Stats!["Games Played"] > 0).ToArray();
