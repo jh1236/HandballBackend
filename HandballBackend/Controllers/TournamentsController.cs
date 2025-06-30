@@ -48,7 +48,7 @@ public class TournamentsController : ControllerBase {
     }
 
 
-    [HttpGet("{searchable}/start")]
+    [HttpPost("{searchable}/start")]
     [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult StartTournament(string searchable) {
         var db = new HandballContext();
@@ -159,7 +159,8 @@ public class TournamentsController : ControllerBase {
             return NotFound("Tournament has already started!");
         }
 
-        var tournamentTeam = db.TournamentTeams.FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+        var tournamentTeam =
+            db.TournamentTeams.FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
 
         if (tournamentTeam is null) {
             return BadRequest("That team doesn't exist!");
@@ -167,7 +168,12 @@ public class TournamentsController : ControllerBase {
 
         db.TournamentTeams.Remove(tournamentTeam);
 
-
+        db.SaveChanges();
+        var team = db.Teams.Include(t => t.TournamentTeams)
+            .First(t => t.SearchableName == request.TeamSearchableName);
+        if (team.TournamentTeams.Count != 0) {
+            db.Teams.Remove(team);
+        }
         db.SaveChanges();
         return Ok();
     }
@@ -238,7 +244,6 @@ public class TournamentsController : ControllerBase {
         if (tournamentOfficial == null) {
             return BadRequest("The Official doesn't exist");
         }
-
 
         db.TournamentOfficials.Remove(tournamentOfficial);
 
