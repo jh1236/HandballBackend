@@ -190,9 +190,9 @@ public class TeamsController : ControllerBase {
                 .Include(t => t.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
                 .Where(t => t.Captain != null
-                            && t.Captain.SearchableName != "lachlan_banks"
-                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "lachlan_banks")
-                            && (t.Substitute == null || t.Substitute.SearchableName != "lachlan_banks"));
+                            && t.Captain.SearchableName != "worstie"
+                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "worstie")
+                            && (t.Substitute == null || t.Substitute.SearchableName != "worstie"));
             ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
                 .ToArray());
             ladder = ladder.Where(t => t.Stats!["Games Played"] > 0).ToArray();
