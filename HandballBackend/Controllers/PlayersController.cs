@@ -100,10 +100,9 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
 
         var playerSendable = query.OrderBy(p => p.SearchableName)
+            .Where(p => p.PlayerGameStats!.Any(pgs =>
+                !includeStats || tournament == null || pgs.TournamentId == tournament.Id))
             .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
-        if ((tournament == null || tournament.Editable) && includeStats) {
-            playerSendable = playerSendable.Where(p => p.Stats!["Games Played"] > 0).ToArray();
-        }
 
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
@@ -143,10 +142,9 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             statsList = db.People
                 .Where(p => p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id))
                 .Include(p => p.PlayerGameStats!
-                    .Where(
-                        pgs => pgs.TournamentId == tournament.Id
-                               && pgs.Team.NonCaptainId != null &&
-                               pgs.Opponent.NonCaptainId != null
+                    .Where(pgs => pgs.TournamentId == tournament.Id
+                                  && pgs.Team.NonCaptainId != null &&
+                                  pgs.Opponent.NonCaptainId != null
                     )
                 )
                 .ThenInclude(pgs => pgs.Game)
@@ -155,9 +153,8 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         } else {
             statsList = db.People
                 .Include(p => p.PlayerGameStats!
-                    .Where(
-                        pgs => pgs.Team.NonCaptainId != null &&
-                               pgs.Opponent.NonCaptainId != null
+                    .Where(pgs => pgs.Team.NonCaptainId != null &&
+                                  pgs.Opponent.NonCaptainId != null
                     )
                 )
                 .ThenInclude(pgs => pgs.Game)
