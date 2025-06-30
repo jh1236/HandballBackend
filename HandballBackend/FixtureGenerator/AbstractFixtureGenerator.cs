@@ -38,7 +38,10 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
     public virtual void BeginTournament() {
+        var db = new HandballContext();
+        db.Tournaments.Find(tournamentId)!.Started = true;
         EndOfRound();
+        db.SaveChanges();
     }
 
 

@@ -74,6 +74,10 @@ public class Tournament {
     [Column("badminton_serves")]
     public bool BadmintonServes { get; set; } = false;
 
+    [Required]
+    [Column("started")]
+    public bool Started { get; set; }
+
     public void EndRound() {
         var finals = InFinals;
         if (!finals) {
@@ -95,6 +99,7 @@ public class Tournament {
     [NotMapped]
     public AbstractFixtureGenerator GetFixtureGenerator =>
         AbstractFixtureGenerator.GetControllerByName(FixturesType, Id);
+
 
     public TournamentData ToSendableData() {
         return new TournamentData(this);
