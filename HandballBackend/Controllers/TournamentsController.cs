@@ -70,7 +70,7 @@ public class TournamentsController : ControllerBase {
         public string? SubstituteName { get; set; }
     }
 
-    [HttpPost("{searchable}/add_team")]
+    [HttpPost("{searchable}/addTeam")]
     [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult AddTeamToTournament(string searchable, [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
@@ -145,7 +145,7 @@ public class TournamentsController : ControllerBase {
         public string? TeamSearchableName { get; set; }
     }
 
-    [HttpDelete("{searchable}/remove_team")]
+    [HttpDelete("{searchable}/removeTeam")]
     [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
@@ -176,7 +176,7 @@ public class TournamentsController : ControllerBase {
         public required string OfficialSearchableName { get; set; }
     }
 
-    [HttpPost("{searchable}/add_official")]
+    [HttpPost("{searchable}/addOfficial")]
     [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult AddOfficialToTournament(string searchable,
         [FromBody] AddOfficialRequest request) {
@@ -217,7 +217,7 @@ public class TournamentsController : ControllerBase {
     }
 
 
-    [HttpDelete("{searchable}/remove_official")]
+    [HttpDelete("{searchable}/removeOfficial")]
     public ActionResult RemoveOfficialFromTournament(string searchable,
         [FromBody] RemoveOfficialRequest request) {
         var db = new HandballContext();
