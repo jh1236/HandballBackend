@@ -1,5 +1,7 @@
-﻿using HandballBackend.Database.SendableTypes;
+﻿using HandballBackend.Authentication;
+using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HandballBackend.Controllers;
@@ -37,6 +39,22 @@ public class TournamentsController : ControllerBase {
             return NotFound("Invalid Tournament");
         }
 
+        return new GetTournamentResponse {
+            Tournament = tournament.ToSendableData()
+        };
+    }
+
+
+    [HttpGet("{searchable}/start")]
+    [Authorize(Policy = Policies.IsAdmin)]
+    public ActionResult<GetTournamentResponse> StartTournament(string searchable) {
+        var db = new HandballContext();
+        var tournament = db.Tournaments
+            .FirstOrDefault(a => a.SearchableName == searchable);
+        if (tournament is null) {
+            return NotFound("Invalid Tournament");
+        }
+        tournament.BeginTournament();
         return new GetTournamentResponse {
             Tournament = tournament.ToSendableData()
         };
