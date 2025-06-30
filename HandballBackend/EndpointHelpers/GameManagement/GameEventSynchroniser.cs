@@ -56,6 +56,11 @@ internal static class GameEventSynchroniser {
                     game.Resolved = true;
                     break;
                 case GameEventType.EndGame:
+                    SyncGameEnd(game, gameEvent);
+                    break;
+                case GameEventType.Votes:
+                    SyncVotes(game, gameEvent);
+                    break;
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
@@ -85,6 +90,36 @@ internal static class GameEventSynchroniser {
         }
     }
 
+    public static void SyncGameEnd(Game game, GameEvent gameEvent) {
+        var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
+        var badBehaviour = game.Events.Where(ge => ge.EventType == GameEventType.Notes).Any(gE => gE.Details == 1);
+        var protested = game.Events.Any(gE => gE.EventType == GameEventType.Protest);
+        game.Protested = protested;
+
+        if (game.Players.Any(i => i.RedCards != 0)) {
+            game.AdminStatus = "Red Card Awarded";
+        } else if (protested) {
+            game.AdminStatus = "Protested";
+        } else if (game.MarkedForReview) {
+            game.AdminStatus = "Marked for Review";
+        } else if (game.Players.Any(i => i.YellowCards != 0)) {
+            game.AdminStatus = "Yellow Card Awarded";
+        } else if (badBehaviour) {
+            game.AdminStatus = "Unsportsmanlike Conduct";
+        } else if (isForfeit) {
+            game.AdminStatus = "Forfeit";
+        } else {
+            game.AdminStatus = "Official";
+        }
+
+
+        game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
+        game.NoteableStatus = game.AdminStatus;
+        game.Status = "Official";
+        game.Ended = true;
+        game.Notes = gameEvent.Notes;
+    }
+
     public static void SyncCard(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
         switch (gameEvent.EventType) {
@@ -110,11 +145,12 @@ internal static class GameEventSynchroniser {
         if (gameEvent.Details > 0) {
             //the card is not a red or warning
             player.CardTimeRemaining += gameEvent.Details ?? 0;
-            player.CardTime = player.CardTimeRemaining;
         } else if (gameEvent.Details < 0) {
             //red card
             player.CardTimeRemaining = -1;
         }
+
+        player.CardTime = player.CardTimeRemaining;
     }
 
 
@@ -154,12 +190,17 @@ internal static class GameEventSynchroniser {
         }
 
         player.PointsScored += 1;
-        var playerWhoServed =
-            playersOnCourt.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId)!;
-        playerWhoServed.ServedPoints += 1;
-        if (playerWhoServed.TeamId == gameEvent.TeamId) {
-            playerWhoServed.ServedPointsWon += 1;
+        if (gameEvent.TeamWhoServedId is not null) {
+            var playerWhoServed = //doing this like this means that it won't give served points to carded players
+                playersOnCourt.Where(pgs => pgs.TeamId == gameEvent.TeamWhoServedId)
+                    .OrderByDescending(pgs => pgs.CardTimeRemaining == 0)
+                    .ThenBy(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId).First();
+            playerWhoServed.ServedPoints += 1;
+            if (playerWhoServed.TeamId == gameEvent.TeamId) {
+                playerWhoServed.ServedPointsWon += 1;
+            }
         }
+
 
         if (gameEvent.PlayerWhoServedId == gameEvent.PlayerToServeId) {
             serveStreak += 1;
@@ -254,5 +295,11 @@ internal static class GameEventSynchroniser {
         }
 
         game.SomeoneHasWon = true;
+    }
+
+    public static void SyncVotes(Game game, GameEvent gameEvent) {
+        var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId);
+        if (player is null) return;
+        player.BestPlayerVotes = gameEvent.Details!.Value;
     }
 }

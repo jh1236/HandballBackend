@@ -49,6 +49,7 @@ app.UseSwaggerUI();
 
 app.UseCors();
 
+app.UseWebSockets();
 
 app.MapControllers();
 
