@@ -94,7 +94,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             query = db.People
                 .Include(t => t.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
-                .Where(p => p.SearchableName != "lachlan_banks");
+                .Where(p => p.SearchableName != "worstie");
         }
 
         var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
