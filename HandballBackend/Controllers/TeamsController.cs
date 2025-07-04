@@ -136,8 +136,8 @@ public class TeamsController : ControllerBase {
                 }
             }
 
-            teamData = query.OrderBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
-                .ThenBy(t => !EF.Functions.Like(t.ImageUrl, "/api/%"))
+            teamData = query.OrderByDescending(t => t.TournamentTeams.Any(tt => tt.TournamentId != 1))
+                .ThenBy(t => EF.Functions.Like(t.SearchableName, "solo_%"))
                 .ThenBy(t => t.SearchableName)
                 .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToArray();
         }
