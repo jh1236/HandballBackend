@@ -11,6 +11,7 @@ namespace HandballBackend;
 internal static class EvilTests {
     public static void init() {
         Config.SECRETS_FOLDER = @"G:\Programming\c#\HandballBackend\HandballBackend\secrets";
+        Config.RESOURCES_FOLDER = @"G:\Programming\c#\HandballBackend\HandballBackend\resources\";
     }
 
 
@@ -269,6 +270,20 @@ internal static class EvilTests {
                                             $"\n You have been invited to the 10th Squarers' United Sporting Syndicate Handball Championship. This event will be hosted at 5pm on the 13th of July. The event will be located at the Manning Library (2 Conochie Cr.). Please respond YES if you are available, or NO if you are not." +
                                             $"\nThanks, and happy balling!"));
         }
+    }
+
+    public static void FixImages() {
+        init();
+        var db = new HandballContext();
+        var list = new List<Team>();
+        var teams = db.Teams.Where(t => t.NonCaptainId != null && (t.ImageUrl == null || !t.ImageUrl.StartsWith("/")));
+        foreach (var team in teams) {
+            list.Add(team);
+            Console.WriteLine($"Team {team.Name}");
+        }
+
+        var tasks = list.Select(t => ImageHelper.SetGoogleImageForTeam(t.Id)).ToList();
+        Task.WaitAll(tasks.ToArray());
     }
 
     public static void NastyTest() {

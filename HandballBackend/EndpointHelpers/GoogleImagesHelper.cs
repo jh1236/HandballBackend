@@ -4,7 +4,7 @@ using HtmlAgilityPack;
 namespace HandballBackend.EndpointHelpers;
 
 public class GoogleImagesHelper {
-    public async Task<string> GetImageUrl(string searchTerm) {
+    public static async Task<string> GetImageUrl(string searchTerm) {
         var url = "https://www.google.com/search?tbm=isch&q=" + Utilities.ToSearchable(searchTerm);
 
         var web = new HtmlWeb {
@@ -18,7 +18,7 @@ public class GoogleImagesHelper {
         return node.FirstOrDefault()?.GetAttributeValue("src", "/api/images?name=blank") ?? "/api/images?name=blank";
     }
 
-    public async Task<bool> SetTeamImageUrl(string searchableName) {
+    public static async Task<bool> SetTeamImageUrl(string searchableName) {
         var db = new HandballContext();
         var team = db.Teams.FirstOrDefault(t => t.SearchableName == searchableName);
         if (team == null) return false;
