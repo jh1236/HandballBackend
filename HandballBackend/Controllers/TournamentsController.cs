@@ -70,9 +70,14 @@ public class TournamentsController : ControllerBase {
         public string? SubstituteName { get; set; }
     }
 
+    public class AddTeamResponse {
+        public required TeamData Team { get; set; }
+    }
+
     [HttpPost("{searchable}/addTeam")]
     [Authorize(Policy = Policies.IsAdmin)]
-    public ActionResult AddTeamToTournament(string searchable, [FromBody] AddTeamRequest request) {
+    public ActionResult<AddTeamResponse> AddTeamToTournament([FromRoute] string searchable,
+        [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
@@ -132,14 +137,49 @@ public class TournamentsController : ControllerBase {
 
         db.TournamentTeams.Add(new TournamentTeam {
             TournamentId = tournament.Id,
-            TeamId = team.Id
+            TeamId = team.Id,
+            Name = request.TeamName == null || request.TeamName == team.Name ? null : request.TeamName,
         });
 
 
         db.SaveChanges();
-        return Ok();
+        return Ok(new AddTeamResponse {
+            Team = team.ToSendableData()
+        });
     }
 
+
+    public class UpdateTeamRequest {
+        public required string TeamSearchableName { get; set; }
+        public required string NewName { get; set; }
+    }
+
+    [HttpPatch("{searchable}/updateTeam")]
+    [Authorize(Policy = Policies.IsAdmin)]
+    public ActionResult UpdateTeamForTournament(string searchable, [FromBody] UpdateTeamRequest request) {
+        var db = new HandballContext();
+        var tournament = db.Tournaments
+            .FirstOrDefault(a => a.SearchableName == searchable);
+        if (tournament is null) {
+            return NotFound("Invalid Tournament");
+        }
+
+        if (tournament.Started) {
+            return NotFound("Tournament has already started!");
+        }
+
+        var tournamentTeam =
+            db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
+                .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+
+        if (tournamentTeam is null) {
+            return BadRequest("That team doesn't exist!");
+        }
+
+        tournamentTeam.Name = request.NewName;
+        db.SaveChanges();
+        return Ok();
+    }
 
     public class RemoveTeamRequest {
         public string? TeamSearchableName { get; set; }
@@ -160,20 +200,14 @@ public class TournamentsController : ControllerBase {
         }
 
         var tournamentTeam =
-            db.TournamentTeams.FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+            db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
+                .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
 
         if (tournamentTeam is null) {
             return BadRequest("That team doesn't exist!");
         }
 
         db.TournamentTeams.Remove(tournamentTeam);
-
-        db.SaveChanges();
-        var team = db.Teams.Include(t => t.TournamentTeams)
-            .First(t => t.SearchableName == request.TeamSearchableName);
-        if (team.TournamentTeams.Count != 0) {
-            db.Teams.Remove(team);
-        }
         db.SaveChanges();
         return Ok();
     }
