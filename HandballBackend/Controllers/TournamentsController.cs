@@ -168,15 +168,23 @@ public class TournamentsController : ControllerBase {
             return NotFound("Tournament has already started!");
         }
 
-        var tournamentTeam =
-            db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
-                .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+        var team = db.Teams.Single(team => team.SearchableName == request.TeamSearchableName);
 
-        if (tournamentTeam is null) {
-            return BadRequest("That team doesn't exist!");
+        if (team.TournamentTeams.All(tt => tt.TournamentId != tournament.Id)) {
+            return BadRequest("Team not in tournament!");
         }
 
-        tournamentTeam.Name = request.NewName;
+        if (team.TournamentTeams.Count == 1) {
+            team.Name = request.NewName;
+        } else {
+            var tournamentTeam =
+                db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
+                    .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+
+            tournamentTeam.Name = request.NewName;
+        }
+
+
         db.SaveChanges();
         return Ok();
     }
