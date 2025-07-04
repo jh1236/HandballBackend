@@ -45,7 +45,7 @@ public class ImageController : ControllerBase {
     [HttpPost("people/upload")]
     //Set the method to only be usable as an Admin
     [Authorize(Policy = Policies.IsAdmin)]
-    public IActionResult Post(List<IFormFile> file) {
+    public IActionResult UploadPeopleImage(List<IFormFile> file) {
         // Handball Contexts are used to access the db
         var db = new HandballContext();
         if (file.Count != 1) {
@@ -55,12 +55,38 @@ public class ImageController : ControllerBase {
 
         var formFile = file.First();
         //do some voodoo shit on the image to make it circle; also saves it.
-        var image = ImageHelper.SavePlayerImageWithCircle(formFile.OpenReadStream(), formFile.FileName);
+        var image = ImageHelper.CreatePlayerImage(formFile.OpenReadStream(), formFile.FileName);
         // get the person by searchable name
         var person = db.People.Single(p => p.SearchableName == formFile.FileName);
         // set their image paths
         person.ImageUrl = image;
         person.BigImageUrl = $"{image}&big=true";
+
+
+        // Save the changes (duh.)
+        db.SaveChanges();
+        return Ok();
+    }
+    //Set the method to be a Http POST method (meaning that it has a body)
+    [HttpPost("team/upload")]
+    //Set the method to only be usable as an Admin
+    [Authorize(Policy = Policies.IsAdmin)]
+    public IActionResult UploadTeamImage(List<IFormFile> file) {
+        // Handball Contexts are used to access the db
+        var db = new HandballContext();
+        if (file.Count != 1) {
+            //when we receive a file it's a list for some reason; we only want 1 file
+            return BadRequest("Only one image is allowed");
+        }
+
+        var formFile = file.First();
+        //do some voodoo shit on the image to make it circle; also saves it.
+        var image = ImageHelper.CreateTeamImage(formFile.OpenReadStream(), formFile.FileName);
+        // get the team by searchable name
+        var team = db.Teams.Single(t => t.SearchableName == formFile.FileName);
+        // set their image paths
+        team.ImageUrl = image;
+        team.BigImageUrl = $"{image}&big=true";
 
 
         // Save the changes (duh.)

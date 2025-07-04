@@ -13,11 +13,14 @@ public static partial class ImageHelper {
     private static readonly FileInfo CircleOutline = new(Config.RESOURCES_FOLDER + "/images/circle_outline.png");
 
     public static string CreatePlayerImage(Stream image, string searchableName = "test") {
-        using var result = AddCircleToImage(image);
+        using (var bigImage = AddCircleToImage(image, true)) {
+            bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/users/{searchableName}.png");
+        }
 
-        result.Write(Config.RESOURCES_FOLDER + $"/images/big/users/{searchableName}.png");
-        result.Resize(200, 200);
-        result.Write(Config.RESOURCES_FOLDER + $"/images/users/{searchableName}.png");
+        image.Seek(0, SeekOrigin.Begin);
+        using (var smallImage = AddCircleToImage(image, false)) {
+            smallImage.Write(Config.RESOURCES_FOLDER + $"/images/users/{searchableName}.png");
+        }
         return $"/api/people/image?name={searchableName}";
     }
 
@@ -38,7 +41,6 @@ public static partial class ImageHelper {
         var db = new HandballContext();
         var team = (await db.Teams.FindAsync(teamId))!;
         var imageLink = await GetGoogleImageUrl(team.Name);
-        Console.WriteLine($"'{imageLink}'");
         if (imageLink == null) return;
         var stream = await GetImageFromLink(imageLink);
         var localLink = CreateTeamImage(stream, team.SearchableName);
