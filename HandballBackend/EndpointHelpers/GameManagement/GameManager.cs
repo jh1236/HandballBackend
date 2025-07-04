@@ -622,7 +622,7 @@ public static class GameManager {
                         Name = teamName,
                         SearchableName = Utilities.ToSearchable(teamName)
                     };
-                    _ = ImageHelper.CreateTeamImage(team);
+                    _ = ImageHelper.SetGoogleImageForTeam(team.Id);
                     db.Teams.Add(team);
                 } else {
                     team = maybeTeam;
