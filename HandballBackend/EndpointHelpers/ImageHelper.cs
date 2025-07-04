@@ -5,7 +5,7 @@ using ImageMagick.Drawing;
 
 namespace HandballBackend.EndpointHelpers;
 
-public static partial class ImageHelper {
+public static class ImageHelper {
     private static readonly FileInfo CircleOutline = new(Config.RESOURCES_FOLDER + "/images/circle_outline.png");
 
     public static string CreatePlayerImage(Stream image, string searchableName = "test") {
