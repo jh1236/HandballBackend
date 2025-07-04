@@ -1,8 +1,4 @@
-﻿using System.Net;
-using System.Net.Mime;
-using System.Text.RegularExpressions;
-using HandballBackend.Database.Models;
-using HandballBackend.Utils;
+﻿using HandballBackend.Utils;
 using HtmlAgilityPack;
 using ImageMagick;
 using ImageMagick.Drawing;
