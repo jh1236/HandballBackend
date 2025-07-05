@@ -8,7 +8,7 @@ namespace HandballBackend.EndpointHelpers;
 public static class ImageHelper {
     private static readonly FileInfo CircleOutline = new(Config.RESOURCES_FOLDER + "/images/circle_outline.png");
 
-    public static string CreatePlayerImage(Stream image, string searchableName = "test") {
+    public static string CreatePlayerImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
             bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/users/{searchableName}.png");
         }
@@ -20,7 +20,7 @@ public static class ImageHelper {
         return $"/api/people/image?name={searchableName}";
     }
 
-    public static string CreateTeamImage(Stream image, string searchableName = "test") {
+    public static string CreateTeamImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
             bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
         }
@@ -33,13 +33,26 @@ public static class ImageHelper {
         return $"/api/teams/image?name={searchableName}";
     }
 
+    public static string CreateTeamImage(Stream imageIn, string searchableName = "test") {
+        using (var image = new MagickImage(imageIn)) {
+            var circleOutline = new MagickImage(CircleOutline);
+            image.Resize(circleOutline.Width, circleOutline.Height);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
+
+            image.Resize(200,200);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/teams/{searchableName}.png");
+        }
+
+        return $"/api/teams/image?name={searchableName}";
+    }
+
     public static async Task SetGoogleImageForTeam(int teamId) {
         var db = new HandballContext();
         var team = (await db.Teams.FindAsync(teamId))!;
         var imageLink = await GetGoogleImageUrl(team.Name);
         if (imageLink == null) return;
         var stream = await GetImageFromLink(imageLink);
-        var localLink = CreateTeamImage(stream, team.SearchableName);
+        var localLink = CreateTeamImageWithCircle(stream, team.SearchableName);
         team.ImageUrl = localLink;
         team.BigImageUrl = localLink + "?big=true";
         await db.SaveChangesAsync();
