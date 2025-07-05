@@ -21,7 +21,7 @@ public class GamePlayerData : PersonData {
         CardTime = pgs.CardTime;
         CardTimeRemaining = pgs.CardTimeRemaining;
         SideOfCourt = pgs.SideOfCourt;
-        IsCaptain = pgs.Id == pgs.Team.CaptainId;
+        IsCaptain = pgs.PlayerId == pgs.Team.CaptainId;
         StartSide = pgs.StartSide;
         PrevCards = isAdmin
             ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
