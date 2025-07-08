@@ -2,6 +2,7 @@
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public class OfficialsController : ControllerBase {
         OfficialData[]? officials;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid Tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         if (tournament is not null) {
@@ -46,7 +47,7 @@ public class OfficialsController : ControllerBase {
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetOfficialsResponse {
@@ -76,15 +77,15 @@ public class OfficialsController : ControllerBase {
             .ThenInclude(g => g.Players)
             .FirstOrDefault();
         if (official is null) {
-            return NotFound("Invalid Name");
+            return NotFound(new DoesNotExist(nameof(Official), searchable));
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("invalid Tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetOfficialResponse {

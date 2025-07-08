@@ -2,6 +2,7 @@
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData teamData;
@@ -61,7 +62,7 @@ public class TeamsController : ControllerBase {
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetTeamResponse {
@@ -87,7 +88,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData[] teamData;
@@ -145,7 +146,7 @@ public class TeamsController : ControllerBase {
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetTeamsResponse {
@@ -174,7 +175,7 @@ public class TeamsController : ControllerBase {
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         if (tournament is not null) {
@@ -223,7 +224,7 @@ public class TeamsController : ControllerBase {
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetLadderResponse {

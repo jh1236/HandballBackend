@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .Select(gE => gE.Id)
             .FirstOrDefault();
 
-        return new ChangeCodeResponse { Code = query };
+        return new ChangeCodeResponse {Code = query};
     }
 
     public record GetGameResponse {
@@ -57,8 +58,8 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         var cards = db
             .GameEvents.Where(gE =>
                 gE.TournamentId == game.TournamentId
-                    && GameEvent.CardTypes.Contains(gE.EventType)
-                    && gE.TeamId == game.TeamOneId
+                && GameEvent.CardTypes.Contains(gE.EventType)
+                && gE.TeamId == game.TeamOneId
                 || gE.TeamId == game.TeamTwoId
             )
             .Include(gE => gE.Game);
@@ -96,7 +97,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         ).Succeeded;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         var query = db.Games.IncludeRelevant();
@@ -164,9 +165,8 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
                 g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin)
             )
             .ToArray();
-
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetGamesResponse {
@@ -193,7 +193,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable!));
         }
 
         var query = db
@@ -216,7 +216,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .ToArray();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
         return new GetNoteableResponse {
@@ -233,7 +233,8 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
     [HttpGet("fixtures")]
     public async Task<ActionResult<GetFixturesResponse>> GetFixtures(
-        [BindRequired, FromQuery(Name = "tournament")] string tournamentSearchable,
+        [BindRequired, FromQuery(Name = "tournament")]
+        string tournamentSearchable,
         [FromQuery] bool returnTournament = false,
         [FromQuery] bool separateFinals = false,
         [FromQuery] int maxRounds = -1
@@ -243,7 +244,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)
         ).Succeeded;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return BadRequest(new InvalidTournament(tournamentSearchable));
         }
 
         var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();
@@ -288,7 +289,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
         if (returnTournament) {
             if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
+                return BadRequest(new TournamentNotProvidedForReturn());
             }
 
             output.Tournament = tournament.ToSendableData();
