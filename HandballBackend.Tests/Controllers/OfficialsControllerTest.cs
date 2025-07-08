@@ -1,9 +1,6 @@
 ﻿using System.IO;
-using System.Linq;
 using HandballBackend.Controllers;
-using HandballBackend.Database;
 using HandballBackend.Database.Models;
-using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.ErrorTypes;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
@@ -62,27 +59,9 @@ public class OfficialsControllerTest {
             PersonId = personTwo.Id,
             Proficiency = 5
         });
-        db.Tournaments.Add(new Tournament {
-            Name = "Test",
-            SearchableName = "foo",
-            Editable = false,
-            FixturesType = "OneRound",
-            FinalsType = "Never Checked",
-            Ranked = false,
-            TwoCourts = false,
-            Finished = false,
-            InFinals = false,
-            HasScorer = false,
-            TextAlerts = false,
-            IsPooled = false,
-            Notes = null,
-            ImageUrl = "/an/image",
-            BadmintonServes = true
-        });
-        // db.SaveChanges();
-        // GameManager.CreateGame(db.Tournaments.First().Id, personOne.Id, personTwo.Id);
         db.SaveChanges();
     }
+
 
     [TestCleanup]
     public void TearDown() {
