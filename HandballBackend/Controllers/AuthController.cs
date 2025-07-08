@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using HandballBackend.Authentication;
+using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController(IAuthorizationService authorizationService) : ControllerBase {
+public class AuthController : ControllerBase {
     public class LoginRequest {
         public required int UserID { get; set; }
         public required string Password { get; set; }

@@ -12,9 +12,7 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ScoreboardController : ControllerBase {
-    private static Random _random = new();
-
-    public static Dictionary<int, List<WebSocket>> Sockets = new();
+    public static readonly Dictionary<int, List<WebSocket>> Sockets = new();
     private static IOptions<JsonOptions> _jsonOptions = null!;
 
     public ScoreboardController(IOptions<JsonOptions> jsonOptions) {

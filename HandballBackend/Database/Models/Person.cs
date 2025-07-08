@@ -46,6 +46,9 @@ public class Person {
     [Column("phone_number", TypeName = "TEXT")]
     public string? PhoneNumber { get; set; }
 
+    [Column("availability")]
+    public int? Availability { get; set; }
+
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
     public List<GameEvent>? Events { get; set; }
@@ -58,8 +61,6 @@ public class Person {
         }
     }
 
-    [Column("availability")]
-    public int? Availability { get; set; }
 
     public double Elo(int? gameId = null, int? tournamentId = null) {
         if (gameId.HasValue) {
@@ -88,7 +89,7 @@ public class Person {
         }
 
         var player = PlayerGameStats?.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
-        if (player is { EloDelta: not null }) {
+        if (player is {EloDelta: not null}) {
             return (double) (player.EloDelta + player.InitialElo);
         }
 
