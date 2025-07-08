@@ -3,7 +3,10 @@ using System.Linq;
 using HandballBackend.Controllers;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
+using HandballBackend.EndpointHelpers.GameManagement;
+using HandballBackend.ErrorTypes;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace HandballBackend.Tests.Controllers;
@@ -11,27 +14,20 @@ namespace HandballBackend.Tests.Controllers;
 [TestClass]
 [TestSubject(typeof(OfficialsController))]
 public class OfficialsControllerTest {
-    [TestInitialize]
-    public void Setup() {
+    [ClassInitialize]
+    public static void Initialize(TestContext testContext) {
         Directory.SetCurrentDirectory("../../../");
 
         Config.USING_POSTGRES = false;
         Config.SECRETS_FOLDER = @".\Config\secrets";
         Config.RESOURCES_FOLDER = @"..\HandballBackend\resources\";
+    }
+
+    [TestInitialize]
+    public void Setup() {
         var db = new HandballContext();
         db.Database.EnsureCreated();
-    }
-
-    [TestCleanup]
-    public void TearDown() {
-        var db = new HandballContext();
-        db.Database.EnsureDeleted();
-    }
-
-    [TestMethod]
-    public void TestGetOfficial() {
-        var db = new HandballContext();
-        var person = new Person {
+        var personOne = new Person {
             Name = "Foo",
             SearchableName = "foo",
             Password = null,
@@ -43,21 +39,84 @@ public class OfficialsControllerTest {
             PhoneNumber = null,
             Availability = null
         };
-        db.People.Add(person);
+        db.People.Add(personOne);
+        var personTwo = new Person {
+            Name = "Foo",
+            SearchableName = "foo",
+            Password = null,
+            ImageUrl = "/a/fake/url",
+            BigImageUrl = null,
+            SessionToken = null,
+            TokenTimeout = null,
+            PermissionLevel = 0,
+            PhoneNumber = null,
+            Availability = null
+        };
+        db.People.Add(personTwo);
         db.SaveChanges();
         db.Officials.Add(new Official {
-            PersonId = person.Id,
-            Proficiency = 0,
-            CreatedAt = 0,
-            Person = null,
-            Games = null
+            PersonId = personOne.Id,
+            Proficiency = 2
         });
+        db.Officials.Add(new Official {
+            PersonId = personTwo.Id,
+            Proficiency = 5
+        });
+        db.Tournaments.Add(new Tournament {
+            Name = "Test",
+            SearchableName = "foo",
+            Editable = false,
+            FixturesType = "OneRound",
+            FinalsType = "Never Checked",
+            Ranked = false,
+            TwoCourts = false,
+            Finished = false,
+            InFinals = false,
+            HasScorer = false,
+            TextAlerts = false,
+            IsPooled = false,
+            Notes = null,
+            ImageUrl = "/an/image",
+            BadmintonServes = true
+        });
+        // db.SaveChanges();
+        // GameManager.CreateGame(db.Tournaments.First().Id, personOne.Id, personTwo.Id);
         db.SaveChanges();
+    }
+
+    [TestCleanup]
+    public void TearDown() {
+        var db = new HandballContext();
+        db.Database.EnsureDeleted();
+    }
+
+    [TestMethod]
+    public void TestGetOfficial() {
         var controller = new OfficialsController();
-        OfficialsController.GetOfficialResponse actualController = controller.GetSingleOfficial("foo").Value;
-        Assert.IsNotNull(actualController);
-        Assert.AreEqual("Foo", actualController.Official.Name);
-        Assert.AreEqual("foo", actualController.Official.SearchableName);
-        Assert.AreEqual($"{Config.MY_ADDRESS}/a/fake/url", actualController.Official.ImageUrl);
+        OfficialsController.GetOfficialResponse response = controller.GetSingleOfficial("foo").Value;
+        Assert.IsNotNull(response);
+        Assert.AreEqual("Foo", response.Official.Name);
+        Assert.AreEqual("foo", response.Official.SearchableName);
+        Assert.AreEqual($"{Config.MY_ADDRESS}/a/fake/url", response.Official.ImageUrl);
+    }
+
+    [TestMethod]
+    public void TestTestGetOfficialBadTournamentName() {
+        var controller = new OfficialsController();
+        var response = controller.GetSingleOfficial("foo", "a_name_not_existing").Result;
+        Assert.IsNotNull(response);
+        var actual = response as NotFoundObjectResult;
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(404, actual.StatusCode);
+        Assert.IsInstanceOfType<InvalidTournament>(actual.Value);
+    }
+
+    [TestMethod]
+    public void TestTestGetOfficialBadOfficialName() {
+        var controller = new OfficialsController();
+        var response = controller.GetSingleOfficial("a_name_not_existing").Result;
+        var actual = response as NotFoundObjectResult;
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(404, actual.StatusCode);
     }
 }
