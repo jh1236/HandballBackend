@@ -8,9 +8,13 @@ using HandballBackend.Utils;
 namespace HandballBackend.Database.SendableTypes;
 
 public class TournamentTeamData : TeamData {
-    public TournamentTeamData(TournamentTeam tt, bool generateStats = false,
-        bool generatePlayerStats = false, bool formatData = false) : base(tt.Team, tt.Tournament, generateStats,
-        generatePlayerStats, formatData) {
+    public TournamentTeamData(
+        TournamentTeam tt,
+        bool generateStats = false,
+        bool generatePlayerStats = false,
+        bool formatData = false
+    )
+        : base(tt.Team, tt.Tournament, generateStats, generatePlayerStats, formatData) {
         ImageUrl = tt.ImageUrl == null ? ImageUrl : Utilities.FixImageUrl(tt.ImageUrl);
         BigImageUrl = tt.BigImageUrl == null ? BigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
         Name = tt.Name ?? Name;

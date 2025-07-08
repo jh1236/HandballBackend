@@ -6,16 +6,25 @@ namespace HandballBackend.EndpointHelpers.GameManagement;
 
 internal static class GameEventSynchroniser {
     public static void SyncGame(HandballContext db, int gameNumber) {
-        var game = db.Games.IncludeRelevant().Include(g => g.Events).SingleOrDefault(g => g.GameNumber == gameNumber);
-        if (game is null) throw new InvalidOperationException($"Game {gameNumber} not found");
+        var game = db
+            .Games.IncludeRelevant()
+            .Include(g => g.Events)
+            .SingleOrDefault(g => g.GameNumber == gameNumber);
+        if (game is null)
+            throw new InvalidOperationException($"Game {gameNumber} not found");
         game.Reset();
         var carryOverCards = game.TournamentId >= 8;
         foreach (var pgs in game.Players) {
             pgs.ResetStats();
-            if (!carryOverCards) continue;
-            var prevGamePlayer = db.PlayerGameStats
-                .FirstOrDefault(prev => prev.TournamentId == game.TournamentId && pgs.PlayerId == prev.PlayerId);
-            var cardTime = prevGamePlayer?.RedCards == 0 ? Math.Max(prevGamePlayer?.CardTimeRemaining ?? 0, 0) : -1;
+            if (!carryOverCards)
+                continue;
+            var prevGamePlayer = db.PlayerGameStats.FirstOrDefault(prev =>
+                prev.TournamentId == game.TournamentId && pgs.PlayerId == prev.PlayerId
+            );
+            var cardTime =
+                prevGamePlayer?.RedCards == 0
+                    ? Math.Max(prevGamePlayer?.CardTimeRemaining ?? 0, 0)
+                    : -1;
             pgs.CardTimeRemaining = cardTime;
             pgs.CardTime = cardTime;
         }
@@ -74,9 +83,15 @@ internal static class GameEventSynchroniser {
         foreach (var pgs in game.Players) {
             if (lastEvent == null) {
                 pgs.SideOfCourt = pgs.StartSide;
-            } else if (pgs.PlayerId == lastEvent.TeamTwoLeftId || pgs.PlayerId == lastEvent.TeamOneLeftId) {
+            } else if (
+                  pgs.PlayerId == lastEvent.TeamTwoLeftId
+                  || pgs.PlayerId == lastEvent.TeamOneLeftId
+              ) {
                 pgs.SideOfCourt = "Left";
-            } else if (pgs.PlayerId == lastEvent.TeamTwoRightId || pgs.PlayerId == lastEvent.TeamOneRightId) {
+            } else if (
+                  pgs.PlayerId == lastEvent.TeamTwoRightId
+                  || pgs.PlayerId == lastEvent.TeamOneRightId
+              ) {
                 pgs.SideOfCourt = "Right";
             } else {
                 pgs.SideOfCourt = "Substitute";
@@ -92,7 +107,9 @@ internal static class GameEventSynchroniser {
 
     public static void SyncGameEnd(Game game, GameEvent gameEvent) {
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
-        var badBehaviour = game.Events.Where(ge => ge.EventType == GameEventType.Notes).Any(gE => gE.Details == 1);
+        var badBehaviour = game
+            .Events.Where(ge => ge.EventType == GameEventType.Notes)
+            .Any(gE => gE.Details == 1);
         var protested = game.Events.Any(gE => gE.EventType == GameEventType.Protest);
         game.Protested = protested;
 
@@ -112,8 +129,8 @@ internal static class GameEventSynchroniser {
             game.AdminStatus = "Official";
         }
 
-
-        game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
+        game.WinningTeamId =
+            game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
         game.NoteableStatus = game.AdminStatus;
         game.Status = "Official";
         game.Ended = true;
@@ -139,7 +156,8 @@ internal static class GameEventSynchroniser {
                 throw new ArgumentException("Only card events can be synced as cards");
         }
 
-        if (player.CardTimeRemaining < 0) return;
+        if (player.CardTimeRemaining < 0)
+            return;
         //player isn't already red carded
 
         if (gameEvent.Details > 0) {
@@ -153,11 +171,14 @@ internal static class GameEventSynchroniser {
         player.CardTime = player.CardTimeRemaining;
     }
 
-
     public static void SyncFault(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerId);
-        var faulted = game.Events.OrderByDescending(gE => gE.EventType is GameEventType.Fault or GameEventType.Score)
-            .Select(gE => gE.EventType is GameEventType.Fault).FirstOrDefault(false);
+        var faulted = game
+            .Events.OrderByDescending(gE =>
+                gE.EventType is GameEventType.Fault or GameEventType.Score
+            )
+            .Select(gE => gE.EventType is GameEventType.Fault)
+            .FirstOrDefault(false);
         player.Faults += 1;
         player.ServedPoints += 1;
         if (faulted) {
@@ -167,18 +188,28 @@ internal static class GameEventSynchroniser {
 
     public static void SyncScorePoint(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerId);
-        var playersOnCourt = game.Players.Where(p =>
-            p.PlayerId == gameEvent.TeamOneLeftId ||
-            p.PlayerId == gameEvent.TeamOneRightId ||
-            p.PlayerId == gameEvent.TeamTwoLeftId ||
-            p.PlayerId == gameEvent.TeamTwoRightId).ToArray();
-        var serveStreak = game.Events.OrderByDescending(ge => ge.Id)
-            .TakeWhile(ge => ge.PlayerToServeId == player?.PlayerId).Count();
-        var aceStreak = game.Events.OrderByDescending(ge => ge.Id)
-            .TakeWhile(gE => gE.PlayerToServeId == player?.PlayerId && gE.Notes == "Ace").Count();
+        var playersOnCourt = game
+            .Players.Where(p =>
+                p.PlayerId == gameEvent.TeamOneLeftId
+                || p.PlayerId == gameEvent.TeamOneRightId
+                || p.PlayerId == gameEvent.TeamTwoLeftId
+                || p.PlayerId == gameEvent.TeamTwoRightId
+            )
+            .ToArray();
+        var serveStreak = game
+            .Events.OrderByDescending(ge => ge.Id)
+            .TakeWhile(ge => ge.PlayerToServeId == player?.PlayerId)
+            .Count();
+        var aceStreak = game
+            .Events.OrderByDescending(ge => ge.Id)
+            .TakeWhile(gE => gE.PlayerToServeId == player?.PlayerId && gE.Notes == "Ace")
+            .Count();
 
-        var nonServingTeam = playersOnCourt.Where(pgs => gameEvent.TeamWhoServedId != pgs.TeamId).OrderBy(pgs =>
-                pgs.PlayerId != gameEvent.TeamOneLeftId && pgs.PlayerId != gameEvent.TeamTwoLeftId)
+        var nonServingTeam = playersOnCourt
+            .Where(pgs => gameEvent.TeamWhoServedId != pgs.TeamId)
+            .OrderBy(pgs =>
+                pgs.PlayerId != gameEvent.TeamOneLeftId && pgs.PlayerId != gameEvent.TeamTwoLeftId
+            )
             .Select(PlayerGameStats? (pgs) => pgs)
             .ToList(); //force the team into LTR order
         nonServingTeam.Add(null);
@@ -192,15 +223,16 @@ internal static class GameEventSynchroniser {
         player.PointsScored += 1;
         if (gameEvent.TeamWhoServedId is not null) {
             var playerWhoServed = //doing this like this means that it won't give served points to carded players
-                playersOnCourt.Where(pgs => pgs.TeamId == gameEvent.TeamWhoServedId)
-                    .OrderByDescending(pgs => pgs.CardTimeRemaining == 0)
-                    .ThenBy(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId).First();
+            playersOnCourt
+                .Where(pgs => pgs.TeamId == gameEvent.TeamWhoServedId)
+                .OrderByDescending(pgs => pgs.CardTimeRemaining == 0)
+                .ThenBy(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId)
+                .First();
             playerWhoServed.ServedPoints += 1;
             if (playerWhoServed.TeamId == gameEvent.TeamId) {
                 playerWhoServed.ServedPointsWon += 1;
             }
         }
-
 
         if (gameEvent.PlayerWhoServedId == gameEvent.PlayerToServeId) {
             serveStreak += 1;
@@ -221,10 +253,12 @@ internal static class GameEventSynchroniser {
 
         player.ServeStreak = Math.Max(player.ServeStreak, serveStreak);
         player.AceStreak = Math.Max(player.AceStreak, aceStreak);
-        var receivingPlayer = nonServingTeam[leftServed ? 0 : 1] ??
-                              nonServingTeam.FirstOrDefault(a => a != null);
+        var receivingPlayer =
+            nonServingTeam[leftServed ? 0 : 1] ?? nonServingTeam.FirstOrDefault(a => a != null);
         if (receivingPlayer?.CardTimeRemaining != 0) {
-            receivingPlayer = nonServingTeam.FirstOrDefault(pgs => (pgs?.CardTimeRemaining ?? 1) == 0);
+            receivingPlayer = nonServingTeam.FirstOrDefault(pgs =>
+                (pgs?.CardTimeRemaining ?? 1) == 0
+            );
         }
 
         if (receivingPlayer != null && gameEvent.Notes != "Penalty") {
@@ -234,8 +268,7 @@ internal static class GameEventSynchroniser {
             }
         }
 
-
-        end:
+    end:
         if (isFirstTeam) {
             game.TeamOneScore += 1;
         } else {
@@ -245,7 +278,6 @@ internal static class GameEventSynchroniser {
         game.TeamToServeId = gameEvent.TeamToServeId;
         game.PlayerToServeId = gameEvent.PlayerToServeId;
         game.SideToServe = gameEvent.SideToServe;
-
 
         foreach (var pgs in playersOnCourt) {
             if (pgs.CardTimeRemaining == 0) {
@@ -259,19 +291,23 @@ internal static class GameEventSynchroniser {
         }
 
         var highScore = Math.Max(game.TeamOneScore, game.TeamTwoScore);
-        if (highScore >= 11 && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)) {
+        if (
+            highScore >= 11
+            && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)
+        ) {
             game.SomeoneHasWon = true;
         }
     }
-
 
     public static void SyncStartGame(Game game, GameEvent gameEvent) {
         game.Started = true;
         foreach (var pgs in game.Players) {
             if (pgs.PlayerId == gameEvent.TeamOneLeftId || pgs.PlayerId == gameEvent.TeamTwoLeftId) {
                 pgs.StartSide = "Left";
-            } else if (pgs.PlayerId == gameEvent.TeamOneRightId ||
-                       pgs.PlayerId == gameEvent.TeamTwoRightId) {
+            } else if (
+                  pgs.PlayerId == gameEvent.TeamOneRightId
+                  || pgs.PlayerId == gameEvent.TeamTwoRightId
+              ) {
                 pgs.StartSide = "Right";
             } else {
                 pgs.StartSide = "Substitute";
@@ -299,7 +335,8 @@ internal static class GameEventSynchroniser {
 
     public static void SyncVotes(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId);
-        if (player is null) return;
+        if (player is null)
+            return;
         player.BestPlayerVotes = gameEvent.Details!.Value;
     }
 }

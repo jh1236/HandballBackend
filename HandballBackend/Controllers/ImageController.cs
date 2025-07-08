@@ -1,10 +1,10 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net.Http.Headers;
 using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace HandballBackend.Controllers;
 
@@ -40,7 +40,6 @@ public class ImageController : ControllerBase {
         return File(System.IO.File.OpenRead(path + fileName + ".png"), "image/png");
     }
 
-
     //Set the method to be a Http POST method (meaning that it has a body)
     [HttpPost("people/upload")]
     //Set the method to only be usable as an Admin
@@ -62,11 +61,11 @@ public class ImageController : ControllerBase {
         person.ImageUrl = image;
         person.BigImageUrl = $"{image}&big=true";
 
-
         // Save the changes (duh.)
         db.SaveChanges();
         return Ok();
     }
+
     //Set the method to be a Http POST method (meaning that it has a body)
     [HttpPost("team/upload")]
     //Set the method to only be usable as an Admin
@@ -87,7 +86,6 @@ public class ImageController : ControllerBase {
         // set their image paths
         team.ImageUrl = image;
         team.BigImageUrl = $"{image}&big=true";
-
 
         // Save the changes (duh.)
         db.SaveChanges();

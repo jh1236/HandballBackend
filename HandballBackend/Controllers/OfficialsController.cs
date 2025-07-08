@@ -11,13 +11,11 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("/api/[controller]")]
 public class OfficialsController : ControllerBase {
-
-
     public record GetOfficialsResponse {
         public required OfficialData[] Officials { get; set; }
         public TournamentData? Tournament { get; set; }
     }
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -33,15 +31,15 @@ public class OfficialsController : ControllerBase {
         }
 
         if (tournament is not null) {
-            officials = db.TournamentOfficials
-                .Where(a => a.TournamentId == tournament.Id)
+            officials = db
+                .TournamentOfficials.Where(a => a.TournamentId == tournament.Id)
                 .IncludeRelevant()
                 .OrderBy(p => p.Official.Person.SearchableName)
                 .Select(to => to.Official.ToSendableData(tournament, false))
                 .ToArray();
         } else {
-            officials = db.Officials
-                .IncludeRelevant()
+            officials = db
+                .Officials.IncludeRelevant()
                 .OrderBy(p => p.Person.SearchableName)
                 .Select(o => o.ToSendableData(null, false))
                 .ToArray();
@@ -51,10 +49,9 @@ public class OfficialsController : ControllerBase {
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetOfficialsResponse {
             Officials = officials,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 
@@ -63,7 +60,6 @@ public class OfficialsController : ControllerBase {
         public TournamentData? tournament { get; set; }
     }
 
-    
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,7 +69,9 @@ public class OfficialsController : ControllerBase {
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        var official = db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
+        var official = db
+            .Officials.Where(o => o.Person.SearchableName == searchable)
+            .IncludeRelevant()
             .Include(g => g.Games)
             .ThenInclude(g => g.Players)
             .FirstOrDefault();
@@ -85,15 +83,13 @@ public class OfficialsController : ControllerBase {
             return BadRequest("invalid Tournament");
         }
 
-
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetOfficialResponse {
             Official = official.ToSendableData(tournament, true),
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 }

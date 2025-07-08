@@ -54,9 +54,10 @@ public class EditGamesController : ControllerBase {
             scorer?.Id ?? -1
         );
 
-        return Created(Config.MY_ADDRESS + $"/api/games/{g.GameNumber}", new CreateResponse {
-            Game = g.ToSendableData()
-        });
+        return Created(
+            Config.MY_ADDRESS + $"/api/games/{g.GameNumber}",
+            new CreateResponse { Game = g.ToSendableData() }
+        );
     }
 
     public class StartRequest {
@@ -72,11 +73,16 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("start")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Start(
-        [FromBody] StartRequest startRequest
-    ) {
-        GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne, startRequest.TeamTwo,
-            startRequest.TeamOneIga, startRequest.Official, startRequest.Scorer);
+    public IActionResult Start([FromBody] StartRequest startRequest) {
+        GameManager.StartGame(
+            startRequest.Id,
+            startRequest.SwapService,
+            startRequest.TeamOne,
+            startRequest.TeamTwo,
+            startRequest.TeamOneIga,
+            startRequest.Official,
+            startRequest.Scorer
+        );
         return NoContent();
     }
 
@@ -92,11 +98,19 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
         if (!string.IsNullOrEmpty(scorePointRequest.PlayerSearchable)) {
-            GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
-                scorePointRequest.PlayerSearchable, scorePointRequest.Method);
+            GameManager.ScorePoint(
+                scorePointRequest.Id,
+                scorePointRequest.FirstTeam,
+                scorePointRequest.PlayerSearchable,
+                scorePointRequest.Method
+            );
         } else if (scorePointRequest.LeftPlayer.HasValue) {
-            GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
-                scorePointRequest.LeftPlayer.Value, scorePointRequest.Method);
+            GameManager.ScorePoint(
+                scorePointRequest.Id,
+                scorePointRequest.FirstTeam,
+                scorePointRequest.LeftPlayer.Value,
+                scorePointRequest.Method
+            );
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -118,11 +132,23 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult Card([FromBody] CardRequest cardRequest) {
         if (!string.IsNullOrEmpty(cardRequest.PlayerSearchable)) {
-            GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable, cardRequest.Color,
-                cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
+            GameManager.Card(
+                cardRequest.Id,
+                cardRequest.FirstTeam,
+                cardRequest.PlayerSearchable,
+                cardRequest.Color,
+                cardRequest.Duration,
+                cardRequest.Reason ?? "Not Provided"
+            );
         } else if (cardRequest.LeftPlayer.HasValue) {
-            GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.LeftPlayer.Value, cardRequest.Color,
-                cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
+            GameManager.Card(
+                cardRequest.Id,
+                cardRequest.FirstTeam,
+                cardRequest.LeftPlayer.Value,
+                cardRequest.Color,
+                cardRequest.Duration,
+                cardRequest.Reason ?? "Not Provided"
+            );
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
@@ -197,11 +223,17 @@ public class EditGamesController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Substitute([FromBody] SubstituteRequest substituteRequest) {
         if (!string.IsNullOrEmpty(substituteRequest.PlayerSearchable)) {
-            GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
-                substituteRequest.PlayerSearchable);
+            GameManager.Substitute(
+                substituteRequest.Id,
+                substituteRequest.FirstTeam,
+                substituteRequest.PlayerSearchable
+            );
         } else if (substituteRequest.LeftPlayer.HasValue) {
-            GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
-                substituteRequest.LeftPlayer.Value);
+            GameManager.Substitute(
+                substituteRequest.Id,
+                substituteRequest.FirstTeam,
+                substituteRequest.LeftPlayer.Value
+            );
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }

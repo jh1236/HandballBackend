@@ -41,7 +41,9 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     public int GamesUmpired {
         get {
             var db = new HandballContext();
-            return db.Games.Count(g => g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+            return db.Games.Count(g =>
+                g.TournamentId == TournamentId && g.OfficialId == OfficialId
+            );
         }
     }
 
@@ -49,7 +51,9 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     public int CourtOneGamesUmpired {
         get {
             var db = new HandballContext();
-            return db.Games.Count(g => g.Court == 0 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+            return db.Games.Count(g =>
+                g.Court == 0 && g.TournamentId == TournamentId && g.OfficialId == OfficialId
+            );
         }
     }
 
@@ -57,7 +61,9 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     public int CourtTwoGamesUmpired {
         get {
             var db = new HandballContext();
-            return db.Games.Count(g => g.Court == 1 && g.TournamentId == TournamentId && g.OfficialId == OfficialId);
+            return db.Games.Count(g =>
+                g.Court == 1 && g.TournamentId == TournamentId && g.OfficialId == OfficialId
+            );
         }
     }
 
@@ -70,8 +76,6 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     }
 
     public static IQueryable<TournamentOfficial> GetRelevant(IQueryable<TournamentOfficial> query) {
-        return query
-            .Include(to => to.Tournament)
-            .Include(to => to.Official.Person);
+        return query.Include(to => to.Tournament).Include(to => to.Official.Person);
     }
 }

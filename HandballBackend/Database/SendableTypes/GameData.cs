@@ -3,8 +3,15 @@
 namespace HandballBackend.Database.SendableTypes;
 
 public class AdminGameData {
-    private static readonly string[] NO_ACTION_REQUIRED = {
-        "Resolved", "In Progress", "Official", "Ended", "Waiting For Start", "Forfeit", "Bye"
+    private static readonly string[] NO_ACTION_REQUIRED =
+    {
+        "Resolved",
+        "In Progress",
+        "Official",
+        "Ended",
+        "Waiting For Start",
+        "Forfeit",
+        "Bye",
     };
 
     public bool MarkedForReview { get; set; }
@@ -27,8 +34,10 @@ public class AdminGameData {
         RequiresAction = !NO_ACTION_REQUIRED.Contains(game.AdminStatus);
         NoteableStatus = game.NoteableStatus;
         Notes = (game.Notes?.Trim().Length ?? 0) > 0 ? game.Notes!.Trim() : "";
-        TeamOneRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamOneId)?.Rating ?? 3;
-        TeamTwoRating = game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamTwoId)?.Rating ?? 3;
+        TeamOneRating =
+            game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamOneId)?.Rating ?? 3;
+        TeamTwoRating =
+            game.Players.FirstOrDefault(pgs => pgs.TeamId == game.TeamTwoId)?.Rating ?? 3;
         TeamOneNotes = teamNotes
             .Where(ge => ge.TeamId == game.TeamOneId && ge.Notes != null)
             .Select(gE => gE.Notes)
@@ -45,7 +54,8 @@ public class AdminGameData {
             .Where(ge => ge.TeamId == game.TeamTwoId && ge.Notes != null)
             .Select(gE => gE.Notes)
             .FirstOrDefault();
-        Cards = game.Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
+        Cards = game
+            .Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
             .Select(a => a.ToSendableData())
             .ToArray();
         Resolved = game.Resolved;
@@ -90,7 +100,6 @@ public class GameData {
     public AdminGameData? Admin { get; private set; }
     public int Court { get; private set; }
 
-
     public GameData(
         Game game,
         bool includeTournament = false,
@@ -126,24 +135,29 @@ public class GameData {
         Round = game.Round;
         IsBye = game.IsBye;
         Status = isAdmin ? game.Status : game.AdminStatus;
-        Faulted = game.Events
-            .Where(a => a.EventType is GameEventType.Fault or GameEventType.Score)
+        Faulted = game
+            .Events.Where(a => a.EventType is GameEventType.Fault or GameEventType.Score)
             .OrderBy(a => a.Id)
             .Select(a => a.EventType == GameEventType.Fault)
             .LastOrDefault(false);
-        ChangeCode = game.Events.Select(a => a.Id).OrderByDescending(a => a).FirstOrDefault(game.Id);
-        var lastTimeoutEvent = game.Events
-            .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
-            .OrderByDescending(a => a.Id).FirstOrDefault();
+        ChangeCode = game
+            .Events.Select(a => a.Id)
+            .OrderByDescending(a => a)
+            .FirstOrDefault(game.Id);
+        var lastTimeoutEvent = game
+            .Events.Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefault();
         TimeoutExpirationTime =
-            lastTimeoutEvent?.EventType == GameEventType.Timeout ? (lastTimeoutEvent.CreatedAt + Config.TimeoutTime) * 1000 : -1;
+            lastTimeoutEvent?.EventType == GameEventType.Timeout
+                ? (lastTimeoutEvent.CreatedAt + Config.TimeoutTime) * 1000
+                : -1;
 
-        IsOfficialTimeout = game.Events
-            .Where(a => a.EventType is GameEventType.Timeout)
+        IsOfficialTimeout = game
+            .Events.Where(a => a.EventType is GameEventType.Timeout)
             .Select(a => a.TeamId is null)
             .LastOrDefault(false);
         Court = game.Court;
-
 
         if (includeGameEvents) {
             Events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.Id).ToArray();

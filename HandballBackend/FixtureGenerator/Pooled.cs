@@ -8,8 +8,8 @@ namespace HandballBackend.FixtureGenerator;
 public class Pooled : AbstractFixtureGenerator {
     private readonly int _tournamentId;
 
-
-    public Pooled(int tournamentId) : base(tournamentId, true, true) {
+    public Pooled(int tournamentId)
+        : base(tournamentId, true, true) {
         _tournamentId = tournamentId;
     }
 
@@ -18,10 +18,12 @@ public class Pooled : AbstractFixtureGenerator {
         var tournament = db.Tournaments.Find(_tournamentId)!;
         tournament.IsPooled = true;
 
-        var teams = db.TournamentTeams
-            .Where(t => t.TournamentId == _tournamentId)
+        var teams = db
+            .TournamentTeams.Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
-            .ToArray().OrderByDescending(t => t.Team.Elo()).ToList();
+            .ToArray()
+            .OrderByDescending(t => t.Team.Elo())
+            .ToList();
 
         var pool = 0;
         foreach (var team in teams) {
@@ -36,17 +38,27 @@ public class Pooled : AbstractFixtureGenerator {
     public override bool EndOfRound() {
         var db = new HandballContext();
         var tournament = db.Tournaments.Find(_tournamentId)!;
-        var tournamentTeams = db.TournamentTeams
-            .Where(t => t.TournamentId == _tournamentId)
+        var tournamentTeams = db
+            .TournamentTeams.Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
             .ToList();
 
-        var rounds = db.Games
-            .Where(g => g.TournamentId == _tournamentId)
-            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefault();
+        var rounds = db
+            .Games.Where(g => g.TournamentId == _tournamentId)
+            .OrderByDescending(g => g.Round)
+            .Select(g => g.Round)
+            .FirstOrDefault();
 
-        var poolOne = tournamentTeams.Where(tt => tt.Pool == 1).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
-        var poolTwo = tournamentTeams.Where(tt => tt.Pool == 2).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
+        var poolOne = tournamentTeams
+            .Where(tt => tt.Pool == 1)
+            .Select(tt => tt.Team)
+            .OrderBy(t => t.Id)
+            .ToList();
+        var poolTwo = tournamentTeams
+            .Where(tt => tt.Pool == 2)
+            .Select(tt => tt.Team)
+            .OrderBy(t => t.Id)
+            .ToList();
         if (poolOne.Count % 2 != 0) {
             poolOne.Add(db.Teams.First(t => t.Id == 1));
         }

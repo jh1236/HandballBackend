@@ -20,7 +20,11 @@ public static class PermissionHelper {
             PermissionType.Umpire => 2,
             PermissionType.UmpireManager => 4,
             PermissionType.Admin => 5,
-            _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(permissionType),
+                permissionType,
+                null
+            ),
         };
     }
 
@@ -30,7 +34,11 @@ public static class PermissionHelper {
             2 or 3 => PermissionType.Umpire,
             4 => PermissionType.UmpireManager,
             5 => PermissionType.Admin,
-            _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(permissionType),
+                permissionType,
+                null
+            ),
         };
     }
 
@@ -53,7 +61,6 @@ public static class PermissionHelper {
         return pwd;
     }
 
-
     private static bool CheckPassword(int personId, string checkPassword) {
         var db = new HandballContext();
         if (!PersonOrElse(db, personId, out var person)) {
@@ -67,7 +74,6 @@ public static class PermissionHelper {
 
         return BCrypt.Verify(checkPassword, realPassword);
     }
-
 
     private static bool CheckToken(int personId, string token) {
         var db = new HandballContext();
@@ -89,7 +95,6 @@ public static class PermissionHelper {
         db.SaveChanges();
     }
 
-
     private static string? GetToken() {
         // Access the current HTTP context
         var httpContext = new HttpContextAccessor().HttpContext;
@@ -106,7 +111,6 @@ public static class PermissionHelper {
         // Extract the token from the header
         return authHeader["Bearer ".Length..].Trim();
     }
-
 
     public static void SetPassword(int personId, string password) {
         var db = new HandballContext();
@@ -155,7 +159,8 @@ public static class PermissionHelper {
 
         var person = db.People.FirstOrDefault(p => p.SessionToken == token);
 
-        if (person == null) return null;
+        if (person == null)
+            return null;
 
         if (person.TokenTimeout < Time()) {
             ResetTokenForPerson(person.Id);

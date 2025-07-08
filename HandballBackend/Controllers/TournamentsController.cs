@@ -15,13 +15,11 @@ public class TournamentsController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<GetTournamentsRepsonse> GetTournaments() {
         var db = new HandballContext();
-        var tournaments = db.Tournaments
-            .OrderBy(t => t.Id)
+        var tournaments = db
+            .Tournaments.OrderBy(t => t.Id)
             .Select(t => t.ToSendableData())
             .ToArray();
-        return new GetTournamentsRepsonse {
-            Tournaments = tournaments
-        };
+        return new GetTournamentsRepsonse { Tournaments = tournaments };
     }
 
     public record GetTournamentResponse {
@@ -31,14 +29,11 @@ public class TournamentsController : ControllerBase {
     [HttpGet("{searchable}")]
     public ActionResult<GetTournamentResponse> GetTournament(string searchable) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = db.Tournaments.FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
 
-        return new GetTournamentResponse {
-            Tournament = tournament.ToSendableData()
-        };
+        return new GetTournamentResponse { Tournament = tournament.ToSendableData() };
     }
 }

@@ -10,17 +10,33 @@ public static class Policies {
     public const string IsAdmin = nameof(IsAdmin);
 
     public static void RegisterPolicies(AuthorizationOptions options) {
-        options.AddPolicy(IsUmpire, policy => policy
-            .RequireAssertion(c =>
-                c.User.HasClaim(c =>
-                    c.Type == ClaimTypes.Role && c.Value == PermissionType.Umpire.ToString())));
-        options.AddPolicy(IsUmpireManager, policy => policy
-            .RequireAssertion(c =>
-                c.User.HasClaim(c =>
-                    c.Type == ClaimTypes.Role && c.Value == PermissionType.UmpireManager.ToString())));
-        options.AddPolicy(IsAdmin, policy => policy
-            .RequireAssertion(c =>
-                c.User.HasClaim(c =>
-                    c.Type == ClaimTypes.Role && c.Value == PermissionType.Admin.ToString())));
+        options.AddPolicy(
+            IsUmpire,
+            policy =>
+                policy.RequireAssertion(c =>
+                    c.User.HasClaim(c =>
+                        c.Type == ClaimTypes.Role && c.Value == PermissionType.Umpire.ToString()
+                    )
+                )
+        );
+        options.AddPolicy(
+            IsUmpireManager,
+            policy =>
+                policy.RequireAssertion(c =>
+                    c.User.HasClaim(c =>
+                        c.Type == ClaimTypes.Role
+                        && c.Value == PermissionType.UmpireManager.ToString()
+                    )
+                )
+        );
+        options.AddPolicy(
+            IsAdmin,
+            policy =>
+                policy.RequireAssertion(c =>
+                    c.User.HasClaim(c =>
+                        c.Type == ClaimTypes.Role && c.Value == PermissionType.Admin.ToString()
+                    )
+                )
+        );
     }
 }

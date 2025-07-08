@@ -2,8 +2,13 @@
 
 namespace HandballBackend.Arguments;
 
-public class HelpArgumentHandler() : AbstractArgumentHandler("h", "help", "Displays this help text.") {
-    protected override void ParseIfMatched(string[] args, ref int index, WebApplicationBuilder builder) {
+public class HelpArgumentHandler()
+    : AbstractArgumentHandler("h", "help", "Displays this help text.") {
+    protected override void ParseIfMatched(
+        string[] args,
+        ref int index,
+        WebApplicationBuilder builder
+    ) {
         var strings = new List<(string, string)>();
         var longestArg = 0;
         foreach (var handler in ArgsHandler.Handlers) {

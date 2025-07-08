@@ -15,15 +15,17 @@ public class GameTeamData : TeamData {
         Game game,
         bool generateStats = false,
         bool formatData = false,
-        bool isAdmin = false) : base(team) {
+        bool isAdmin = false
+    )
+        : base(team) {
         var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
         ImageUrl = tt?.ImageUrl == null ? ImageUrl : Utilities.FixImageUrl(tt.ImageUrl);
         BigImageUrl = tt?.BigImageUrl == null ? BigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
         Name = tt?.Name ?? Name;
         ExtendedName = tt?.LongName ?? tt?.Name ?? ExtendedName;
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);
-        var lastTimeServed = game.Events
-            .OrderByDescending(a => a.Id)
+        var lastTimeServed = game
+            .Events.OrderByDescending(a => a.Id)
             .FirstOrDefault(a => a.EventType == GameEventType.Score && a.TeamToServeId == team.Id);
         if (startGame is null) {
             ServingFromLeft = true;
@@ -41,27 +43,30 @@ public class GameTeamData : TeamData {
             }
         }
 
-        Captain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
+        Captain = game
+            .Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
-        NonCaptain = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
+        NonCaptain = game
+            .Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
-        Substitute = game.Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
+        Substitute = game
+            .Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
             ?.ToSendableData(generateStats, formatData, isAdmin);
 
-
-        if (!generateStats) return;
+        if (!generateStats)
+            return;
 
         Stats = new Dictionary<string, dynamic> {
-            ["Timeouts Called"] = game.TeamOneId == team.Id ? game.TeamOneTimeouts : game.TeamTwoTimeouts,
+            ["Timeouts Called"] =
+                game.TeamOneId == team.Id ? game.TeamOneTimeouts : game.TeamTwoTimeouts,
             ["Points Against"] = game.TeamOneId == team.Id ? game.TeamTwoScore : game.TeamOneScore,
             ["Green Cards"] = 0.0,
             ["Yellow Cards"] = 0.0,
             ["Red Cards"] = 0.0,
             ["Faults"] = 0.0,
             ["Double Faults"] = 0.0,
-            ["Points Scored"] = 0.0
+            ["Points Scored"] = 0.0,
         };
-
 
         foreach (var pgs in game.Players.Where(pgs => pgs.TeamId == team.Id)) {
             Stats["Green Cards"] += pgs.GreenCards;
@@ -72,7 +77,8 @@ public class GameTeamData : TeamData {
             Stats["Points Scored"] += pgs.PointsScored;
         }
 
-        if (!formatData) return;
+        if (!formatData)
+            return;
         FormatData();
     }
 }

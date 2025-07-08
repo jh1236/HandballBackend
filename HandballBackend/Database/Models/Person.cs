@@ -52,7 +52,8 @@ public class Person {
 
     public string InitialLastName {
         get {
-            if (!Name.Contains(' ')) return Name;
+            if (!Name.Contains(' '))
+                return Name;
             return Name[0] + ". " + string.Join(" ", Name.Split(" ")[1..]);
         }
     }
@@ -73,7 +74,8 @@ public class Person {
         }
 
         if (tournamentId.HasValue) {
-            var pgs = PlayerGameStats?.Where(pgs => pgs.TournamentId == tournamentId)
+            var pgs = PlayerGameStats
+                ?.Where(pgs => pgs.TournamentId == tournamentId)
                 .OrderByDescending(pgs => pgs.GameId)
                 .FirstOrDefault();
             if (pgs is not null) {
@@ -85,19 +87,21 @@ public class Person {
             }
         }
 
-
-        var player = PlayerGameStats?
-            .OrderByDescending(pgs => pgs.GameId)
-            .FirstOrDefault();
-        if (player is {EloDelta: not null}) {
+        var player = PlayerGameStats?.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
+        if (player is { EloDelta: not null }) {
             return (double) (player.EloDelta + player.InitialElo);
         }
 
         return player?.InitialElo ?? 1500.0;
     }
 
-    public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
-        bool formatData = false, bool admin = false) {
+    public PersonData ToSendableData(
+        Tournament? tournament = null,
+        bool generateStats = false,
+        Team? team = null,
+        bool formatData = false,
+        bool admin = false
+    ) {
         return new PersonData(this, tournament, generateStats, team, formatData, admin);
     }
 }

@@ -19,16 +19,15 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     [HttpGet("change_code")]
-    public ActionResult<ChangeCodeResponse> GetChangeCode(
-        [FromQuery(Name = "id")] int gameNumber
-    ) {
+    public ActionResult<ChangeCodeResponse> GetChangeCode([FromQuery(Name = "id")] int gameNumber) {
         var db = new HandballContext();
-        var query = db.GameEvents.Where(gE => gE.Game.GameNumber == gameNumber).OrderByDescending(gE => gE.Id)
-            .Select(gE => gE.Id).FirstOrDefault();
+        var query = db
+            .GameEvents.Where(gE => gE.Game.GameNumber == gameNumber)
+            .OrderByDescending(gE => gE.Id)
+            .Select(gE => gE.Id)
+            .FirstOrDefault();
 
-        return new ChangeCodeResponse {
-            Code = query
-        };
+        return new ChangeCodeResponse { Code = query };
     }
 
     public record GetGameResponse {
@@ -45,8 +44,8 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         var db = new HandballContext();
         var isAdmin = HttpContext.User.IsInRole(PermissionType.UmpireManager.ToString());
 
-        var game = db.Games
-            .IncludeRelevant()
+        var game = db
+            .Games.IncludeRelevant()
             .Include(g => g.Events)
             .Include(g => g.Players)
             .ThenInclude(pgs => pgs.Player)
@@ -55,16 +54,20 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             return NotFound();
         }
 
-        var cards = db.GameEvents.Where(gE =>
-            gE.TournamentId == game.TournamentId
-            && GameEvent.CardTypes.Contains(gE.EventType)
-            && gE.TeamId == game.TeamOneId || gE.TeamId == game.TeamTwoId).Include(gE => gE.Game);
+        var cards = db
+            .GameEvents.Where(gE =>
+                gE.TournamentId == game.TournamentId
+                    && GameEvent.CardTypes.Contains(gE.EventType)
+                    && gE.TeamId == game.TeamOneId
+                || gE.TeamId == game.TeamTwoId
+            )
+            .Include(gE => gE.Game);
         foreach (var pgs in game.Players) {
             pgs.Player.Events = cards.Where(gE => pgs.PlayerId == gE.PlayerId).ToList();
         }
 
         return new GetGameResponse {
-            Game = game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin)
+            Game = game.ToSendableData(true, includeGameEvents, includeStats, formatData, isAdmin),
         };
     }
 
@@ -88,7 +91,9 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         [FromQuery] int limit = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = (
+            await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)
+        ).Succeeded;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
@@ -105,21 +110,26 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
         if (players is not null) {
             foreach (var p in players) {
-                query = query.Where(g => g.Players.Select(pgs => pgs.Player.SearchableName).Contains(p));
+                query = query.Where(g =>
+                    g.Players.Select(pgs => pgs.Player.SearchableName).Contains(p)
+                );
             }
         }
 
         if (teams is not null) {
             foreach (var t in teams) {
-                query = query.Where(g => g.TeamOne.SearchableName == t || g.TeamTwo.SearchableName == t);
+                query = query.Where(g =>
+                    g.TeamOne.SearchableName == t || g.TeamTwo.SearchableName == t
+                );
             }
         }
 
         if (officials is not null) {
             foreach (var p in officials) {
                 query = query.Where(g =>
-                    (g.Official != null && g.Official.Person.SearchableName == p) ||
-                    (g.Scorer != null && g.Scorer.Person.SearchableName == p));
+                    (g.Official != null && g.Official.Person.SearchableName == p)
+                    || (g.Scorer != null && g.Scorer.Person.SearchableName == p)
+                );
             }
         }
 
@@ -136,27 +146,32 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         if (includeGameEvents) {
             query = query.Include(g => g.Events).ThenInclude(gE => gE.Player);
         } else if (isAdmin) {
-            query = query.Include(x => x.Events
-                    .Where(gE => gE.EventType == GameEventType.Notes ||
-                                 gE.EventType == GameEventType.Protest ||
-                                 gE.EventType == GameEventType.EndGame ||
-                                 GameEvent.CardTypes.Contains(gE.EventType))
+            query = query
+                .Include(x =>
+                    x.Events.Where(gE =>
+                        gE.EventType == GameEventType.Notes
+                        || gE.EventType == GameEventType.Protest
+                        || gE.EventType == GameEventType.EndGame
+                        || GameEvent.CardTypes.Contains(gE.EventType)
+                    )
                 )
                 .ThenInclude(gE => gE.Player);
         }
 
-        var games = query.OrderBy(g => g.Id)
-            .Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
+        var games = query
+            .OrderBy(g => g.Id)
+            .Select(g =>
+                g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin)
+            )
             .ToArray();
 
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetGamesResponse {
             Games = games,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 
@@ -181,12 +196,12 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             return BadRequest("Invalid tournament");
         }
 
-        var query = db.Games.IncludeRelevant()
+        var query = db
+            .Games.IncludeRelevant()
             .Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
         }
-
 
         query = query.OrderByDescending(g => g.Id);
 
@@ -196,18 +211,17 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
         query = query.Include(g => g.Events);
 
-
-        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
+        var games = query
+            .Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
             .ToArray();
 
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetNoteableResponse {
             Games = games,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 
@@ -219,25 +233,26 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
     [HttpGet("fixtures")]
     public async Task<ActionResult<GetFixturesResponse>> GetFixtures(
-        [BindRequired, FromQuery(Name = "tournament")]
-        string tournamentSearchable,
+        [BindRequired, FromQuery(Name = "tournament")] string tournamentSearchable,
         [FromQuery] bool returnTournament = false,
         [FromQuery] bool separateFinals = false,
         [FromQuery] int maxRounds = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = (
+            await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)
+        ).Succeeded;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
-
 
         var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();
 
         query = query.OrderBy(g => g.Id);
 
-
-        var games = query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArray();
+        var games = query
+            .Select(g => g.ToSendableData(false, false, false, false, isAdmin))
+            .ToArray();
 
         List<FixturesRound> fixtures = [];
 
@@ -265,8 +280,10 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         }
 
         var output = new GetFixturesResponse() {
-            Fixtures = separateFinals ? fixtures.Where(f => !f.Final).ToArray() : fixtures.ToArray(),
-            Finals = separateFinals ? fixtures?.Where(f => f.Final).ToArray() : null
+            Fixtures = separateFinals
+                ? fixtures.Where(f => !f.Final).ToArray()
+                : fixtures.ToArray(),
+            Finals = separateFinals ? fixtures?.Where(f => f.Final).ToArray() : null,
         };
 
         if (returnTournament) {
@@ -276,7 +293,6 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
             output.Tournament = tournament.ToSendableData();
         }
-
 
         return output;
     }

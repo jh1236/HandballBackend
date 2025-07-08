@@ -9,7 +9,8 @@ public class PersonData {
     public string ImageUrl { get; protected set; }
     public string BigImageUrl { get; protected set; }
 
-    public static readonly string[] PercentageColumns = [
+    public static readonly string[] PercentageColumns =
+    [
         "Percentage of Points Scored",
         "Percentage",
         "Percentage of Points Scored For Team",
@@ -18,20 +19,26 @@ public class PersonData {
         "Serve Fault Rate",
         "Serve Ace Rate",
         "Percentage of Rounds Carded",
-        "Percentage of Games Started Left"
+        "Percentage of Games Started Left",
     ];
 
     public Dictionary<string, dynamic?>? Stats { get; protected set; }
 
-
-    public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
-        bool format = false, bool admin = false) {
+    public PersonData(
+        Person person,
+        Tournament? tournament = null,
+        bool generateStats = false,
+        Team? team = null,
+        bool format = false,
+        bool admin = false
+    ) {
         Name = person.Name;
         SearchableName = person.SearchableName;
         ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
         BigImageUrl = Utilities.FixImageUrl(person.BigImageUrl);
 
-        if (!generateStats) return;
+        if (!generateStats)
+            return;
 
         Stats = new Dictionary<string, dynamic?> {
             ["B&F Votes"] = 0.0,
@@ -76,22 +83,27 @@ public class PersonData {
             ["Max Ace Streak"] = 0.0,
             ["Serve Return Rate"] = 0.0,
             ["Votes per 100 Games"] = 0.0,
-            ["Average Rating"] = 0.0
+            ["Average Rating"] = 0.0,
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
         var ratedGames = 0;
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
-            if (tournament != null && pgs.TournamentId != tournament.Id) continue;
-            if (team != null && pgs.TeamId != team.Id) continue;
-            if (pgs.RoundsCarded + pgs.RoundsOnCourt == 0) continue;
-            if (pgs.Game.IsBye) continue;
+            if (tournament != null && pgs.TournamentId != tournament.Id)
+                continue;
+            if (team != null && pgs.TeamId != team.Id)
+                continue;
+            if (pgs.RoundsCarded + pgs.RoundsOnCourt == 0)
+                continue;
+            if (pgs.Game.IsBye)
+                continue;
             var game = pgs.Game;
             Stats["Caps"] += game.Ended && game.TournamentId != 1 ? 1 : 0;
-            if (!pgs.Game.Ranked && tournament?.Ranked != false) continue;
+            if (!pgs.Game.Ranked && tournament?.Ranked != false)
+                continue;
 
-
-            if (pgs.Game.IsFinal) continue;
+            if (pgs.Game.IsFinal)
+                continue;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
 
@@ -150,11 +162,13 @@ public class PersonData {
         Stats["Average Rating"] /= ratedGames;
         Stats["Percentage of Points Scored"] =
             Stats["Points Scored"] / Math.Max(Stats["Rounds on Court"], 1);
-        Stats["Percentage of Points Scored For Team"] = Stats["Points Scored"] / Math.Max(teamPoints, 1);
+        Stats["Percentage of Points Scored For Team"] =
+            Stats["Points Scored"] / Math.Max(teamPoints, 1);
         Stats["Percentage of Games Started Left"] = Stats["Games Started Left"] / gamesPlayed;
         Stats["Percentage of Points Served Won"] =
             servedPointsWon / Math.Max(Stats["Points Served"], 1);
-        Stats["Serve Return Rate"] = Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
+        Stats["Serve Return Rate"] =
+            Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
         Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
         Stats["Percentage of Rounds Carded"] =
             Stats["Rounds Carded"] / (Stats["Rounds on Court"] + Stats["Rounds Carded"]);
@@ -166,7 +180,8 @@ public class PersonData {
             Stats.Remove("Average Rating");
         }
 
-        if (!format) return;
+        if (!format)
+            return;
 
         FormatData();
     }
@@ -178,13 +193,18 @@ public class PersonData {
                 continue;
             }
 
-            if (double.IsNaN(Stats[stat])) Stats[stat] = "-";
+            if (double.IsNaN(Stats[stat]))
+                Stats[stat] = "-";
             else if (PercentageColumns.Contains(stat)) {
-                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e%";
-                else Stats[stat] = Stats[stat].ToString("P2");
+                if (double.IsInfinity(Stats[stat]))
+                    Stats[stat] = "\u221e%";
+                else
+                    Stats[stat] = Stats[stat].ToString("P2");
             } else {
-                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e";
-                else Stats[stat] = Math.Round((double) Stats[stat], 2);
+                if (double.IsInfinity(Stats[stat]))
+                    Stats[stat] = "\u221e";
+                else
+                    Stats[stat] = Math.Round((double) Stats[stat], 2);
             }
         }
     }

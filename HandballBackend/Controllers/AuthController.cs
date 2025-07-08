@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using Microsoft.AspNetCore.Authorization;
@@ -26,9 +26,7 @@ public class AuthController(IAuthorizationService authorizationService) : Contro
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<LoginResponse> Login(
-        [FromBody] LoginRequest loginRequest
-    ) {
+    public ActionResult<LoginResponse> Login([FromBody] LoginRequest loginRequest) {
         var userId = loginRequest.UserID;
         var password = loginRequest.Password;
         var longSession = loginRequest.LongSession;
@@ -43,18 +41,19 @@ public class AuthController(IAuthorizationService authorizationService) : Contro
             UserID = user.Id,
             Timeout = user.TokenTimeout!.Value * 1000L, //convert to ms for frontend
             Username = user.Name,
-            PermissionLevel = user.PermissionLevel
+            PermissionLevel = user.PermissionLevel,
         };
         return response;
     }
-
 
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize]
     [HttpPost("logout")]
     public Task<IActionResult> Logout() {
-        var userId = int.Parse(HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value);
+        var userId = int.Parse(
+            HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value
+        );
         PermissionHelper.Logout(userId);
         return Task.FromResult<IActionResult>(NoContent());
     }

@@ -17,38 +17,50 @@ public static class TextHelper {
     private static bool _hasBeenSetup = false;
 
     private static void Setup() {
-        if (_hasBeenSetup) return;
+        if (_hasBeenSetup)
+            return;
         _hasBeenSetup = true;
         TwilioClient.Init(UserName(), Key());
     }
 
     public static async Task<bool> TextPeopleForGame(Game game) {
         var tasks = new List<Task<bool>>();
-        tasks.Add(Text(game.Official.Person,
-            $"You are umpiring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}. https://squarers.club/games/{game.GameNumber}"
-        ));
+        tasks.Add(
+            Text(
+                game.Official.Person,
+                $"You are umpiring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}. https://squarers.club/games/{game.GameNumber}"
+            )
+        );
         if (game.ScorerId != null && game.ScorerId != game.OfficialId) {
-            tasks.Add(Text(game.Official.Person,
-                $"You are scoring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}."));
+            tasks.Add(
+                Text(
+                    game.Official.Person,
+                    $"You are scoring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}."
+                )
+            );
         }
 
-        var teams = new[] {game.TeamOne, game.TeamTwo};
+        var teams = new[] { game.TeamOne, game.TeamTwo };
         for (var j = 0; j < teams.Length; j++) {
             var team = teams[j];
             var oppTeam = teams[1 - j];
-            tasks.Add(Text(team.Captain,
-                $"Your game against {oppTeam.Name} is beginning soon on court {game.Court + 1}."));
+            tasks.Add(
+                Text(
+                    team.Captain,
+                    $"Your game against {oppTeam.Name} is beginning soon on court {game.Court + 1}."
+                )
+            );
         }
 
         await Task.WhenAll(tasks);
         return tasks.All(t => t.Result);
     }
 
-
     public static async Task<bool> Text(Person target, string msg) {
         Setup();
         var targetPhoneNumber = target.PhoneNumber;
-        if (targetPhoneNumber == null) return false;
+        if (targetPhoneNumber == null)
+            return false;
         var m = await MessageResource.CreateAsync(
             new PhoneNumber(targetPhoneNumber),
             from: new PhoneNumber("+14093592698"),

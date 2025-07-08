@@ -17,7 +17,6 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         public TournamentData? Tournament { get; set; }
     }
 
-
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -33,13 +32,16 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             return BadRequest("Invalid tournament");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = (
+            await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)
+        ).Succeeded;
 
-        var player = db.People
-            .Where(t => t.SearchableName == searchable)
+        var player = db
+            .People.Where(t => t.SearchableName == searchable)
             .Include(t => t.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
-            .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
+            .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin))
+            .FirstOrDefault();
         if (player is null) {
             return NotFound();
         }
@@ -48,10 +50,9 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetPlayerResponse {
             Player = player,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 
@@ -59,7 +60,6 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         public required PersonData[] Players { get; set; }
         public TournamentData? Tournament { get; set; }
     }
-
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -87,31 +87,39 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         }
 
         if (tournament is not null) {
-            query = tournament.GetPeopleInTournament()
+            query = tournament
+                .GetPeopleInTournament()
                 .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game);
         } else {
-            query = db.People
-                .Include(t => t.PlayerGameStats)!
+            query = db
+                .People.Include(t => t.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
                 .Where(p => p.SearchableName != "worstie");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = (
+            await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)
+        ).Succeeded;
 
-        var playerSendable = query.OrderBy(p => p.SearchableName)
-            .Where(p => !includeStats || tournament == null || !tournament.Editable || p.PlayerGameStats!.Any(pgs =>
-                pgs.TournamentId == tournament.Id))
-            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
+        var playerSendable = query
+            .OrderBy(p => p.SearchableName)
+            .Where(p =>
+                !includeStats
+                || tournament == null
+                || !tournament.Editable
+                || p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id)
+            )
+            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin))
+            .ToArray();
 
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetPlayersResponse {
             Players = playerSendable,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 
@@ -125,7 +133,8 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false,
-        [FromQuery] int? gameNumber = null) {
+        [FromQuery] int? gameNumber = null
+    ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
@@ -133,42 +142,49 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
 
         List<Dictionary<string, dynamic?>> statsList;
         if (gameNumber is not null) {
-            statsList = db.PlayerGameStats
-                .Where(pgs => pgs.Game.GameNumber == gameNumber.Value)
+            statsList = db
+                .PlayerGameStats.Where(pgs => pgs.Game.GameNumber == gameNumber.Value)
                 .Include(pgs => pgs.Game)
                 .ToArray()
-                .Select(pgs => pgs.ToSendableData(true).Stats!).ToList();
+                .Select(pgs => pgs.ToSendableData(true).Stats!)
+                .ToList();
         } else if (tournament is not null) {
-            statsList = db.People
-                .Where(p => p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id))
-                .Include(p => p.PlayerGameStats!
-                    .Where(pgs => pgs.TournamentId == tournament.Id
-                                  && pgs.Team.NonCaptainId != null &&
-                                  pgs.Opponent.NonCaptainId != null
+            statsList = db
+                .People.Where(p => p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id))
+                .Include(p =>
+                    p.PlayerGameStats!.Where(pgs =>
+                        pgs.TournamentId == tournament.Id
+                        && pgs.Team.NonCaptainId != null
+                        && pgs.Opponent.NonCaptainId != null
                     )
                 )
                 .ThenInclude(pgs => pgs.Game)
                 .ToArray()
-                .Select(p => p.ToSendableData(tournament, true).Stats!).ToList();
+                .Select(p => p.ToSendableData(tournament, true).Stats!)
+                .ToList();
         } else {
-            statsList = db.People
-                .Include(p => p.PlayerGameStats!
-                    .Where(pgs => pgs.Team.NonCaptainId != null &&
-                                  pgs.Opponent.NonCaptainId != null
+            statsList = db
+                .People.Include(p =>
+                    p.PlayerGameStats!.Where(pgs =>
+                        pgs.Team.NonCaptainId != null && pgs.Opponent.NonCaptainId != null
                     )
                 )
                 .ThenInclude(pgs => pgs.Game)
                 .ToArray()
-                .Select(p => p.ToSendableData(null, true).Stats!).ToList();
+                .Select(p => p.ToSendableData(null, true).Stats!)
+                .ToList();
         }
 
         var ret = new Dictionary<string, dynamic?>();
         var counts = new Dictionary<string, double>();
         foreach (var stats in statsList) {
-            if (stats.GetValueOrDefault("Games Played", 1) == 0) continue;
+            if (stats.GetValueOrDefault("Games Played", 1) == 0)
+                continue;
             foreach (var (k, v) in stats) {
-                if (v is string) continue;
-                if (v is double && (double.IsNaN(v) || double.IsInfinity(v))) continue;
+                if (v is string)
+                    continue;
+                if (v is double && (double.IsNaN(v) || double.IsInfinity(v)))
+                    continue;
                 if (!ret.ContainsKey(k)) {
                     ret[k] = v;
                     counts[k] = 1;
@@ -198,10 +214,9 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             return BadRequest("Cannot return null tournament");
         }
 
-
         return new GetStatsResponse {
             Stats = ret,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null,
         };
     }
 }

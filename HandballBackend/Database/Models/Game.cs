@@ -8,13 +8,14 @@ namespace HandballBackend.Database.Models;
 
 [Table("games")]
 public class Game : IHasRelevant<Game> {
-    public static readonly string[] ResolvedStatuses = [
+    public static readonly string[] ResolvedStatuses =
+    [
         "Resolved",
         "In Progress",
         "Official",
         "Ended",
         "Waiting for Start",
-        "Forfeit"
+        "Forfeit",
     ];
 
     [Key]
@@ -29,11 +30,9 @@ public class Game : IHasRelevant<Game> {
     [Column("team_one_id")]
     public int TeamOneId { get; set; }
 
-
     [Required]
     [Column("team_two_id")]
     public int TeamTwoId { get; set; }
-
 
     [Required]
     [Column("team_one_score")]
@@ -181,7 +180,14 @@ public class Game : IHasRelevant<Game> {
         bool formatData = false,
         bool isAdmin = false
     ) {
-        return new GameData(this, includeTournament, includeGameEvents, includeStats, formatData, isAdmin);
+        return new GameData(
+            this,
+            includeTournament,
+            includeGameEvents,
+            includeStats,
+            formatData,
+            isAdmin
+        );
     }
 
     public void Reset() {
