@@ -100,6 +100,30 @@ public class Tournament {
     public AbstractFixtureGenerator GetFixtureGenerator =>
         AbstractFixtureGenerator.GetControllerByName(FixturesType, Id);
 
+    public IQueryable<Person> GetPeopleInTournament() {
+        var db = new HandballContext();
+        var captainIds = db.TournamentTeams
+            .Where(tt => tt.TournamentId == Id)
+            .Select(tt => tt.Team.CaptainId);
+
+        var nonCaptainIds = db.TournamentTeams
+            .Where(tt => tt.TournamentId == Id)
+            .Select(tt => tt.Team.NonCaptainId);
+
+        var substituteIds = db.TournamentTeams
+            .Where(tt => tt.TournamentId == Id)
+            .Select(tt => tt.Team.SubstituteId);
+
+        var personIds = captainIds
+            .Union(nonCaptainIds)
+            .Union(substituteIds)
+            .Where(id => id != null)
+            .Distinct()
+            .ToList();
+
+        return db.People
+            .Where(p => personIds.Contains(p.Id))!;
+    }
 
     public TournamentData ToSendableData() {
         return new TournamentData(this);

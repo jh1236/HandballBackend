@@ -87,7 +87,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         }
 
         if (tournament is not null) {
-            query = db.People.Where(p => p.PlayerGameStats!.Any(pgs => pgs.TournamentId == tournament.Id))
+            query = tournament.GetPeopleInTournament()
                 .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game);
         } else {
@@ -100,8 +100,8 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
 
         var playerSendable = query.OrderBy(p => p.SearchableName)
-            .Where(p => p.PlayerGameStats!.Any(pgs =>
-                !includeStats || tournament == null || pgs.TournamentId == tournament.Id))
+            .Where(p => !includeStats || tournament == null || !tournament.Editable || p.PlayerGameStats!.Any(pgs =>
+                pgs.TournamentId == tournament.Id))
             .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
 
         if (returnTournament && tournament is null) {
