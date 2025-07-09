@@ -26,6 +26,7 @@ public class PersonData {
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
         bool format = false, bool admin = false) {
+        var db = new HandballContext();
         Name = person.Name;
         SearchableName = person.SearchableName;
         ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
@@ -133,6 +134,10 @@ public class PersonData {
             }
         }
 
+        Stats["Tournaments Played"] = db.TournamentTeams.Where(tt =>
+                tt.Team.CaptainId == person.Id || tt.Team.NonCaptainId == person.Id ||
+                tt.Team.SubstituteId == person.Id)
+            .Select(tt => tt.TournamentId).Where(t => t != 1).Distinct().Count();
         Stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
         var gamesPlayed = Stats["Games Played"];
         Stats["Percentage"] = Stats["Games Won"] / Stats["Games Played"];
