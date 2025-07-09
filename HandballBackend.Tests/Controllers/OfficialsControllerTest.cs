@@ -38,8 +38,8 @@ public class OfficialsControllerTest {
         };
         db.People.Add(personOne);
         var personTwo = new Person {
-            Name = "Foo",
-            SearchableName = "foo",
+            Name = "Bar",
+            SearchableName = "bar",
             Password = null,
             ImageUrl = "/a/fake/url",
             BigImageUrl = null,
