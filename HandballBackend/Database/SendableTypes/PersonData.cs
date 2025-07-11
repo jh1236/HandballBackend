@@ -26,7 +26,6 @@ public class PersonData {
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
         bool format = false, bool admin = false) {
-        var db = new HandballContext();
         Name = person.Name;
         SearchableName = person.SearchableName;
         ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
@@ -82,7 +81,9 @@ public class PersonData {
         var teamPoints = 0;
         var servedPointsWon = 0;
         var ratedGames = 0;
+        var tournaments = new HashSet<int>();
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
+            tournaments.Add(pgs.TournamentId);
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (pgs.RoundsCarded + pgs.RoundsOnCourt == 0) continue;
@@ -98,6 +99,7 @@ public class PersonData {
             if (tournament != null || pgs.TournamentId != 1) {
                 Stats["B&F Votes"] += pgs.BestPlayerVotes;
             }
+
 
             Stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             Stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
@@ -136,10 +138,15 @@ public class PersonData {
             }
         }
 
-        Stats["Tournaments Played"] = db.TournamentTeams.Where(tt =>
-                tt.Team.CaptainId == person.Id || tt.Team.NonCaptainId == person.Id ||
-                tt.Team.SubstituteId == person.Id)
-            .Select(tt => tt.TournamentId).Where(t => t != 1).Distinct().Count();
+        var db = new HandballContext();
+        var umpiredTournaments = db.TournamentOfficials
+            .Where(t => t.Tournament.Started && t.Official.PersonId == person.Id)
+            .Select(to => to.TournamentId)
+            .ToHashSet();
+        tournaments.UnionWith(umpiredTournaments);
+        tournaments.Remove(1);
+
+        Stats["Tournaments"] = tournaments.Count;
         Stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
         var gamesPlayed = Stats["Games Played"];
         Stats["Percentage"] = Stats["Games Won"] / Stats["Games Played"];
