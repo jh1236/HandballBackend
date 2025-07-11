@@ -81,7 +81,10 @@ public class PersonData {
         var teamPoints = 0;
         var servedPointsWon = 0;
         var ratedGames = 0;
+        var tournamentGames = 0;
+        var tournaments = new HashSet<int>();
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
+            tournaments.Add(pgs.TournamentId);
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (pgs.RoundsCarded + pgs.RoundsOnCourt == 0) continue;
@@ -94,8 +97,12 @@ public class PersonData {
             if (pgs.Game.IsFinal) continue;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
+            if (tournament != null || pgs.TournamentId != 1) {
+                tournamentGames++;
+                Stats["B&F Votes"] += pgs.BestPlayerVotes;
+            }
 
-            Stats["B&F Votes"] += pgs.BestPlayerVotes;
+
             Stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             Stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
             Stats["Games Played"] += game.Ended ? 1 : 0;
@@ -133,6 +140,15 @@ public class PersonData {
             }
         }
 
+        var db = new HandballContext();
+        var umpiredTournaments = db.TournamentOfficials
+            .Where(t => t.Tournament.Started && t.Official.PersonId == person.Id)
+            .Select(to => to.TournamentId)
+            .ToHashSet();
+        tournaments.UnionWith(umpiredTournaments);
+        tournaments.Remove(1);
+
+        Stats["Tournaments"] = tournaments.Count;
         Stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
         var gamesPlayed = Stats["Games Played"];
         Stats["Percentage"] = Stats["Games Won"] / Stats["Games Played"];
@@ -155,7 +171,12 @@ public class PersonData {
         Stats["Percentage of Points Served Won"] =
             servedPointsWon / Math.Max(Stats["Points Served"], 1);
         Stats["Serve Return Rate"] = Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
-        Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
+        if (tournament == null) {
+            Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / tournamentGames;
+        } else {
+            Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
+        }
+
         Stats["Percentage of Rounds Carded"] =
             Stats["Rounds Carded"] / (Stats["Rounds on Court"] + Stats["Rounds Carded"]);
         Stats["Rounds per Game"] = Stats["Rounds on Court"] / gamesPlayed;
