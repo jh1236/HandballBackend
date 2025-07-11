@@ -175,6 +175,17 @@ public class EditGamesController : ControllerBase {
         return NoContent();
     }
 
+    public class AbandonRequest {
+        public required int Id { get; set; }
+    }
+
+    [HttpPost("abandon")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Abandon([FromBody] AbandonRequest forfeitRequest) {
+        GameManager.Abandon(forfeitRequest.Id);
+        return NoContent();
+    }
+
     public class EndTimeoutRequest {
         public required int Id { get; set; }
     }

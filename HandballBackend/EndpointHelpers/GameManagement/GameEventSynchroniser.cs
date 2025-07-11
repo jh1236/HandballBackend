@@ -113,7 +113,14 @@ internal static class GameEventSynchroniser {
         }
 
 
-        game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
+        if (Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5) {
+            game.WinningTeamId = Random.Shared.NextSingle() >= 0.5f ? game.TeamOneId : game.TeamTwoId;
+        } else if (game.TeamOneScore == game.TeamTwoScore) {
+            var mostRecentPoint = game.Events.Where(ge => ge.EventType == GameEventType.Score).OrderByDescending(gE => gE.Id).First();
+            game.WinningTeamId = game.TeamOneId == mostRecentPoint.TeamId ? game.TeamTwoId : game.TeamOneId;
+        } else {
+            game.WinningTeamId = game.TeamOneScore > game.TeamTwoScore ? game.TeamOneId : game.TeamTwoId;
+        }
         game.NoteableStatus = game.AdminStatus;
         game.Status = "Official";
         game.Ended = true;
@@ -301,5 +308,9 @@ internal static class GameEventSynchroniser {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId);
         if (player is null) return;
         player.BestPlayerVotes = gameEvent.Details!.Value;
+    }
+
+    public static void SyncAbandon(Game game, GameEvent gameEvent) {
+        game.SomeoneHasWon = true;
     }
 }
