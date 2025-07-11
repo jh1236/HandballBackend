@@ -13,6 +13,7 @@ public enum GameEventType {
     Fault,
     Timeout,
     EndTimeout,
+    Abandon,
     Forfeit,
     Warning,
     GreenCard,

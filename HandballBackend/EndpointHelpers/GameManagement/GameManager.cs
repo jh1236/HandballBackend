@@ -1,4 +1,4 @@
-using HandballBackend.Controllers;
+﻿using HandballBackend.Controllers;
 using System.Runtime.CompilerServices;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
@@ -34,6 +34,7 @@ public static class GameManager {
     private static void BroadcastEvent(int gameId, GameEvent e) {
         _ = ScoreboardController.SendGameUpdate(gameId, e);
     }
+
     private static void BroadcastUpdate(int gameId) {
         _ = ScoreboardController.SendGame(gameId);
     }
@@ -463,6 +464,7 @@ public static class GameManager {
                 }
             }
         }
+
         BroadcastEvent(gameNumber, gameEvent);
     }
 
@@ -538,12 +540,13 @@ public static class GameManager {
             GameEventSynchroniser.SyncVotes(game, votesEvent);
         }
 
+        var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 && game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
 
         game.MarkedForReview = markedForReview;
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         GameEventSynchroniser.SyncGameEnd(game, endEvent);
-        if (game is {
+        if (!isRandomAbandonment && game is {
                 Ranked:
                 true,
                 IsFinal:
@@ -579,6 +582,7 @@ public static class GameManager {
         if (!remainingGames) {
             game.Tournament.EndRound();
         }
+
         BroadcastUpdate(gameNumber);
     }
 
@@ -763,6 +767,17 @@ public static class GameManager {
         db.Add(gameEvent);
         db.SaveChanges();
         BroadcastUpdate(gameNumber);
+    }
 
+    public static void Abandon(int gameNumber) {
+        var db = new HandballContext();
+        var game = db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events).First();
+        if (!game.Started) throw new InvalidOperationException("The game has not started");
+        if (game.Ended) throw new InvalidOperationException("The game has ended");
+        var gameEvent = SetUpGameEvent(game, GameEventType.Abandon, null, null);
+        db.Add(gameEvent);
+        GameEventSynchroniser.SyncAbandon(game, gameEvent);
+        db.SaveChanges();
+        BroadcastEvent(gameNumber, gameEvent);
     }
 }
