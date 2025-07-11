@@ -134,8 +134,6 @@ internal static class EvilTests {
 
         db.SaveChanges();
 
-        tournament.BeginTournament();
-
         return tournament;
     }
 
