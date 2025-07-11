@@ -81,6 +81,7 @@ public class PersonData {
         var teamPoints = 0;
         var servedPointsWon = 0;
         var ratedGames = 0;
+        var tournamentGames = 0;
         var tournaments = new HashSet<int>();
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
             tournaments.Add(pgs.TournamentId);
@@ -97,6 +98,7 @@ public class PersonData {
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
             if (tournament != null || pgs.TournamentId != 1) {
+                tournamentGames++;
                 Stats["B&F Votes"] += pgs.BestPlayerVotes;
             }
 
@@ -169,7 +171,12 @@ public class PersonData {
         Stats["Percentage of Points Served Won"] =
             servedPointsWon / Math.Max(Stats["Points Served"], 1);
         Stats["Serve Return Rate"] = Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
-        Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
+        if (tournament == null) {
+            Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / tournamentGames;
+        } else {
+            Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
+        }
+
         Stats["Percentage of Rounds Carded"] =
             Stats["Rounds Carded"] / (Stats["Rounds on Court"] + Stats["Rounds Carded"]);
         Stats["Rounds per Game"] = Stats["Rounds on Court"] / gamesPlayed;
