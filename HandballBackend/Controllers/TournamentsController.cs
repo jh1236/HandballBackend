@@ -182,8 +182,7 @@ public class TournamentsController : ControllerBase {
         }
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
-        if (team.TournamentTeams.Count == 1 ||
-            (team.TournamentTeams.Count == 2 && team.TournamentTeams.Any(tt => tt.TournamentId == 1))) {
+        if (team.TournamentTeams.Count(tt => tt.Id != 1) == 1) {
             team.Name = request.NewName;
             team.SearchableName = Utilities.ToSearchable(request.NewName);
         } else {

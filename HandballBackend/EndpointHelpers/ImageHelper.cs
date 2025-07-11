@@ -17,6 +17,7 @@ public static class ImageHelper {
         using (var smallImage = AddCircleToImage(image, false)) {
             smallImage.Write(Config.RESOURCES_FOLDER + $"/images/users/{searchableName}.png");
         }
+
         return $"/api/people/image?name={searchableName}";
     }
 
@@ -33,17 +34,31 @@ public static class ImageHelper {
         return $"/api/teams/image?name={searchableName}";
     }
 
-    public static string CreateTeamImage(Stream imageIn, string searchableName = "test") {
+    public static string CreateTeamImage(Stream imageIn, string searchableName) {
         using (var image = new MagickImage(imageIn)) {
             var circleOutline = new MagickImage(CircleOutline);
             image.Resize(circleOutline.Width, circleOutline.Height);
             image.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
 
-            image.Resize(200,200);
+            image.Resize(200, 200);
             image.Write(Config.RESOURCES_FOLDER + $"/images/teams/{searchableName}.png");
         }
 
         return $"/api/teams/image?name={searchableName}";
+    }
+
+
+    public static string CreateTournamentImage(Stream imageIn, string searchableName) {
+        using (var image = new MagickImage(imageIn)) {
+            var circleOutline = new MagickImage(CircleOutline);
+            image.Resize(circleOutline.Width, circleOutline.Height);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/big/tournaments/{searchableName}.png");
+
+            image.Resize(200, 200);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/tournaments/{searchableName}.png");
+        }
+
+        return $"/api/tournaments/image?name={searchableName}";
     }
 
     public static async Task SetGoogleImageForTeam(int teamId) {
