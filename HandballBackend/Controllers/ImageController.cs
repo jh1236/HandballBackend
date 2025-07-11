@@ -90,7 +90,7 @@ public class ImageController : ControllerBase {
         //do some voodoo shit on the image to make it circle; also saves it.
         var image = ImageHelper.CreateTeamImage(formFile.OpenReadStream(), formFile.FileName);
         // get the team by searchable name
-        var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams).ThenInclude(tt => tt)
+        var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
             .Single(t => t.SearchableName == formFile.FileName);
         if (tournament == null || team.TournamentTeams.Count(tt => tt.TournamentId != 1) <= 1) {
             team.ImageUrl = image;
