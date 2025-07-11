@@ -152,7 +152,8 @@ public class TournamentsController : ControllerBase {
 
     public class UpdateTeamRequest {
         public required string TeamSearchableName { get; set; }
-        public required string NewName { get; set; }
+        public string? NewName { get; set; }
+        public string? NewColor { get; set; }
     }
 
     public class UpdateTeamResponse {
@@ -183,10 +184,22 @@ public class TournamentsController : ControllerBase {
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
         if (team.TournamentTeams.Count(tt => tt.Id != 1) == 1) {
-            team.Name = request.NewName;
-            team.SearchableName = Utilities.ToSearchable(request.NewName);
+            if (request.NewName != null) {
+                team.Name = request.NewName;
+                team.SearchableName = Utilities.ToSearchable(request.NewName);
+            }
+
+            if (request.NewColor != null) {
+                team.TeamColor = request.NewColor;
+            }
         } else {
-            tournamentTeam.Name = request.NewName;
+            if (request.NewName != null) {
+                tournamentTeam.Name = request.NewName;
+            }
+
+            if (request.NewColor != null) {
+                tournamentTeam.TeamColor = request.NewColor;
+            }
         }
 
 
