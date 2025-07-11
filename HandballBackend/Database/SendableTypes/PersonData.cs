@@ -95,8 +95,10 @@ public class PersonData {
             if (pgs.Game.IsFinal) continue;
             servedPointsWon += pgs.ServedPointsWon;
             teamPoints += game.TeamOneId == pgs.TeamId ? game.TeamOneScore : game.TeamTwoScore;
+            if (tournament != null || pgs.TournamentId != 1) {
+                Stats["B&F Votes"] += pgs.BestPlayerVotes;
+            }
 
-            Stats["B&F Votes"] += pgs.BestPlayerVotes;
             Stats["Games Won"] += game.Ended && game.WinningTeamId == pgs.TeamId ? 1 : 0;
             Stats["Games Lost"] += game.Ended && game.WinningTeamId != pgs.TeamId ? 1 : 0;
             Stats["Games Played"] += game.Ended ? 1 : 0;
