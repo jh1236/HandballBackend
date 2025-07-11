@@ -27,8 +27,10 @@ public class Official : IHasRelevant<Official> {
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
-    public List<Game> Games { get; set; } = new List<Game>();
-    
+    public List<Game> Games { get; set; } = [];
+
+    public List<TournamentOfficial> TournamentOfficials { get; set; } = [];
+
     public OfficialData ToSendableData(Tournament? tournament = null, bool includeStats = false) {
         return new OfficialData(this, tournament, includeStats);
     }
