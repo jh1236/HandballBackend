@@ -49,7 +49,7 @@ public class TournamentsController : ControllerBase {
 
 
     [HttpPost("{searchable}/start")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult StartTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -75,7 +75,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<AddTeamResponse> AddTeamToTournament([FromRoute] string searchable,
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
@@ -161,7 +161,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPatch("{searchable}/updateTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<UpdateTeamResponse> UpdateTeamForTournament(string searchable,
         [FromBody] UpdateTeamRequest request) {
         var db = new HandballContext();
@@ -214,7 +214,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpDelete("{searchable}/removeTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -249,7 +249,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addOfficial")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult AddOfficialToTournament(string searchable,
         [FromBody] AddOfficialRequest request) {
         var db = new HandballContext();
@@ -288,7 +288,7 @@ public class TournamentsController : ControllerBase {
         public required string OfficialSearchableName { get; set; }
     }
 
-
+    [Authorize(Policy = Policies.IsUmpireManager)]
     [HttpDelete("{searchable}/removeOfficial")]
     public ActionResult RemoveOfficialFromTournament(string searchable,
         [FromBody] RemoveOfficialRequest request) {
