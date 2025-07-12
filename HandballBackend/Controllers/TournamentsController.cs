@@ -227,22 +227,19 @@ public class TournamentsController : ControllerBase {
             return NotFound("Tournament has already started!");
         }
 
-        var tournamentTeam =
-            db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
-                .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+        var team = db.Teams.Include(team => team.TournamentTeams)
+            .Single(t => t.SearchableName == request.TeamSearchableName);
+        var deleteTeam = team.TournamentTeams.Count(tt => tt.TournamentId != 1) <= 1;
 
-        if (tournamentTeam is null) {
-            return BadRequest("That team doesn't exist!");
+        var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
+        db.TournamentTeams.Remove(tournamentTeam);
+        if (deleteTeam) {
+            db.Teams.Remove(team);
         }
 
         db.TournamentTeams.Remove(tournamentTeam);
         db.SaveChanges();
-        var team = db.Teams.Include(team => team.TournamentTeams)
-            .Single(t => t.SearchableName == request.TeamSearchableName);
-        if (team.TournamentTeams.Count == 0) {
-            db.Teams.Remove(team);
-            db.SaveChanges();
-        }
+
 
         return Ok();
     }
