@@ -182,7 +182,7 @@ public class TeamsController : ControllerBase {
             if (tournament.Editable) {
                 ladder = ladder?.Where(t => !tournament.Editable || t.Stats!["Games Played"] > 0).ToArray();
                 poolOne = poolOne?.Where(t => !tournament.Editable || t.Stats!["Games Played"] > 0).ToArray();
-                poolTwo = poolTwo?.Where(t => !tournament.Editable || t.Stats!["Games Played"] > 1).ToArray();
+                poolTwo = poolTwo?.Where(t => !tournament.Editable || t.Stats!["Games Played"] > 0).ToArray();
             }
         } else {
             //Not null captain removes bye team
