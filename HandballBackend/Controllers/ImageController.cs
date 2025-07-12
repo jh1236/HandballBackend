@@ -2,6 +2,7 @@
 using HandballBackend.Database;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -76,10 +77,11 @@ public class ImageController : ControllerBase {
     //Set the method to be a Http POST method (meaning that it has a body)
     [HttpPost("image/teams/upload")]
     //Set the method to only be usable as an Admin
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<UploadTeamImageResponse> UploadTeamImage([FromForm] List<IFormFile> file,
         [FromForm] string? tournament) {
         // Handball Contexts are used to access the db
+        Console.WriteLine(tournament);
         var db = new HandballContext();
         if (file.Count != 1) {
             //when we receive a file it's a list for some reason; we only want 1 file
@@ -88,16 +90,18 @@ public class ImageController : ControllerBase {
 
         var formFile = file.First();
         //do some voodoo shit on the image to make it circle; also saves it.
-        var image = ImageHelper.CreateTeamImage(formFile.OpenReadStream(), formFile.FileName);
+
         // get the team by searchable name
         var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
             .Single(t => t.SearchableName == formFile.FileName);
         if (tournament == null || team.TournamentTeams.Count(tt => tt.TournamentId != 1) <= 1) {
+            var image = ImageHelper.CreateTeamImage(formFile.OpenReadStream(), team.SearchableName);
             team.ImageUrl = image;
             team.BigImageUrl = $"{image}&big=true";
         } else {
             var tournamentObj = db.Tournaments.Single(t => t.SearchableName == tournament);
             var tt = team.TournamentTeams.Single(t => t.TournamentId == tournamentObj.Id);
+            var image = ImageHelper.CreateTeamImage(formFile.OpenReadStream(), Utilities.ToSearchable(tt.Name!));
             tt.ImageUrl = image;
             tt.BigImageUrl = $"{image}&big=true";
         }
