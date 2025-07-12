@@ -2,16 +2,26 @@
 
 public static class ArgsHandler {
     public static AbstractArgumentHandler[] Handlers = [
-        new HelpArgumentHandler(),
-        new LoggingArgumentHandler(),
-        new PortArgumentHandler()
+        new WorkingDirectoryArgHandler(),
+        new LoggingArgHandler(),
+        new PortArgHandler(),
+        new WorkingDirectoryArgHandler()
     ];
 
     public static void Parse(string[] args, WebApplicationBuilder builder) {
         var index = 0;
         while (index < args.Length) {
+            var fail = true;
             foreach (var handler in Handlers) {
-                if (handler.Parse(args, ref index, builder)) break;
+                if (handler.Parse(args, ref index, builder)) {
+                    fail = false;
+                    break;
+                }
+            }
+
+            if (fail) {
+                Console.WriteLine($"Unrecognised Argument {args[index]}.  Run with --help for more information.");
+                break;
             }
         }
     }

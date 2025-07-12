@@ -49,7 +49,7 @@ public class TournamentsController : ControllerBase {
 
 
     [HttpPost("{searchable}/start")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult StartTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -75,7 +75,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<AddTeamResponse> AddTeamToTournament([FromRoute] string searchable,
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
@@ -152,7 +152,8 @@ public class TournamentsController : ControllerBase {
 
     public class UpdateTeamRequest {
         public required string TeamSearchableName { get; set; }
-        public required string NewName { get; set; }
+        public string? NewName { get; set; }
+        public string? NewColor { get; set; }
     }
 
     public class UpdateTeamResponse {
@@ -160,7 +161,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPatch("{searchable}/updateTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult<UpdateTeamResponse> UpdateTeamForTournament(string searchable,
         [FromBody] UpdateTeamRequest request) {
         var db = new HandballContext();
@@ -183,10 +184,22 @@ public class TournamentsController : ControllerBase {
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
         if (team.TournamentTeams.Count(tt => tt.Id != 1) == 1) {
-            team.Name = request.NewName;
-            team.SearchableName = Utilities.ToSearchable(request.NewName);
+            if (request.NewName != null) {
+                team.Name = request.NewName;
+                team.SearchableName = Utilities.ToSearchable(request.NewName);
+            }
+
+            if (request.NewColor != null) {
+                team.TeamColor = request.NewColor;
+            }
         } else {
-            tournamentTeam.Name = request.NewName;
+            if (request.NewName != null) {
+                tournamentTeam.Name = request.NewName;
+            }
+
+            if (request.NewColor != null) {
+                tournamentTeam.TeamColor = request.NewColor;
+            }
         }
 
 
@@ -201,7 +214,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpDelete("{searchable}/removeTeam")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -214,22 +227,19 @@ public class TournamentsController : ControllerBase {
             return NotFound("Tournament has already started!");
         }
 
-        var tournamentTeam =
-            db.TournamentTeams.Include(tournamentTeam => tournamentTeam.Team.TournamentTeams)
-                .FirstOrDefault(tt => tt.Team.SearchableName == request.TeamSearchableName);
+        var team = db.Teams.Include(team => team.TournamentTeams)
+            .Single(t => t.SearchableName == request.TeamSearchableName);
+        var deleteTeam = team.TournamentTeams.Count(tt => tt.TournamentId != 1) <= 1;
 
-        if (tournamentTeam is null) {
-            return BadRequest("That team doesn't exist!");
+        var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
+        db.TournamentTeams.Remove(tournamentTeam);
+        if (deleteTeam) {
+            db.Teams.Remove(team);
         }
 
         db.TournamentTeams.Remove(tournamentTeam);
         db.SaveChanges();
-        var team = db.Teams.Include(team => team.TournamentTeams)
-            .Single(t => t.SearchableName == request.TeamSearchableName);
-        if (team.TournamentTeams.Count == 0) {
-            db.Teams.Remove(team);
-            db.SaveChanges();
-        }
+
 
         return Ok();
     }
@@ -239,7 +249,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addOfficial")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [Authorize(Policy = Policies.IsUmpireManager)]
     public ActionResult AddOfficialToTournament(string searchable,
         [FromBody] AddOfficialRequest request) {
         var db = new HandballContext();
@@ -278,7 +288,7 @@ public class TournamentsController : ControllerBase {
         public required string OfficialSearchableName { get; set; }
     }
 
-
+    [Authorize(Policy = Policies.IsUmpireManager)]
     [HttpDelete("{searchable}/removeOfficial")]
     public ActionResult RemoveOfficialFromTournament(string searchable,
         [FromBody] RemoveOfficialRequest request) {

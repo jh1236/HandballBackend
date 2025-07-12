@@ -66,12 +66,15 @@ public class GameData {
     public bool SomeoneHasWon { get; private set; }
     public bool Ended { get; private set; }
     public bool Protested { get; private set; }
+    public bool Abandoned { get; private set; }
     public bool Ranked { get; private set; }
     public PersonData? BestPlayer { get; private set; }
     public OfficialData? Official { get; private set; }
     public OfficialData? Scorer { get; private set; }
     public bool FirstTeamIga { get; private set; }
     public bool FirstTeamToServe { get; private set; }
+
+    public bool FirstTeamScoredLast { get; private set; }
     public string SideToServe { get; private set; }
     public int? StartTime { get; private set; }
     public int? ServeTimer { get; private set; }
@@ -136,7 +139,9 @@ public class GameData {
             .Where(a => a.EventType is GameEventType.Timeout or GameEventType.EndTimeout)
             .OrderByDescending(a => a.Id).FirstOrDefault();
         TimeoutExpirationTime =
-            lastTimeoutEvent?.EventType == GameEventType.Timeout ? (lastTimeoutEvent.CreatedAt + Config.TimeoutTime) * 1000 : -1;
+            lastTimeoutEvent?.EventType == GameEventType.Timeout
+                ? (lastTimeoutEvent.CreatedAt + Config.TimeoutTime) * 1000
+                : -1;
 
         IsOfficialTimeout = game.Events
             .Where(a => a.EventType is GameEventType.Timeout)
@@ -144,6 +149,10 @@ public class GameData {
             .LastOrDefault(false);
         Court = game.Court;
 
+        Abandoned = game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
+        var mostRecentPoint = game.Events.Where(ge => ge.EventType == GameEventType.Score)
+            .OrderByDescending(gE => gE.Id).FirstOrDefault();
+        FirstTeamScoredLast = game.TeamOneId == mostRecentPoint?.TeamId;
 
         if (includeGameEvents) {
             Events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.Id).ToArray();
