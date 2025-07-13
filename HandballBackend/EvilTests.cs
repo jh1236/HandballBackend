@@ -10,8 +10,10 @@ namespace HandballBackend;
 
 internal static class EvilTests {
     public static void init() {
-        Config.SECRETS_FOLDER = @"G:\Programming\c#\HandballBackend\HandballBackend\secrets";
-        Config.RESOURCES_FOLDER = @"G:\Programming\c#\HandballBackend\HandballBackend\resources\";
+        Config.SECRETS_FOLDER =
+            @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\secrets";
+        Config.RESOURCES_FOLDER =
+            @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\resources";
     }
 
 
@@ -21,7 +23,7 @@ internal static class EvilTests {
         var gE = db.GameEvents.OrderByDescending(gE => gE.Id).First();
     }
 
-    public static void MalevolantTest() {
+    public static void RegenerateElos() {
         init();
         var teamElos = new Dictionary<int, double>();
         var db = new HandballContext();
@@ -55,89 +57,8 @@ internal static class EvilTests {
         db.SaveChanges();
     }
 
-    public static void SinisterTest() {
-        init();
-        var teams = new[] {
-            62,
-            126,
-            116,
-            127,
-            128,
-            129,
-            131,
-            132,
-            133,
-            134,
-            136
-        };
 
-        var officials = new[] {1, 2, 6, 11, 14, 15, 17};
-        CreateTournament(
-            "The Ninth SUSS Championship",
-            "Pooled",
-            "PooledFinals",
-            true,
-            true,
-            true,
-            true,
-            teams,
-            officials
-        );
-    }
-
-    public static Tournament CreateTournament(
-        string name,
-        string fixturesGen,
-        string finalsGen,
-        bool ranked,
-        bool twoCourts,
-        bool scorer,
-        bool badmintonServes,
-        int[]? teams = null,
-        int[]? officials = null) {
-        var db = new HandballContext();
-        officials ??= [];
-        teams ??= [];
-
-        var searchableName = Utilities.ToSearchable(name);
-
-        var tournament = new Tournament {
-            Name = name,
-            SearchableName = searchableName,
-            FixturesType = fixturesGen,
-            FinalsType = finalsGen,
-            Ranked = ranked,
-            TwoCourts = twoCourts,
-            HasScorer = scorer,
-            BadmintonServes = badmintonServes,
-            ImageUrl = $"/api/tournaments/image?name={searchableName}"
-        };
-
-        db.Tournaments.Add(tournament);
-        db.SaveChanges();
-
-        foreach (var teamId in teams.OrderBy(i => i)) {
-            db.TournamentTeams.Add(new TournamentTeam {
-                TournamentId = tournament.Id,
-                TeamId = teamId
-            });
-        }
-
-        foreach (var officialId in officials.OrderBy(i => i)) {
-            db.TournamentOfficials.Add(new TournamentOfficial {
-                TournamentId = tournament.Id,
-                OfficialId = officialId,
-                IsScorer = true,
-                IsUmpire = true
-            });
-        }
-
-        db.SaveChanges();
-
-        return tournament;
-    }
-
-    public static void MaliciousTest() {
+    public static void EncryptString() {
         string? x;
         do {
             Console.WriteLine("Enter the target string");
@@ -148,56 +69,21 @@ internal static class EvilTests {
         } while (x != "x");
     }
 
-    public static void NefariousTest() {
-        init();
-        var db = new HandballContext();
-        var digby = db.People.Single(p => p.SearchableName == "digby_ross");
-        TextHelper.Text(digby, "And now the api key isnt even in the code!!").GetAwaiter().GetResult();
-    }
 
-    public static void DeviousTest() {
+    public static void ForceForfeitTournament() {
         init();
         Console.WriteLine("Enter the Lowest game Number");
         var db = new HandballContext();
         var i = int.Parse(Console.ReadLine() ?? string.Empty);
-        var game = db.Games.FirstOrDefault(g => g.GameNumber == i);
-        while (game != null) {
-            Console.WriteLine($"Game {i}");
-            if (game.IsBye) {
-                i++;
-                game = db.Games.FirstOrDefault(g => g.GameNumber == i);
-                continue;
-            }
-
-            GameManager.StartGame(i, false, null, null, true);
-            GameManager.Forfeit(i, false);
-            GameManager.End(
-                i,
-                null,
-                3, 3,
-                "Testing",
-                null,
-                null,
-                "",
-                "", false
-            );
-            i++;
-            game = db.Games.FirstOrDefault(g => g.GameNumber == i);
-        }
-    }
-
-    public static void ConnivingTest() {
-        init();
-        Console.WriteLine("Enter the Lowest game Number");
-        var db = new HandballContext();
-        var i = int.Parse(Console.ReadLine() ?? string.Empty);
-        var game = db.Games.FirstOrDefault(g => g.GameNumber == i);
+        var game = db.Games.Include(game => game.Players).ThenInclude(pgs => pgs.Player)
+            .FirstOrDefault(g => g.GameNumber == i);
         var c = true;
         while (game != null && c) {
             Console.WriteLine($"Game {i}");
             if (game.IsBye) {
                 i++;
-                game = db.Games.FirstOrDefault(g => g.GameNumber == i);
+                game = db.Games.Include(game => game.Players).ThenInclude(pgs => pgs.Player)
+                    .FirstOrDefault(g => g.GameNumber == i);
                 continue;
             }
 
@@ -205,7 +91,7 @@ internal static class EvilTests {
             GameManager.Forfeit(i, false);
             GameManager.End(
                 i,
-                null,
+                game.Players.Select(p => p.Player.SearchableName).ToList(),
                 3, 3,
                 "Testing",
                 null,
@@ -214,35 +100,51 @@ internal static class EvilTests {
                 "", false
             );
             i++;
-            game = db.Games.FirstOrDefault(g => g.GameNumber == i);
+            game = db.Games.Include(game => game.Players).ThenInclude(playerGameStats => playerGameStats.Player)
+                .FirstOrDefault(g => g.GameNumber == i);
             c = Console.ReadLine().ToLower() != "x";
         }
     }
 
-    public static void WickedTest() {
+    public static void ResetTournament() {
         init();
-        return;
+        const int tournamentId = 11;
+        Console.WriteLine($"Please Type 'CONFRIM' to confirm you want to reset the {tournamentId - 1}th tournament:");
+        if (Console.ReadLine() != "CONFIRM") return;
+
+
         var db = new HandballContext();
-        var people = db.TournamentTeams.Where(tt => tt.TournamentId == 10).IncludeRelevant().Select(t => t.Team)
+        db.RemoveRange(db.GameEvents.Where(gE => gE.TournamentId == tournamentId));
+        db.RemoveRange(db.PlayerGameStats.Where(gE => gE.TournamentId == tournamentId));
+        db.RemoveRange(db.Games.Where(gE => gE.TournamentId == tournamentId));
+        db.Tournaments.Single(t => t.Id == tournamentId).Started = false;
+        db.Tournaments.Single(t => t.Id == tournamentId).InFinals = false;
+        db.Tournaments.Single(t => t.Id == tournamentId).Finished = false;
+        var tournamentTeams = db.TournamentTeams.Where(tt => tt.TournamentId == tournamentId).ToList();
+        foreach (var tt in tournamentTeams) {
+            tt.Pool = 0;
+        }
+
+        db.SaveChanges();
+    }
+
+    public static void SendGroupText() {
+        init();
+        Console.WriteLine("Please Type 'CONFRIM' to confirm you want to send a group text:");
+        if (Console.ReadLine() != "CONFIRM") return;
+        var db = new HandballContext();
+        var people = db.TournamentTeams.Where(tt => tt.TournamentId == 11).IncludeRelevant().Select(t => t.Team)
             .ToArray()
             .SelectMany(t => t.People).ToList();
         var tasks = new List<Task>();
         foreach (var p in people) {
             Console.WriteLine($"Texting {p.Name}");
             tasks.Add(TextHelper.Text(p,
-                //$"Hi {p.Name.Split(" ")[0]}!\n  Just a reminder that the 9th SUSS Championship is on at 5pm today at Manning Library (2 Conochie Cres). Don't forget to bring a jumper as it is set to get quite cold!\n\nThanks, and as always, Happy Balling!")
-                "Hi all! It appears that I have accidentally pressed send on a group text.  Please Disregard that last message. Thanks, and happy balling!")
+                $"Hi {p.Name.Split(" ")[0]}!\n  Just a reminder that the 10th SUSS Championship is on at 5pm today at Manning Library (2 Conochie Cres). Don't forget to bring a jumper as it is set to get quite cold!\n\nThanks, and as always, Happy Balling!")
             );
         }
 
         Task.WaitAll(tasks.ToArray());
-    }
-
-    public static void Test() {
-        init();
-        var db = new HandballContext();
-        db.People.First(p => p.SearchableName == "remy_mcgunnigle").PhoneNumber = "+61447125557";
-        db.SaveChanges();
     }
 
 
@@ -255,22 +157,6 @@ internal static class EvilTests {
         }
     }
 
-    public static void VillanousTest() {
-        init();
-        return;
-        var db = new HandballContext();
-        var people = db.People.OrderBy(p => p.SearchableName == "kaliha_bhuiyan" ? 0 : 1);
-        var taskList = new List<Task>();
-        foreach (var p in people) {
-            if (p.PhoneNumber == null) continue;
-            Console.WriteLine($"Should {p.Name} be texted?");
-            var shouldBeTexted = Console.ReadLine()?.ToLower() == "y";
-            if (!shouldBeTexted) continue;
-            taskList.Add(TextHelper.Text(p, $"Hi {p.Name.Split(" ")[0]}, " +
-                                            $"\n You have been invited to the 10th Squarers' United Sporting Syndicate Handball Championship. This event will be hosted at 5pm on the 13th of July. The event will be located at the Manning Library (2 Conochie Cr.). Please respond YES if you are available, or NO if you are not." +
-                                            $"\nThanks, and happy balling!"));
-        }
-    }
 
     public static void FixImages() {
         init();
@@ -286,21 +172,7 @@ internal static class EvilTests {
         Task.WaitAll(tasks.ToArray());
     }
 
-    public static void NastyTest() {
-        init();
-        var db = new HandballContext();
-        foreach (var p in db.People) {
-            if (p.PhoneNumber == null) continue;
-            Console.Write($"Password for {p.Name}:");
-            var input = Console.ReadLine()!;
-            if (input.IsEmpty()) continue;
-            PermissionHelper.SetPassword(p.Id, input);
-        }
-
-        db.SaveChanges();
-    }
-
-    public static void ViciousTest() {
+    public static void ResynchroniseEveryGame() {
         init();
         var db = new HandballContext();
         var prevGame = -1;
@@ -358,5 +230,20 @@ internal static class EvilTests {
         }
 
         db.SaveChanges();
+    }
+
+    public static void PrintAllHandballQuotes() {
+        init();
+        var db = new HandballContext();
+        var today = DateTime.Today.DayOfYear;
+        var quotes = db.QuotesOfTheDay
+            .ToArray();
+        var year = DateTime.Now.Year; //Or any year you want
+
+        for (var i = 0; i < 365; i++) {
+            var theDate = new DateTime(year, 1, 1).AddDays(i);
+            var b = theDate.ToString("d.M.yyyy");
+            Console.WriteLine($"{b}: {quotes[i % quotes.Length].Quote} - {quotes[i % quotes.Length].Author}");
+        }
     }
 }
