@@ -81,7 +81,6 @@ public class ImageController : ControllerBase {
     public ActionResult<UploadTeamImageResponse> UploadTeamImage([FromForm] List<IFormFile> file,
         [FromForm] string? tournament) {
         // Handball Contexts are used to access the db
-        Console.WriteLine(tournament);
         var db = new HandballContext();
         if (file.Count != 1) {
             //when we receive a file it's a list for some reason; we only want 1 file
