@@ -62,6 +62,21 @@ public class TournamentsController : ControllerBase {
         return Ok();
     }
 
+    [HttpPost("{searchable}/finalsNextRound")]
+    [Authorize(Policy = Policies.IsUmpireManager)]
+    public ActionResult FinalsTournament(string searchable) {
+        var db = new HandballContext();
+        var tournament = db.Tournaments
+            .FirstOrDefault(a => a.SearchableName == searchable);
+        if (tournament is null) {
+            return NotFound("Invalid Tournament");
+        }
+
+        tournament.InFinals = true;
+        db.SaveChanges();
+        return Ok();
+    }
+
 
     public class AddTeamRequest {
         public string? TeamName { get; set; }
