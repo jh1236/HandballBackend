@@ -56,6 +56,7 @@ internal static class EvilTests {
                 var eloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
                 pgs.EloDelta = eloDelta;
                 teamElos[pgs.TeamId] = myElo + eloDelta;
+                if (pgs.TeamId == 7) Console.WriteLine(teamElos[7]);
             }
         }
 
