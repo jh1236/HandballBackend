@@ -37,8 +37,9 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
 
         var player = db.People
             .Where(t => t.SearchableName == searchable)
-            .Include(t => t.PlayerGameStats)!
+            .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
+            .Include(p => p.Official.TournamentOfficials)!
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
         if (player is null) {
             return NotFound();
@@ -92,8 +93,10 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
                 .ThenInclude(pgs => pgs.Game);
         } else {
             query = db.People
-                .Include(t => t.PlayerGameStats)!
+                .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
+                .Include(p => p.Official.TournamentOfficials)!
+                .ThenInclude(to => to.Tournament)!
                 .Where(p => p.SearchableName != "worstie");
         }
 
