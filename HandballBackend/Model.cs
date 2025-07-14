@@ -44,7 +44,7 @@ public class HandballContext : DbContext {
             .Property(e => e.EventType)
             .HasConversion(
                 v => Utilities.SplitCamelCase(v.ToString()),
-                v => (GameEventType) Enum.Parse(typeof(GameEventType), v.Replace(" ", "")));
+                v => Enum.Parse<GameEventType>(v.Replace(" ", "")));
         modelBuilder
             .Entity<Person>()
             .Property(e => e.PhoneNumber)
@@ -54,14 +54,12 @@ public class HandballContext : DbContext {
         modelBuilder
             .Entity<GameEvent>()
             .HasOne(gE => gE.Player)
-            .WithMany(
-                p => p.Events
+            .WithMany(p => p.Events
             );
         modelBuilder
             .Entity<GameEvent>()
             .HasOne(gE => gE.Game)
-            .WithMany(
-                g => g.Events
+            .WithMany(g => g.Events
             );
         modelBuilder
             .Entity<GameEvent>()
