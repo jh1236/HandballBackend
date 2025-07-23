@@ -149,6 +149,10 @@ public class Game : IHasRelevant<Game> {
     [Column("game_number")]
     public int GameNumber { get; set; }
 
+    [Required]
+    [Column("shorter_game")]
+    public bool BlitzGame { get; set; } = false;
+
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
@@ -173,6 +177,12 @@ public class Game : IHasRelevant<Game> {
 
     [NotMapped]
     public int LosingTeamId => TeamOneId == WinningTeamId ? TeamTwoId : TeamOneId;
+
+    [NotMapped]
+    public int ScoreToWin => BlitzGame ? 7 : 11;
+
+    [NotMapped]
+    public int ScoreToForceWin => 2 * ScoreToWin;
 
     public GameData ToSendableData(
         bool includeTournament = false,

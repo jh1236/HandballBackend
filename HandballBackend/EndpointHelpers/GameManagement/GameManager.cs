@@ -437,7 +437,7 @@ public static class GameManager {
         var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute" && pgs.TeamId == teamId).ToList();
 
         var bothCarded = players
-            .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : 12)
+            .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : game.ScoreToForceWin)
             .DefaultIfEmpty(0)
             .Min();
 
@@ -449,7 +449,8 @@ public static class GameManager {
                 (myScore, theirScore) = (theirScore, myScore);
             }
 
-            bothCarded = Math.Min(bothCarded, Math.Max(11 - theirScore, myScore + 2 - theirScore));
+            bothCarded = Math.Min(bothCarded,
+                Math.Min(Math.Max(myScore + 2, game.ScoreToWin), game.ScoreToForceWin) - theirScore);
 
             for (var i = 0; i < (players.Count == 1 ? duration : bothCarded); i++) {
                 AddPointToGame(
@@ -540,7 +541,8 @@ public static class GameManager {
             GameEventSynchroniser.SyncVotes(game, votesEvent);
         }
 
-        var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 && game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
+        var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
+                                  game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
 
         game.MarkedForReview = markedForReview;
