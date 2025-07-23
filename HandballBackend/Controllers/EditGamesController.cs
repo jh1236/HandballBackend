@@ -23,6 +23,8 @@ public class EditGamesController : ControllerBase {
         public string[]? PlayersTwo { get; set; } = null;
         public required string Official { get; set; }
         public string? Scorer { get; set; } = null;
+
+        public bool BlitzGame { get; set; } = false;
     }
 
     public class CreateResponse {
@@ -50,6 +52,7 @@ public class EditGamesController : ControllerBase {
             create.PlayersTwo,
             create.TeamOne,
             create.TeamTwo,
+            create.BlitzGame,
             official.Id,
             scorer?.Id ?? -1
         );
@@ -100,6 +103,7 @@ public class EditGamesController : ControllerBase {
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
+
         return NoContent();
     }
 
@@ -126,6 +130,7 @@ public class EditGamesController : ControllerBase {
         } else {
             return BadRequest("Either leftPlayer or playerSearchable must be provided.");
         }
+
         return NoContent();
     }
 

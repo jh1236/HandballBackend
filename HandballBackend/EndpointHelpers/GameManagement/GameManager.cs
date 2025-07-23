@@ -589,7 +589,7 @@ public static class GameManager {
     }
 
     public static Game CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,
-        string? teamOneName, string? teamTwoName, int officialId = -1,
+        string? teamOneName, string? teamTwoName, bool blitzGame, int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
         var teams = new List<Team>();
@@ -639,16 +639,19 @@ public static class GameManager {
         }
 
         db.SaveChanges();
-        return CreateGame(tournamentId, teams[0].Id, teams[1].Id, officialId, scorerId, round, court, isFinal);
+        return CreateGame(tournamentId, teams[0].Id, teams[1].Id, blitzGame, officialId, scorerId, round, court,
+            isFinal);
     }
 
 
-    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId,
+    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId, bool blitzGame,
         int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
-        var teamOne = db.Teams.Where(t => t.Id == teamOneId).IncludeRelevant().Single();
-        var teamTwo = db.Teams.Where(t => t.Id == teamTwoId).IncludeRelevant().Single();
+        var oneId = teamOneId;
+        var twoId = teamTwoId;
+        var teamOne = db.Teams.Where(t => t.Id == oneId).IncludeRelevant().Single();
+        var teamTwo = db.Teams.Where(t => t.Id == twoId).IncludeRelevant().Single();
         var tournament = db.Tournaments.Find(tournamentId)!;
         var ranked = tournament.Ranked;
         var isBye = false;
@@ -702,6 +705,8 @@ public static class GameManager {
             TeamTwoId = teamTwoId,
             IgaSideId = teamOneId,
             OfficialId = officialId > 0 ? officialId : null,
+            ScorerId = scorerId > 0 ? scorerId : null,
+            BlitzGame = blitzGame,
             Court = court,
             IsFinal = isFinal,
             Round = round,
