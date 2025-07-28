@@ -5,6 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
+public enum OfficialRole {
+    Scorer,
+    Umpire,
+    UmpireManager,
+    TournamentDirector,
+    TeamLiaison
+}
+
 [Table("tournament_officials")]
 public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     [Key]
@@ -13,19 +21,15 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
 
     [Required]
     [Column("tournament_id")]
-    public int TournamentId { get; set; }
+    public required int TournamentId { get; set; }
 
     [Required]
     [Column("official_id")]
-    public int OfficialId { get; set; }
+    public required int OfficialId { get; set; }
 
     [Required]
-    [Column("is_umpire")]
-    public bool IsUmpire { get; set; } = true;
-
-    [Required]
-    [Column("is_scorer")]
-    public bool IsScorer { get; set; } = true;
+    [Column("role")]
+    public required OfficialRole Role { get; set; }
 
     [Required]
     [Column("created_at")]

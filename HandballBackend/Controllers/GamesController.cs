@@ -88,17 +88,19 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         [FromQuery] int limit = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
+
 
         var query = db.Games.IncludeRelevant();
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
         }
 
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
         if (!includeByes) {
             query = query.Where(g => !g.IsBye);
         }
@@ -166,7 +168,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     [HttpGet("noteable")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public ActionResult<GetNoteableResponse> GetNoteableGames(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
@@ -226,10 +228,11 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         [FromQuery] int maxRounds = -1
     ) {
         var db = new HandballContext();
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return BadRequest("Invalid tournament");
         }
+
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
 
         var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();

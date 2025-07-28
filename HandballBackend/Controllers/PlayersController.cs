@@ -33,13 +33,14 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             return BadRequest("Invalid tournament");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
         var player = db.People
             .Where(t => t.SearchableName == searchable)
             .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
             .Include(p => p.Official.TournamentOfficials)!
+            .ThenInclude(to => to.Tournament)!
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
         if (player is null) {
             return NotFound();
@@ -100,8 +101,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
                 .Where(p => p.SearchableName != "worstie");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
-
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
         var playerSendable = query.OrderBy(p => p.SearchableName)
             .Where(p => !includeStats || tournament == null || !tournament.Editable || p.PlayerGameStats!.Any(pgs =>
                 pgs.TournamentId == tournament.Id))

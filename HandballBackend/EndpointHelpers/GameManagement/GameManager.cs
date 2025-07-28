@@ -566,15 +566,8 @@ public static class GameManager {
         }
 
         db.SaveChanges();
-        if (game.Tournament.TextAlerts) {
-            var nextGame = db.Games
-                .Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id > game.Id &&
-                            g.Court == game.Court)
-                .IncludeRelevant()
-                .OrderBy(g => g.Id).FirstOrDefault();
-            if (nextGame != null) {
-                TextHelper.TextPeopleForGame(nextGame);
-            }
+        if (game.Tournament.TextAlerts && markedForReview) {
+
         }
 
         var remainingGames =

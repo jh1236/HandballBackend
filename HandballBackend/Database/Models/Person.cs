@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.Models;
@@ -40,7 +41,7 @@ public class Person {
 
     [Required]
     [Column("permission_level")]
-    public int PermissionLevel { get; set; } = 0;
+    public PermissionType PermissionLevel { get; set; }
 
     [Column("phone_number", TypeName = "TEXT")]
     public string? PhoneNumber { get; set; }
