@@ -5,6 +5,7 @@ using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
+using static System.Enum;
 
 namespace HandballBackend;
 
@@ -44,7 +45,19 @@ public class HandballContext : DbContext {
             .Property(e => e.EventType)
             .HasConversion(
                 v => Utilities.SplitCamelCase(v.ToString()),
-                v => Enum.Parse<GameEventType>(v.Replace(" ", "")));
+                v => Parse<GameEventType>(v.Replace(" ", "")));
+        modelBuilder
+            .Entity<TournamentOfficial>()
+            .Property(e => e.Role)
+            .HasConversion(
+                v => Utilities.SplitCamelCase(v.ToString()),
+                v => Parse<OfficialRole>(v.Replace(" ", "")));
+        modelBuilder
+            .Entity<Person>()
+            .Property(e => e.PermissionLevel)
+            .HasConversion(
+                v => Utilities.SplitCamelCase(v.ToString()),
+                v => Parse<PermissionType>(v.Replace(" ", "")));
         modelBuilder
             .Entity<Person>()
             .Property(e => e.PhoneNumber)

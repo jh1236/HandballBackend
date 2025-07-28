@@ -77,7 +77,7 @@ public class ImageController : ControllerBase {
     //Set the method to be a Http POST method (meaning that it has a body)
     [HttpPost("image/teams/upload")]
     //Set the method to only be usable as an Admin
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult<UploadTeamImageResponse> UploadTeamImage([FromForm] List<IFormFile> file,
         [FromForm] string? tournament) {
         // Handball Contexts are used to access the db
