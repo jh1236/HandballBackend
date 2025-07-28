@@ -18,7 +18,7 @@ public class TournamentsController : ControllerBase {
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<GetTournamentsRepsonse> GetTournaments() {
+    public ActionResult<GetTournamentsRepsonse> GetManyTournaments() {
         var db = new HandballContext();
         var tournaments = db.Tournaments
             .OrderBy(t => t.Id)
@@ -34,7 +34,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpGet("{searchable}")]
-    public ActionResult<GetTournamentResponse> GetTournament(string searchable) {
+    public ActionResult<GetTournamentResponse> GetOneTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
@@ -64,7 +64,7 @@ public class TournamentsController : ControllerBase {
 
     [HttpPost("{searchable}/finalsNextRound")]
     [Authorize(Policy = Policies.IsUmpireManager)]
-    public ActionResult FinalsTournament(string searchable) {
+    public ActionResult PutTournamentInFinals(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
@@ -292,7 +292,8 @@ public class TournamentsController : ControllerBase {
 
         db.TournamentOfficials.Add(new TournamentOfficial {
             TournamentId = tournament.Id,
-            OfficialId = official.Id
+            OfficialId = official.Id,
+            Role = OfficialRole.Umpire
         });
 
         db.SaveChanges();

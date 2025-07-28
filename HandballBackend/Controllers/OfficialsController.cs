@@ -21,7 +21,7 @@ public class OfficialsController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialsResponse> GetOfficials(
+    public ActionResult<GetOfficialsResponse> GetManyOfficials(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
@@ -67,7 +67,7 @@ public class OfficialsController : ControllerBase {
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialResponse> GetSingleOfficial(
+    public ActionResult<GetOfficialResponse> GetOneOfficial(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false

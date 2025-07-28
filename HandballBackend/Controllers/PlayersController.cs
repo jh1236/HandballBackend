@@ -22,7 +22,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<GetPlayerResponse>> GetSingle(
+    public async Task<ActionResult<GetPlayerResponse>> GetOnePlayer(
         string searchable,
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -65,7 +65,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<GetPlayersResponse>> GetMulti(
+    public async Task<ActionResult<GetPlayersResponse>> GetManyPlayers(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] string? team = null,
@@ -124,7 +124,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     }
 
     [HttpGet("stats")]
-    public ActionResult<GetStatsResponse> GetAverage(
+    public ActionResult<GetStatsResponse> GetAveragePlayerStats(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false,

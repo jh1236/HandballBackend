@@ -19,7 +19,7 @@ public class TeamsController : ControllerBase {
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetTeamResponse> GetSingle(
+    public ActionResult<GetTeamResponse> GetOneTeam(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool formatData = false,
@@ -74,7 +74,7 @@ public class TeamsController : ControllerBase {
     }
 
     [HttpGet]
-    public ActionResult<GetTeamsResponse> GetMultiple(
+    public ActionResult<GetTeamsResponse> GetManyTeams(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] List<string>? player = null,
         [FromQuery] bool includeStats = false,
