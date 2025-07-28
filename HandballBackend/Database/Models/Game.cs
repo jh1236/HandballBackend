@@ -150,7 +150,7 @@ public class Game : IHasRelevant<Game> {
     public int GameNumber { get; set; }
 
     [Required]
-    [Column("shorter_game")]
+    [Column("blitz_game")]
     public bool BlitzGame { get; set; } = false;
 
     [ForeignKey("TournamentId")]

@@ -644,7 +644,7 @@ public static class GameManager {
     }
 
 
-    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId, bool blitzGame,
+    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId, bool blitzGame = false,
         int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
