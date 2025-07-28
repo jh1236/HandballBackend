@@ -13,11 +13,11 @@ public class Person {
 
     [Required]
     [Column("name", TypeName = "TEXT")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
-    public string SearchableName { get; set; }
+    public required string SearchableName { get; set; }
 
     [Column("password", TypeName = "TEXT")]
     public string? Password { get; set; }

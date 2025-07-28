@@ -14,11 +14,11 @@ public class Official : IHasRelevant<Official> {
 
     [Required]
     [Column("person_id")]
-    public int PersonId { get; set; }
+    public required int PersonId { get; set; }
 
     [Required]
     [Column("proficiency")]
-    public int Proficiency { get; set; }
+    public required int Proficiency { get; set; }
 
     [Required]
     [Column("created_at")]
