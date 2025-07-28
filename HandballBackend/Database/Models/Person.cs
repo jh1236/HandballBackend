@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
-using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Database.Models;
 
@@ -14,11 +13,11 @@ public class Person {
 
     [Required]
     [Column("name", TypeName = "TEXT")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
-    public string SearchableName { get; set; }
+    public required string SearchableName { get; set; }
 
     [Column("password", TypeName = "TEXT")]
     public string? Password { get; set; }
@@ -49,6 +48,8 @@ public class Person {
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
     public List<GameEvent>? Events { get; set; }
+
+    public Official? Official { get; set; }
 
     public string InitialLastName {
         get {

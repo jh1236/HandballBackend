@@ -56,7 +56,7 @@ public static class GameManager {
             PlayerWhoServedId = prevEvent.PlayerToServeId,
             SideServed = prevEvent.SideToServe,
 
-            TeamToServeId = teamId,
+            TeamToServeId = prevEvent.TeamToServeId,
             PlayerToServeId = prevEvent.PlayerToServeId,
             SideToServe = prevEvent.SideToServe,
             TeamOneLeftId = prevEvent.TeamOneLeftId,
@@ -74,6 +74,7 @@ public static class GameManager {
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes);
+        newEvent.TeamToServeId = teamId;
         if (teamId == prevEvent.TeamToServeId) {
             //We won this point and the last point
             if (game.Tournament.BadmintonServes) {
@@ -103,7 +104,6 @@ public static class GameManager {
             // default side is the only difference between badminton and normal serves; the second team starts on the 
             // right if using badminton.
             var defaultSide = game.Tournament!.BadmintonServes ? "Left" : "Right";
-            newEvent.TeamToServeId = teamId;
             newEvent.SideToServe = (lastService?.SideToServe ?? defaultSide) == "Left" ? "Right" : "Left";
             var teamPlayers = game.Players!.Where(pgs => pgs.TeamId == teamId).ToList();
             if (teamPlayers.Count == 1) {

@@ -36,7 +36,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     [HttpGet("{gameNumber:int}")]
-    public ActionResult<GetGameResponse> GetSingleGame(
+    public ActionResult<GetGameResponse> GetOneGame(
         int gameNumber,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeStats = false,
@@ -74,7 +74,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     [HttpGet]
-    public async Task<ActionResult<GetGamesResponse>> GetMulti(
+    public async Task<ActionResult<GetGamesResponse>> GetManyGames(
         [FromQuery(Name = "tournament")] string? tournamentSearchable,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool includeByes = false,
@@ -167,7 +167,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
     [HttpGet("noteable")]
     [Authorize(Policy = Policies.IsUmpireManager)]
-    public ActionResult<GetNoteableResponse> GetNoteable(
+    public ActionResult<GetNoteableResponse> GetNoteableGames(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool returnTournament = false,

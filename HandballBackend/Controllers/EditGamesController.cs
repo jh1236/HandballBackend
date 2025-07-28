@@ -72,7 +72,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("start")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Start(
+    public IActionResult StartGame(
         [FromBody] StartRequest startRequest
     ) {
         GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne, startRequest.TeamTwo,
@@ -90,7 +90,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("score")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult ScorePoint([FromBody] ScorePointRequest scorePointRequest) {
+    public IActionResult ScorePointForGame([FromBody] ScorePointRequest scorePointRequest) {
         if (!string.IsNullOrEmpty(scorePointRequest.PlayerSearchable)) {
             GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
                 scorePointRequest.PlayerSearchable, scorePointRequest.Method);
@@ -116,7 +116,7 @@ public class EditGamesController : ControllerBase {
     [HttpPost("card")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Card([FromBody] CardRequest cardRequest) {
+    public IActionResult CardForGame([FromBody] CardRequest cardRequest) {
         if (!string.IsNullOrEmpty(cardRequest.PlayerSearchable)) {
             GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable, cardRequest.Color,
                 cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
@@ -135,7 +135,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("ace")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Ace([FromBody] AceRequest aceRequest) {
+    public IActionResult AceForGame([FromBody] AceRequest aceRequest) {
         GameManager.Ace(aceRequest.Id);
         return NoContent();
     }
@@ -146,7 +146,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("fault")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Fault([FromBody] FaultRequest faultRequest) {
+    public IActionResult FaultForGame([FromBody] FaultRequest faultRequest) {
         GameManager.Fault(faultRequest.Id);
         return NoContent();
     }
@@ -158,7 +158,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("timeout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Timeout([FromBody] TimeoutRequest timeoutRequest) {
+    public IActionResult TimeoutForGame([FromBody] TimeoutRequest timeoutRequest) {
         GameManager.Timeout(timeoutRequest.Id, timeoutRequest.FirstTeam);
         return NoContent();
     }
@@ -170,7 +170,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("forfeit")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Forfeit([FromBody] ForfeitRequest forfeitRequest) {
+    public IActionResult ForfeitGame([FromBody] ForfeitRequest forfeitRequest) {
         GameManager.Forfeit(forfeitRequest.Id, forfeitRequest.FirstTeam);
         return NoContent();
     }
@@ -181,7 +181,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("abandon")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Abandon([FromBody] AbandonRequest forfeitRequest) {
+    public IActionResult AbandonGame([FromBody] AbandonRequest forfeitRequest) {
         GameManager.Abandon(forfeitRequest.Id);
         return NoContent();
     }
@@ -192,7 +192,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("endTimeout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult EndTimeout([FromBody] EndTimeoutRequest endTimeoutRequest) {
+    public IActionResult EndTimeoutForGame([FromBody] EndTimeoutRequest endTimeoutRequest) {
         GameManager.EndTimeout(endTimeoutRequest.Id);
         return NoContent();
     }
@@ -206,7 +206,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("substitute")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Substitute([FromBody] SubstituteRequest substituteRequest) {
+    public IActionResult SubstituteForGame([FromBody] SubstituteRequest substituteRequest) {
         if (!string.IsNullOrEmpty(substituteRequest.PlayerSearchable)) {
             GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
                 substituteRequest.PlayerSearchable);
@@ -226,7 +226,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("undo")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Undo([FromBody] UndoRequest undoRequest) {
+    public IActionResult UndoForGame([FromBody] UndoRequest undoRequest) {
         GameManager.Undo(undoRequest.Id);
         return NoContent();
     }
@@ -237,7 +237,7 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Delete([FromBody] DeleteRequest deleteRequest) {
+    public IActionResult DeleteGame([FromBody] DeleteRequest deleteRequest) {
         GameManager.Delete(deleteRequest.Id);
         return NoContent();
     }
@@ -281,10 +281,10 @@ public class EditGamesController : ControllerBase {
     [HttpPost("alert")]
     [Authorize(Policy = Policies.IsUmpireManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult Alert([FromBody] AlertRequest alertRequest) {
+    public IActionResult AlertGame([FromBody] AlertRequest alertRequest) {
         var db = new HandballContext();
         var game = db.Games.IncludeRelevant().First(g => alertRequest.Id == g.GameNumber);
-        TextHelper.TextPeopleForGame(game);
+        _ = TextHelper.TextPeopleForGame(game);
         return NoContent();
     }
 
@@ -295,7 +295,7 @@ public class EditGamesController : ControllerBase {
     [HttpPost("resolve")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [Authorize(Policy = Policies.IsUmpireManager)]
-    public IActionResult Resolve([FromBody] ResolveRequest resolveRequest) {
+    public IActionResult ResolveGame([FromBody] ResolveRequest resolveRequest) {
         GameManager.Resolve(resolveRequest.Id);
         return NoContent();
     }

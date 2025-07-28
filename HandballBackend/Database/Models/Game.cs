@@ -23,16 +23,16 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("tournament_id")]
-    public int TournamentId { get; set; }
+    public required int TournamentId { get; set; }
 
     [Required]
     [Column("team_one_id")]
-    public int TeamOneId { get; set; }
+    public required int TeamOneId { get; set; }
 
 
     [Required]
     [Column("team_two_id")]
-    public int TeamTwoId { get; set; }
+    public required int TeamTwoId { get; set; }
 
 
     [Required]
@@ -64,15 +64,15 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("someone_has_won")]
-    public bool SomeoneHasWon { get; set; }
+    public required bool SomeoneHasWon { get; set; }
 
     [Required]
     [Column("protested")]
-    public bool Protested { get; set; }
+    public bool Protested { get; set; } = false;
 
     [Required]
     [Column("resolved")]
-    public bool Resolved { get; set; }
+    public bool Resolved { get; set; } = false;
 
     [Required]
     [Column("ranked")]
@@ -111,18 +111,18 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("is_final")]
-    public bool IsFinal { get; set; }
+    public required bool IsFinal { get; set; }
 
     [Required]
     [Column("round")]
-    public int Round { get; set; }
+    public required int Round { get; set; }
 
     [Column("notes", TypeName = "TEXT")]
     public string? Notes { get; set; }
 
     [Required]
     [Column("is_bye")]
-    public bool IsBye { get; set; }
+    public required bool IsBye { get; set; }
 
     [Required]
     [Column("status", TypeName = "TEXT")]
@@ -147,7 +147,7 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("game_number")]
-    public int GameNumber { get; set; }
+    public required int GameNumber { get; set; }
 
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }

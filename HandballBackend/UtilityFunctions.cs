@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend;
 
-internal static class EvilTests {
+internal static class UtilityFunctions {
     public static void init() {
         Config.SECRETS_FOLDER =
             @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\secrets";

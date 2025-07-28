@@ -43,7 +43,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [Required]
     [Column("game_id")]
-    public int GameId { get; set; }
+    public required int GameId { get; set; }
 
     [Column("player_id")]
     public int? PlayerId { get; set; }
@@ -53,11 +53,11 @@ public class GameEvent : IHasRelevant<GameEvent> {
 
     [Required]
     [Column("tournament_id")]
-    public int TournamentId { get; set; }
+    public required int TournamentId { get; set; }
 
     [Required]
     [Column("event_type", TypeName = "TEXT")]
-    public GameEventType EventType { get; set; }
+    public required GameEventType EventType { get; set; }
 
     [Required]
     [Column("created_at")]

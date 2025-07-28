@@ -19,7 +19,7 @@ public class TeamsController : ControllerBase {
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetTeamResponse> GetSingle(
+    public ActionResult<GetTeamResponse> GetOneTeam(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool formatData = false,
@@ -74,7 +74,7 @@ public class TeamsController : ControllerBase {
     }
 
     [HttpGet]
-    public ActionResult<GetTeamsResponse> GetMultiple(
+    public ActionResult<GetTeamsResponse> GetManyTeams(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] List<string>? player = null,
         [FromQuery] bool includeStats = false,
@@ -192,7 +192,8 @@ public class TeamsController : ControllerBase {
                 .Where(t => t.Captain != null
                             && t.Captain.SearchableName != "worstie"
                             && (t.NonCaptain == null || t.NonCaptain.SearchableName != "worstie")
-                            && (t.Substitute == null || t.Substitute.SearchableName != "worstie"));
+                            && (t.Substitute == null || t.Substitute.SearchableName != "worstie"))
+                .Where(t => t.TournamentTeams.Any(tt => tt.TournamentId != 1));
             ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
                 .ToArray());
             ladder = ladder.Where(t => t.Stats!["Games Played"] > 0).ToArray();

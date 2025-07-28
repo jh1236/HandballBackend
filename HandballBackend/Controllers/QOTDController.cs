@@ -8,7 +8,7 @@ namespace HandballBackend.Controllers;
 public class QOTDController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<QuoteOfTheDayData> GetQOTD() {
+    public ActionResult<QuoteOfTheDayData> GetQotd() {
         var db = new HandballContext();
         var today = DateTime.Today.DayOfYear;
         var quotes = db.QuotesOfTheDay

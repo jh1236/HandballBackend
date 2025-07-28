@@ -140,13 +140,12 @@ public class PersonData {
             }
         }
 
-        var db = new HandballContext();
-        var umpiredTournaments = db.TournamentOfficials
-            .Where(t => t.Tournament.Started && t.Official.PersonId == person.Id)
-            .Select(to => to.TournamentId)
-            .ToHashSet();
-        tournaments.UnionWith(umpiredTournaments);
-        tournaments.Remove(1);
+        if (tournament == null && person.Official is not null) {
+            var umpiredTournaments = person.Official!.TournamentOfficials.Where(to => to.Tournament.Started)
+                .Select(to => to.TournamentId).ToHashSet();
+            tournaments.UnionWith(umpiredTournaments);
+            tournaments.Remove(1);
+        }
 
         Stats["Tournaments"] = tournaments.Count;
         Stats["Elo"] = person.Elo(tournamentId: tournament?.Id);
@@ -185,6 +184,10 @@ public class PersonData {
         } else {
             Stats.Remove("Penalty Points");
             Stats.Remove("Average Rating");
+        }
+
+        if (tournament != null) {
+            Stats.Remove("Tournaments");
         }
 
         if (!format) return;
