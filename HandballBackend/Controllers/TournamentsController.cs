@@ -292,8 +292,7 @@ public class TournamentsController : ControllerBase {
 
         db.TournamentOfficials.Add(new TournamentOfficial {
             TournamentId = tournament.Id,
-            OfficialId = official.Id,
-            Role = OfficialRole.Umpire
+            OfficialId = official.Id
         });
 
         db.SaveChanges();
