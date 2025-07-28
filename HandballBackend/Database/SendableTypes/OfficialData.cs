@@ -9,7 +9,9 @@ public class OfficialData : PersonData {
         official.Person) {
         Role = tournament == null
             ? OfficialRole.Umpire
-            : official.TournamentOfficials.First(to => tournament.Id == to.TournamentId).Role;
+            : official.TournamentOfficials.FirstOrDefault(to => tournament.Id == to.TournamentId)?.Role ??
+              OfficialRole.Scorer;
+
         if (!includeStats) return;
 
         var playerGameStats =

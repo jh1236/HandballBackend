@@ -36,6 +36,6 @@ public class Official : IHasRelevant<Official> {
     }
 
     public static IQueryable<Official> GetRelevant(IQueryable<Official> query) {
-        return query.Include(o => o.Person);
+        return query.Include(o => o.Person).Include(o => o.TournamentOfficials);
     }
 }

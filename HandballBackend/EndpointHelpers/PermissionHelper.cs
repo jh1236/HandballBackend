@@ -19,7 +19,8 @@ public static class PermissionHelper {
     public static int ToInt(this OfficialRole officialRole) {
         return officialRole switch {
             OfficialRole.Scorer or OfficialRole.Umpire => 2,
-            OfficialRole.TeamLiaison or OfficialRole.TournamentDirector or OfficialRole.UmpireManager => 4,
+            OfficialRole.TeamLiaison or OfficialRole.UmpireManager => 3,
+            OfficialRole.TournamentDirector => 4,
             _ => throw new ArgumentOutOfRangeException(nameof(officialRole), officialRole, null)
         };
     }
@@ -33,7 +34,7 @@ public static class PermissionHelper {
             PermissionType.None => 0,
             PermissionType.LoggedIn => 1,
             PermissionType.Umpire => 2,
-            PermissionType.UmpireManager => 4,
+            PermissionType.UmpireManager => 3,
             PermissionType.Admin => 5,
             _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
         };
@@ -48,6 +49,7 @@ public static class PermissionHelper {
                    to.TournamentId == tournament.Id &&
                    to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
     }
+
     public static bool IsUmpireManager(Game g) {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
@@ -80,8 +82,8 @@ public static class PermissionHelper {
         return permissionType switch {
             0 => PermissionType.None,
             1 => PermissionType.LoggedIn,
-            2 or 3 => PermissionType.Umpire,
-            4 => PermissionType.UmpireManager,
+            2 => PermissionType.Umpire,
+            3 => PermissionType.UmpireManager,
             5 => PermissionType.Admin,
             _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
         };

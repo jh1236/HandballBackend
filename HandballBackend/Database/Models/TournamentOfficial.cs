@@ -8,9 +8,9 @@ namespace HandballBackend.Database.Models;
 public enum OfficialRole {
     Scorer,
     Umpire,
+    TeamLiaison,
     UmpireManager,
-    TournamentDirector,
-    TeamLiaison
+    TournamentDirector
 }
 
 [Table("tournament_officials")]
@@ -76,6 +76,7 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     public static IQueryable<TournamentOfficial> GetRelevant(IQueryable<TournamentOfficial> query) {
         return query
             .Include(to => to.Tournament)
-            .Include(to => to.Official.Person);
+            .Include(to => to.Official.Person)
+            .Include(to => to.Official.TournamentOfficials);
     }
 }
