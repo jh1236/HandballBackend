@@ -102,7 +102,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         await db.SaveChangesAsync();
     }
 
-    private async Task AddUmpires() {
+    private void AddUmpires() {
 
     }
 }
