@@ -2,6 +2,7 @@
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ public class TournamentsController : ControllerBase {
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<GetTournamentsRepsonse> GetTournaments() {
+    public ActionResult<GetTournamentsRepsonse> GetManyTournaments() {
         var db = new HandballContext();
         var tournaments = db.Tournaments
             .OrderBy(t => t.Id)
@@ -34,7 +35,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpGet("{searchable}")]
-    public ActionResult<GetTournamentResponse> GetTournament(string searchable) {
+    public ActionResult<GetTournamentResponse> GetOneTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
@@ -49,7 +50,7 @@ public class TournamentsController : ControllerBase {
 
 
     [HttpPost("{searchable}/start")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public ActionResult StartTournament(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -63,8 +64,8 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/finalsNextRound")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
-    public ActionResult FinalsTournament(string searchable) {
+    [TournamentAuthorize(PermissionType.UmpireManager)]
+    public ActionResult PutTournamentInFinals(string searchable) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
@@ -90,7 +91,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addTeam")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [Authorize(Policy = Policies.IsAdmin)]
     public ActionResult<AddTeamResponse> AddTeamToTournament([FromRoute] string searchable,
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
@@ -176,7 +177,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPatch("{searchable}/updateTeam")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public ActionResult<UpdateTeamResponse> UpdateTeamForTournament(string searchable,
         [FromBody] UpdateTeamRequest request) {
         var db = new HandballContext();
@@ -229,7 +230,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpDelete("{searchable}/removeTeam")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public ActionResult RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
@@ -264,7 +265,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("{searchable}/addOfficial")]
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public ActionResult AddOfficialToTournament(string searchable,
         [FromBody] AddOfficialRequest request) {
         var db = new HandballContext();
@@ -292,7 +293,8 @@ public class TournamentsController : ControllerBase {
 
         db.TournamentOfficials.Add(new TournamentOfficial {
             TournamentId = tournament.Id,
-            OfficialId = official.Id
+            OfficialId = official.Id,
+            Role = OfficialRole.Umpire,
         });
 
         db.SaveChanges();
@@ -303,7 +305,7 @@ public class TournamentsController : ControllerBase {
         public required string OfficialSearchableName { get; set; }
     }
 
-    [Authorize(Policy = Policies.IsUmpireManager)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     [HttpDelete("{searchable}/removeOfficial")]
     public ActionResult RemoveOfficialFromTournament(string searchable,
         [FromBody] RemoveOfficialRequest request) {
