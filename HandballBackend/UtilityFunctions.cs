@@ -32,25 +32,31 @@ internal static class UtilityFunctions {
             .ThenBy(g => g.TournamentId == 3)
             .ThenBy(g => g.StartTime)
             .ThenBy(g => g.Id)
-            .IncludeRelevant().Include(g => g.Events.Where(gE => gE.EventType == GameEventType.Forfeit));
+            .IncludeRelevant().Include(g =>
+                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon));
         foreach (var game in games) {
-            Console.WriteLine($"Game {game.TeamOne.Name} vs {game.TeamTwo.Name}");
+            if (!game.Ended) continue;
+            var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
+                                      game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
+            if (isRandomAbandonment) continue;
+            // Console.WriteLine($"{game.Id} ({game.GameNumber}): Game {game.TeamOne.Name} vs {game.TeamTwo.Name}");
             var playingPlayers = game.Players
                 .Where(pgs =>
-                    (game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
-                     pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
+                    game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
+                    pgs.RoundsCarded + pgs.RoundsOnCourt > 0).ToList();
             var teamOneElo = teamElos.GetValueOrDefault(game.TeamOne.Id, playingPlayers
                 .Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
                 .Average());
             var teamTwoElo = teamElos.GetValueOrDefault(game.TeamTwo.Id, playingPlayers
                 .Where(pgs => pgs.TeamId == game.TeamTwoId).Select(pgs => pgs.InitialElo)
                 .Average());
-            foreach (var pgs in game.Players) {
+            foreach (var pgs in playingPlayers) {
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 var eloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
                 pgs.EloDelta = eloDelta;
                 teamElos[pgs.TeamId] = myElo + eloDelta;
+                if (pgs.TeamId == 7) Console.WriteLine(teamElos[7]);
             }
         }
 

@@ -560,7 +560,7 @@ public static class GameManager {
                 .Average();
             var teamTwoElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamTwoId).Select(pgs => pgs.InitialElo)
                 .Average();
-            foreach (var pgs in game.Players) {
+            foreach (var pgs in playingPlayers) {
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);

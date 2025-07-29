@@ -38,14 +38,8 @@ internal static class GameEventSynchroniser {
                     SyncForfeit(game, gameEvent);
                     break;
                 case GameEventType.Warning:
-                    SyncCard(game, gameEvent);
-                    break;
                 case GameEventType.GreenCard:
-                    SyncCard(game, gameEvent);
-                    break;
                 case GameEventType.YellowCard:
-                    SyncCard(game, gameEvent);
-                    break;
                 case GameEventType.RedCard:
                     SyncCard(game, gameEvent);
                     break;
@@ -60,6 +54,9 @@ internal static class GameEventSynchroniser {
                     break;
                 case GameEventType.Votes:
                     SyncVotes(game, gameEvent);
+                    break;
+                case GameEventType.Abandon:
+                    SyncAbandon(game, gameEvent);
                     break;
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
