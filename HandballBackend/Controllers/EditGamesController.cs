@@ -11,7 +11,6 @@ using Twilio.Jwt.Taskrouter;
 
 namespace HandballBackend.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/games/update")]
 public class EditGamesController : ControllerBase {

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend;
 
 internal static class UtilityFunctions {
-    public static void init() {
+    public static void Init() {
         Config.SECRETS_FOLDER =
             @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\secrets";
         Config.RESOURCES_FOLDER =
@@ -18,13 +18,13 @@ internal static class UtilityFunctions {
 
 
     public static void EvilTest() {
-        init();
+        Init();
         var db = new HandballContext();
         var gE = db.GameEvents.OrderByDescending(gE => gE.Id).First();
     }
 
     public static void RegenerateElos() {
-        init();
+        Init();
         var teamElos = new Dictionary<int, double>();
         var db = new HandballContext();
         var games = db.Games.Where(g => !g.IsFinal && g.Ranked && !g.IsBye)
@@ -77,7 +77,7 @@ internal static class UtilityFunctions {
 
 
     public static void ForceForfeitTournament() {
-        init();
+        Init();
         Console.WriteLine("Enter the Lowest game Number");
         var db = new HandballContext();
         var i = int.Parse(Console.ReadLine() ?? string.Empty);
@@ -113,7 +113,7 @@ internal static class UtilityFunctions {
     }
 
     public static void ResetTournament() {
-        init();
+        Init();
         const int tournamentId = 11;
         Console.WriteLine($"Please Type 'CONFRIM' to confirm you want to reset the {tournamentId - 1}th tournament:");
         if (Console.ReadLine() != "CONFIRM") return;
@@ -135,7 +135,7 @@ internal static class UtilityFunctions {
     }
 
     public static void SendGroupText() {
-        init();
+        Init();
         Console.WriteLine("Please Type 'CONFRIM' to confirm you want to send a group text:");
         if (Console.ReadLine() != "CONFIRM") return;
         var db = new HandballContext();
@@ -155,7 +155,7 @@ internal static class UtilityFunctions {
 
 
     public static void ListPhoneNumbers() {
-        init();
+        Init();
         var db = new HandballContext();
         var people = db.People;
         foreach (var p in people) {
@@ -165,7 +165,7 @@ internal static class UtilityFunctions {
 
 
     public static void FixImages() {
-        init();
+        Init();
         var db = new HandballContext();
         var list = new List<Team>();
         var teams = db.Teams.Where(t => t.NonCaptainId != null && (t.ImageUrl == null || !t.ImageUrl.StartsWith("/")));
@@ -179,7 +179,7 @@ internal static class UtilityFunctions {
     }
 
     public static void ResynchroniseEveryGame() {
-        init();
+        Init();
         var db = new HandballContext();
         var prevGame = -1;
         foreach (var g in db.Games.IncludeRelevant().ToArray()) {
@@ -202,7 +202,7 @@ internal static class UtilityFunctions {
 
 
     public static void VotesFixerer() {
-        init();
+        Init();
         var db = new HandballContext();
         var gamesToFix =
             db.Games.Where(g => g.Ended && !g.IsBye && g.Events.All(gE => gE.EventType != GameEventType.Votes));
@@ -239,7 +239,7 @@ internal static class UtilityFunctions {
     }
 
     public static void PrintAllHandballQuotes() {
-        init();
+        Init();
         var db = new HandballContext();
         var today = DateTime.Today.DayOfYear;
         var quotes = db.QuotesOfTheDay
