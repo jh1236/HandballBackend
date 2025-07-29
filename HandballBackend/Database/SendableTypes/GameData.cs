@@ -93,6 +93,8 @@ public class GameData {
     public AdminGameData? Admin { get; private set; }
     public int Court { get; private set; }
 
+    public bool BlitzGame { get; private set; }
+
 
     public GameData(
         Game game,
@@ -153,7 +155,7 @@ public class GameData {
         var mostRecentPoint = game.Events.Where(ge => ge.EventType == GameEventType.Score)
             .OrderByDescending(gE => gE.Id).FirstOrDefault();
         FirstTeamScoredLast = game.TeamOneId == mostRecentPoint?.TeamId;
-
+        BlitzGame = game.BlitzGame;
         if (includeGameEvents) {
             Events = game.Events.Select(a => a.ToSendableData()).OrderBy(gE => gE.Id).ToArray();
         }

@@ -2,6 +2,7 @@ using HandballBackend;
 using HandballBackend.Arguments;
 using HandballBackend.Authentication;
 using HandballBackend.Converters;
+using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authentication;
 
@@ -15,6 +16,8 @@ builder.Services.AddControllers().AddJsonOptions(options => {
     // Global settings: use the defaults, but serialize enums as strings
     // (because it really should be the default)
     options.JsonSerializerOptions.Converters.Add(new NumberConverter());
+    options.JsonSerializerOptions.Converters.Add(new EnumConverter<OfficialRole>());
+    options.JsonSerializerOptions.Converters.Add(new EnumConverter<GameEventType>());
 });
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
@@ -27,8 +30,7 @@ builder.Services.AddAuthentication(options => {
         "TokenAuthentication", null);
 builder.Services.AddAuthorization(Policies.RegisterPolicies);
 builder.Services.AddCors(options => {
-    options.AddDefaultPolicy(
-        policy => { policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); });
+    options.AddDefaultPolicy(policy => { policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); });
 });
 
 ArgsHandler.Parse(args, builder);
@@ -37,7 +39,7 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || Config.REQUEST_LOGGING) {
+if (Config.REQUEST_LOGGING) {
     app.UseMiddleware<RequestLogger>();
 }
 

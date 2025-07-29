@@ -22,7 +22,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<GetPlayerResponse>> GetSingle(
+    public async Task<ActionResult<GetPlayerResponse>> GetOnePlayer(
         string searchable,
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
@@ -33,12 +33,14 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             return BadRequest("Invalid tournament");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
         var player = db.People
             .Where(t => t.SearchableName == searchable)
-            .Include(t => t.PlayerGameStats)!
+            .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
+            .Include(p => p.Official.TournamentOfficials)!
+            .ThenInclude(to => to.Tournament)!
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
         if (player is null) {
             return NotFound();
@@ -64,7 +66,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<GetPlayersResponse>> GetMulti(
+    public async Task<ActionResult<GetPlayersResponse>> GetManyPlayers(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] string? team = null,
@@ -92,13 +94,14 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
                 .ThenInclude(pgs => pgs.Game);
         } else {
             query = db.People
-                .Include(t => t.PlayerGameStats)!
+                .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
+                .Include(p => p.Official.TournamentOfficials)!
+                .ThenInclude(to => to.Tournament)!
                 .Where(p => p.SearchableName != "worstie");
         }
 
-        var isAdmin = (await authorizationService.AuthorizeAsync(HttpContext.User, Policies.IsUmpireManager)).Succeeded;
-
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
         var playerSendable = query.OrderBy(p => p.SearchableName)
             .Where(p => !includeStats || tournament == null || !tournament.Editable || p.PlayerGameStats!.Any(pgs =>
                 pgs.TournamentId == tournament.Id))
@@ -121,7 +124,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     }
 
     [HttpGet("stats")]
-    public ActionResult<GetStatsResponse> GetAverage(
+    public ActionResult<GetStatsResponse> GetAveragePlayerStats(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false,

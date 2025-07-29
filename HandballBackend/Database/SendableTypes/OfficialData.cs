@@ -3,8 +3,15 @@
 namespace HandballBackend.Database.SendableTypes;
 
 public class OfficialData : PersonData {
+    public OfficialRole Role { get; set; }
+
     public OfficialData(Official official, Tournament? tournament = null, bool includeStats = false) : base(
         official.Person) {
+        Role = tournament == null
+            ? OfficialRole.Umpire
+            : official.TournamentOfficials.FirstOrDefault(to => tournament.Id == to.TournamentId)?.Role ??
+              OfficialRole.Scorer;
+
         if (!includeStats) return;
 
         var playerGameStats =

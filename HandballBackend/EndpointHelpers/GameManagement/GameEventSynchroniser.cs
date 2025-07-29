@@ -263,7 +263,7 @@ internal static class GameEventSynchroniser {
         }
 
         var highScore = Math.Max(game.TeamOneScore, game.TeamTwoScore);
-        if (highScore >= 11 && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= 18)) {
+        if (highScore >= game.ScoreToWin && (Math.Abs(game.TeamOneScore - game.TeamTwoScore) >= 2 || highScore >= game.ScoreToForceWin)) {
             game.SomeoneHasWon = true;
         }
     }
@@ -292,10 +292,10 @@ internal static class GameEventSynchroniser {
     }
 
     public static void SyncForfeit(Game game, GameEvent gameEvent) {
-        if (gameEvent.TeamToServeId == game.TeamOneId) {
-            game.TeamTwoScore = Math.Min(Math.Max(game.TeamOneScore + 2, 11), 18);
+        if (gameEvent.TeamId == game.TeamOneId) {
+            game.TeamTwoScore = Math.Min(Math.Max(game.TeamOneScore + 2, game.ScoreToWin), game.ScoreToForceWin);
         } else {
-            game.TeamOneScore = Math.Min(Math.Max(game.TeamTwoScore + 2, 11), 18);
+            game.TeamOneScore = Math.Min(Math.Max(game.TeamTwoScore + 2, game.ScoreToWin), game.ScoreToForceWin);
         }
 
         game.SomeoneHasWon = true;

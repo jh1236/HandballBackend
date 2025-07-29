@@ -12,9 +12,7 @@ namespace HandballBackend.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ScoreboardController : ControllerBase {
-    private static Random _random = new();
-
-    public static Dictionary<int, List<WebSocket>> Sockets = new();
+    public static readonly Dictionary<int, List<WebSocket>> Sockets = new();
     private static IOptions<JsonOptions> _jsonOptions = null!;
 
     public ScoreboardController(IOptions<JsonOptions> jsonOptions) {
@@ -33,7 +31,7 @@ public class ScoreboardController : ControllerBase {
         await socket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
-    private async Task ManageReceive(WebSocket socket, int gameId) {
+    private static async Task ManageReceive(WebSocket socket, int gameId) {
         var buffer = new ArraySegment<byte>(new byte[4 * 1024]);
         while (socket.State == WebSocketState.Open) {
             var result = await socket.ReceiveAsync(buffer, CancellationToken.None);
@@ -66,7 +64,7 @@ public class ScoreboardController : ControllerBase {
 
     public static async Task SendGame(int gameId) {
         if (!Sockets.TryGetValue(gameId, out var sockets)) return;
-        var tasks = sockets.Select(ws => SocketSendUpdate(ws, gameId)).ToList();
+        var tasks = sockets.Select(ws => _ = SocketSendUpdate(ws, gameId)).ToList();
         await Task.WhenAll(tasks);
     }
 
@@ -77,7 +75,7 @@ public class ScoreboardController : ControllerBase {
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetScoreboard(int gameId) {
+    public async Task<IActionResult> GetScoreboardSocket(int gameId) {
         if (!HttpContext.WebSockets.IsWebSocketRequest) {
             return BadRequest();
         }

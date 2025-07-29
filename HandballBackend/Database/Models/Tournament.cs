@@ -15,30 +15,30 @@ public class Tournament {
 
     [Required]
     [Column("name", TypeName = "TEXT")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
-    public string SearchableName { get; set; }
+    public required string SearchableName { get; set; }
 
     [Required]
     [Column("editable")]
-    public bool Editable { get; set; }
+    public required bool Editable { get; set; }
 
     [Required]
     [Column("fixtures_type", TypeName = "TEXT")]
-    public string FixturesType { get; set; }
+    public required string FixturesType { get; set; }
 
     [Column("finals_type", TypeName = "TEXT")]
     public string FinalsType { get; set; }
 
     [Required]
     [Column("ranked")]
-    public bool Ranked { get; set; }
+    public required bool Ranked { get; set; }
 
     [Required]
     [Column("two_courts")]
-    public bool TwoCourts { get; set; }
+    public required bool TwoCourts { get; set; }
 
     [Required]
     [Column("finished")]
@@ -76,7 +76,7 @@ public class Tournament {
 
     [Required]
     [Column("started")]
-    public bool Started { get; set; }
+    public required bool Started { get; set; }
 
     public void EndRound() {
         var finals = InFinals;

@@ -12,15 +12,16 @@ public class Team : IHasRelevant<Team> {
     [Column("id")]
     public int Id { get; set; }
 
+    [Required]
     [Column("name", TypeName = "TEXT")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Column("long_name", TypeName = "TEXT")]
     public string? LongName { get; set; }
 
     [Required]
     [Column("searchable_name", TypeName = "TEXT")]
-    public string SearchableName { get; set; }
+    public required string SearchableName { get; set; }
 
     [Column("image_url", TypeName = "TEXT")]
     public string? ImageUrl { get; set; }

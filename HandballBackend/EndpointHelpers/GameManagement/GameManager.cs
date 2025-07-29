@@ -56,7 +56,7 @@ public static class GameManager {
             PlayerWhoServedId = prevEvent.PlayerToServeId,
             SideServed = prevEvent.SideToServe,
 
-            TeamToServeId = teamId,
+            TeamToServeId = prevEvent.TeamToServeId,
             PlayerToServeId = prevEvent.PlayerToServeId,
             SideToServe = prevEvent.SideToServe,
             TeamOneLeftId = prevEvent.TeamOneLeftId,
@@ -74,6 +74,7 @@ public static class GameManager {
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes);
+        newEvent.TeamToServeId = teamId;
         if (teamId == prevEvent.TeamToServeId) {
             //We won this point and the last point
             if (game.Tournament.BadmintonServes) {
@@ -103,7 +104,6 @@ public static class GameManager {
             // default side is the only difference between badminton and normal serves; the second team starts on the 
             // right if using badminton.
             var defaultSide = game.Tournament!.BadmintonServes ? "Left" : "Right";
-            newEvent.TeamToServeId = teamId;
             newEvent.SideToServe = (lastService?.SideToServe ?? defaultSide) == "Left" ? "Right" : "Left";
             var teamPlayers = game.Players!.Where(pgs => pgs.TeamId == teamId).ToList();
             if (teamPlayers.Count == 1) {
@@ -437,7 +437,7 @@ public static class GameManager {
         var players = game.Players.Where(pgs => pgs.SideOfCourt != "Substitute" && pgs.TeamId == teamId).ToList();
 
         var bothCarded = players
-            .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : 12)
+            .Select(i => i.CardTimeRemaining >= 0 ? i.CardTimeRemaining : game.ScoreToForceWin)
             .DefaultIfEmpty(0)
             .Min();
 
@@ -449,7 +449,8 @@ public static class GameManager {
                 (myScore, theirScore) = (theirScore, myScore);
             }
 
-            bothCarded = Math.Min(bothCarded, Math.Max(11 - theirScore, myScore + 2 - theirScore));
+            bothCarded = Math.Min(bothCarded,
+                Math.Min(Math.Max(myScore + 2, game.ScoreToWin), game.ScoreToForceWin) - theirScore);
 
             for (var i = 0; i < (players.Count == 1 ? duration : bothCarded); i++) {
                 AddPointToGame(
@@ -540,7 +541,8 @@ public static class GameManager {
             GameEventSynchroniser.SyncVotes(game, votesEvent);
         }
 
-        var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 && game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
+        var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
+                                  game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
         var isForfeit = game.Events.Any(gE => gE.EventType == GameEventType.Forfeit);
 
         game.MarkedForReview = markedForReview;
@@ -566,15 +568,8 @@ public static class GameManager {
         }
 
         db.SaveChanges();
-        if (game.Tournament.TextAlerts) {
-            var nextGame = db.Games
-                .Where(g => g.TournamentId == game.TournamentId && !g.IsBye && !g.Ended && g.Id > game.Id &&
-                            g.Court == game.Court)
-                .IncludeRelevant()
-                .OrderBy(g => g.Id).FirstOrDefault();
-            if (nextGame != null) {
-                TextHelper.TextPeopleForGame(nextGame);
-            }
+        if (game.Tournament.TextAlerts && markedForReview) {
+
         }
 
         var remainingGames =
@@ -587,7 +582,7 @@ public static class GameManager {
     }
 
     public static Game CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,
-        string? teamOneName, string? teamTwoName, int officialId = -1,
+        string? teamOneName, string? teamTwoName, bool blitzGame, int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
         var teams = new List<Team>();
@@ -637,16 +632,19 @@ public static class GameManager {
         }
 
         db.SaveChanges();
-        return CreateGame(tournamentId, teams[0].Id, teams[1].Id, officialId, scorerId, round, court, isFinal);
+        return CreateGame(tournamentId, teams[0].Id, teams[1].Id, blitzGame, officialId, scorerId, round, court,
+            isFinal);
     }
 
 
-    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId,
+    public static Game CreateGame(int tournamentId, int teamOneId, int teamTwoId, bool blitzGame = false,
         int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
-        var teamOne = db.Teams.Where(t => t.Id == teamOneId).IncludeRelevant().Single();
-        var teamTwo = db.Teams.Where(t => t.Id == teamTwoId).IncludeRelevant().Single();
+        var oneId = teamOneId;
+        var twoId = teamTwoId;
+        var teamOne = db.Teams.Where(t => t.Id == oneId).IncludeRelevant().Single();
+        var teamTwo = db.Teams.Where(t => t.Id == twoId).IncludeRelevant().Single();
         var tournament = db.Tournaments.Find(tournamentId)!;
         var ranked = tournament.Ranked;
         var isBye = false;
@@ -700,6 +698,8 @@ public static class GameManager {
             TeamTwoId = teamTwoId,
             IgaSideId = teamOneId,
             OfficialId = officialId > 0 ? officialId : null,
+            ScorerId = scorerId > 0 ? scorerId : null,
+            BlitzGame = blitzGame,
             Court = court,
             IsFinal = isFinal,
             Round = round,
