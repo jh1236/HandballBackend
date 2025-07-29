@@ -32,7 +32,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     public record GetGameResponse {
-        public GameData Game { get; set; }
+        public required GameData Game { get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
