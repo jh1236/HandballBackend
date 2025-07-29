@@ -1,4 +1,6 @@
 using HandballBackend.EndpointHelpers;
+using HandballBackend.Controllers;
+using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
@@ -102,7 +104,28 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         await db.SaveChangesAsync();
     }
 
-    private void AddUmpires() {
+    private class UmpiringSolution {
+        public required int gameId;
+        public required int courtId;
+        public required List<int> teamOneIds;
+        public required List<int> teamTwoIds;
+        public int? officialId;
+        public int? scorerId;
+    }
 
+    private async Task AddUmpires() {
+        var db = new HandballContext();
+        var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started).ToListAsync();
+        var tournamentOfficials = await db.TournamentOfficials.Where(to => to.TournamentId == tournamentId)
+            .Include(to => to.Official).ToListAsync();
+        var officialDict = new Dictionary<int, int>();
+        foreach (var to in tournamentOfficials) {
+            officialDict.Add(to.Official.Proficiency, to.OfficialId);
+        }
+        var solution = new List<UmpiringSolution>();
+    }
+
+    private bool TrySolution(List<UmpiringSolution> solutions, int index) {
+        return false;
     }
 }
