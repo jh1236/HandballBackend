@@ -31,7 +31,7 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetGameResponse {
-        public GameData Game { get; set; }
+        public required GameData Game { get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
