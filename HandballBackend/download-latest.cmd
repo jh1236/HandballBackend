@@ -9,7 +9,7 @@ git stash
 git checkout master
 git pull
 dotnet build -c Release
-dotnet publish -c Release --no-build --framework net9.0 -r win-x64 -p:PublishSingleFile=true -p:PublishReadyToRun=true -o .\build
+dotnet publish -c Release --no-build -r win-x64 -p:PublishSingleFile=true -p:PublishReadyToRun=true -o .\build
 git checkout %current_branch%
 git stash apply
 cd .\build
