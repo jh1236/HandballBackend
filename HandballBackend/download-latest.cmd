@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 echo Starting the pulling and compiling process
 timeout 2
 set current_branch=

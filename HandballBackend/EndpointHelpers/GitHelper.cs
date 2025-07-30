@@ -3,12 +3,12 @@
 public static class GitHelper {
     private static Timer _timer;
 
-    private static void CheckForUpdates() {
+    private static void CheckForUpdates(bool force) {
         RunGitCommand("fetch --all");
         var localHash = RunGitCommand("rev-parse master");
         var newHash = RunGitCommand("rev-parse origin/master");
 
-        if (localHash == newHash) return;
+        if (localHash == newHash && !force) return;
         Console.WriteLine("Updates on master found; restarting ");
         System.Diagnostics.Process.Start("..\\download-latest.cmd");
         Environment.Exit(0);
@@ -32,8 +32,8 @@ public static class GitHelper {
         return output.Trim();
     }
 
-    public static void StartCheckingForUpdates() {
-        CheckForUpdates();
-        _timer = new Timer(_ => CheckForUpdates(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+    public static void StartCheckingForUpdates(bool force) {
+        CheckForUpdates(force);
+        _timer = new Timer(_ => CheckForUpdates(false), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
     }
 }
