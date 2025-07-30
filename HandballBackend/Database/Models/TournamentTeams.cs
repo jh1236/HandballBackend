@@ -49,8 +49,11 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
     [ForeignKey("TeamId")]
     public Team Team { get; set; }
 
-    public TeamData ToSendableData(bool generateStats = false,
-        bool generatePlayerStats = false, bool formatData = false) {
+    public TeamData ToSendableData(
+        bool generateStats = false,
+        bool generatePlayerStats = false,
+        bool formatData = false
+    ) {
         return new TournamentTeamData(this, generateStats, generatePlayerStats, formatData);
     }
 

@@ -10,7 +10,9 @@ namespace HandballBackend.Controllers;
 public class TestController : ControllerBase {
     [HttpGet("Mirror")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Dictionary<string, string>> Mirror([FromQuery] Dictionary<string, string> input) {
+    public ActionResult<Dictionary<string, string>> Mirror(
+        [FromQuery] Dictionary<string, string> input
+    ) {
         return input;
     }
 
