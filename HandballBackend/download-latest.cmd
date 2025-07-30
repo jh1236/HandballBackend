@@ -12,5 +12,6 @@ dotnet build -c Release
 dotnet publish -c Release --no-build -r win-x64 -p:PublishSingleFile=true -p:PublishReadyToRun=true -o .\build
 git checkout %current_branch%
 git stash apply
+cls
 cd .\build
 .\HandballBackend.exe -l false -u -b
