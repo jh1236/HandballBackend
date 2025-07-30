@@ -94,7 +94,8 @@ public class Tournament {
     }
 
     [NotMapped]
-    public AbstractFixtureGenerator GetFinalGenerator => AbstractFixtureGenerator.GetControllerByName(FinalsType, Id);
+    public AbstractFixtureGenerator GetFinalGenerator =>
+        AbstractFixtureGenerator.GetControllerByName(FinalsType, Id);
 
     [NotMapped]
     public AbstractFixtureGenerator GetFixtureGenerator =>
@@ -102,16 +103,16 @@ public class Tournament {
 
     public IQueryable<Person> GetPeopleInTournament() {
         var db = new HandballContext();
-        var captainIds = db.TournamentTeams
-            .Where(tt => tt.TournamentId == Id)
+        var captainIds = db
+            .TournamentTeams.Where(tt => tt.TournamentId == Id)
             .Select(tt => tt.Team.CaptainId);
 
-        var nonCaptainIds = db.TournamentTeams
-            .Where(tt => tt.TournamentId == Id)
+        var nonCaptainIds = db
+            .TournamentTeams.Where(tt => tt.TournamentId == Id)
             .Select(tt => tt.Team.NonCaptainId);
 
-        var substituteIds = db.TournamentTeams
-            .Where(tt => tt.TournamentId == Id)
+        var substituteIds = db
+            .TournamentTeams.Where(tt => tt.TournamentId == Id)
             .Select(tt => tt.Team.SubstituteId);
 
         var personIds = captainIds
@@ -121,8 +122,7 @@ public class Tournament {
             .Distinct()
             .ToList();
 
-        return db.People
-            .Where(p => personIds.Contains(p.Id))!;
+        return db.People.Where(p => personIds.Contains(p.Id))!;
     }
 
     public TournamentData ToSendableData() {

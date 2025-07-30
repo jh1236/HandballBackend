@@ -11,11 +11,20 @@ public class GamePlayerData : PersonData {
     public string? StartSide { get; set; }
     public List<GameEventData> PrevCards { get; set; }
 
-    public GamePlayerData(Person player, Game game, bool includeStats = false, bool formatData = false)
-        : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
-    }
+    public GamePlayerData(
+        Person player,
+        Game game,
+        bool includeStats = false,
+        bool formatData = false
+    )
+        : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) { }
 
-    public GamePlayerData(PlayerGameStats pgs, bool includeStats = false, bool formatData = false, bool isAdmin = false)
+    public GamePlayerData(
+        PlayerGameStats pgs,
+        bool includeStats = false,
+        bool formatData = false,
+        bool isAdmin = false
+    )
         : base(pgs.Player) {
         BestPlayerVotes = pgs.BestPlayerVotes;
         CardTime = pgs.CardTime;
@@ -24,10 +33,14 @@ public class GamePlayerData : PersonData {
         IsCaptain = pgs.PlayerId == pgs.Team.CaptainId;
         StartSide = pgs.StartSide;
         PrevCards = isAdmin
-            ? pgs.Player.Events?.Where(gE => gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId)
-                .Select(gE => gE.ToSendableData()).ToList() ?? []
+            ? pgs.Player.Events?.Where(gE =>
+                    gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId
+                )
+                .Select(gE => gE.ToSendableData())
+                .ToList() ?? []
             : [];
-        if (!includeStats) return;
+        if (!includeStats)
+            return;
         Stats = new Dictionary<string, dynamic?> {
             ["Elo"] = pgs.InitialElo,
             ["Elo Delta"] = pgs.EloDelta,
@@ -49,9 +62,10 @@ public class GamePlayerData : PersonData {
             ["Serves Received"] = pgs.ServesReceived,
             ["Serves Returned"] = pgs.ServesReturned,
             ["Max Ace Streak"] = pgs.AceStreak,
-            ["Max Serve Streak"] = pgs.ServeStreak
+            ["Max Serve Streak"] = pgs.ServeStreak,
         };
-        if (!formatData) return;
+        if (!formatData)
+            return;
         FormatData();
     }
 }

@@ -38,6 +38,5 @@ public static class EloCalculator {
         return delta;
     }
 
-    public static void CalculateElos(Game game, bool isForfeit) {
-    }
+    public static void CalculateElos(Game game, bool isForfeit) { }
 }
