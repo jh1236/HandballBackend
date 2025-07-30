@@ -13,13 +13,16 @@ namespace HandballBackend.Tests.Controllers;
 [TestClass]
 [TestSubject(typeof(PlayersController))]
 public class PlayersControllerTest {
-    [TestInitialize]
-    public void Setup() {
-        Directory.SetCurrentDirectory("../../../");
+    [ClassInitialize]
+    public static void Initialize(TestContext testContext) {
+        Directory.SetCurrentDirectory("../../../../HandballBackend/build/");
 
         Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\Config\secrets";
-        Config.RESOURCES_FOLDER = @"..\HandballBackend\resources\";
+        Config.SECRETS_FOLDER = @".\secrets";
+        Config.RESOURCES_FOLDER = @".\resources\";
+    }
+    [TestInitialize]
+    public void Setup() {
         var db = new HandballContext();
         db.Database.EnsureCreated();
         db.Tournaments.Add(new Tournament {

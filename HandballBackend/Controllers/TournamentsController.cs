@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ public class TournamentsController : ControllerBase {
             .Tournaments.OrderBy(t => t.Id)
             .Select(t => t.ToSendableData())
             .ToArray();
-        return new GetTournamentsRepsonse { Tournaments = tournaments };
+        return new GetTournamentsRepsonse {Tournaments = tournaments};
     }
 
     public record GetTournamentResponse {
@@ -37,10 +38,10 @@ public class TournamentsController : ControllerBase {
         var db = new HandballContext();
         var tournament = db.Tournaments.FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
-        return new GetTournamentResponse { Tournament = tournament.ToSendableData() };
+        return new GetTournamentResponse {Tournament = tournament.ToSendableData()};
     }
 
 
@@ -51,7 +52,7 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         tournament.BeginTournament();
@@ -65,7 +66,7 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         tournament.InFinals = true;
@@ -93,18 +94,18 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         if (tournament.Started) {
-            return NotFound("Tournament has already started!");
+            return BadRequest(new ActionNotAllowed("The Tournament has already been started"));
         }
 
         var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
             .FirstOrDefault(t => t.Name == request.TeamName);
         if (team is not null && (request.CaptainName is not null || request.NonCaptainName is not null ||
                                  request.SubstituteName is not null)) {
-            return BadRequest("This Team already exists; you may not provide players");
+            return BadRequest(new ActionNotAllowed("This Team already exists; you may not provide players"));
         }
 
 
@@ -144,7 +145,7 @@ public class TournamentsController : ControllerBase {
         }
 
         if (team.TournamentTeams.Any(tt => tt.TournamentId == tournament.Id)) {
-            return BadRequest("That team is already in this tournament!");
+            return BadRequest(new ActionNotAllowed("That team is already in this tournament!"));
         }
 
         db.TournamentTeams.Add(new TournamentTeam {
@@ -179,18 +180,18 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         if (tournament.Started) {
-            return NotFound("Tournament has already started!");
+            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
         }
 
         var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
             .Single(team => team.SearchableName == request.TeamSearchableName);
 
         if (team.TournamentTeams.All(tt => tt.TournamentId != tournament.Id)) {
-            return BadRequest("Team not in tournament!");
+            return BadRequest(new ActionNotAllowed("Team not in tournament!"));
         }
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
@@ -231,11 +232,11 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         if (tournament.Started) {
-            return NotFound("Tournament has already started!");
+            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
         }
 
         var team = db.Teams.Include(team => team.TournamentTeams)
@@ -267,11 +268,11 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         if (tournament.Started) {
-            return NotFound("Tournament has already started!");
+            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
         }
 
         var official = db.Officials.IncludeRelevant().Include(official => official.TournamentOfficials)
@@ -279,11 +280,11 @@ public class TournamentsController : ControllerBase {
 
 
         if (official == null) {
-            return BadRequest("The Official doesn't exist");
+            return NotFound(new DoesNotExist("Official", request.OfficialSearchableName));
         }
 
         if (official.TournamentOfficials.Any(to => to.TournamentId == tournament.Id)) {
-            return BadRequest("That official is already in this tournament!");
+            return BadRequest(new ActionNotAllowed("That official is already in this tournament!"));
         }
 
         db.TournamentOfficials.Add(new TournamentOfficial {
@@ -308,11 +309,11 @@ public class TournamentsController : ControllerBase {
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound("Invalid Tournament");
+            return NotFound(new InvalidTournament(searchable));
         }
 
         if (tournament.Started) {
-            return NotFound("Tournament has already started!");
+            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
         }
 
         var tournamentOfficial = db.TournamentOfficials.FirstOrDefault(to =>
@@ -320,7 +321,7 @@ public class TournamentsController : ControllerBase {
 
 
         if (tournamentOfficial == null) {
-            return BadRequest("The Official doesn't exist");
+            return NotFound(new DoesNotExist("Official", request.OfficialSearchableName));
         }
 
         db.TournamentOfficials.Remove(tournamentOfficial);

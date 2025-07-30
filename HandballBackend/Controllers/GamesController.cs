@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,7 +53,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .ThenInclude(pgs => pgs.Player)
             .FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
-            return NotFound();
+            return NotFound(new DoesNotExist("Game",  gameNumber.ToString()));
         }
 
         var cards = db.GameEvents.Where(gE =>
@@ -91,7 +92,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
 
@@ -152,7 +153,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .ToArray();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -180,7 +181,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         var query = db.Games.IncludeRelevant()
@@ -203,7 +204,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .ToArray();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -229,7 +230,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
@@ -274,7 +275,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
         if (returnTournament) {
             if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
+                return BadRequest(new TournamentNotProvidedForReturn());
             }
 
             output.Tournament = tournament.ToSendableData();

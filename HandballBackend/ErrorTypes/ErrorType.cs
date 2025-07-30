@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 namespace HandballBackend.ErrorTypes;
 
 public abstract class ErrorType : ValidationProblemDetails {
-    protected ErrorType(string title, string message, int code = 400) : base() {
+    protected ErrorType(string title, string message, int code = 400) {
         Detail = message;
         Instance = "add extension here";
         Status = code;

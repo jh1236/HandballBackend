@@ -2,6 +2,7 @@
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
@@ -43,11 +44,11 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             .ThenInclude(to => to.Tournament)!
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
         if (player is null) {
-            return NotFound();
+            return NotFound(new DoesNotExist("Player", searchable));
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -78,13 +79,13 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         Team? teamObj = null;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         if (team is not null) {
             teamObj = db.Teams.FirstOrDefault(t => t.SearchableName == team);
             if (teamObj is null) {
-                return BadRequest("Invalid team");
+                return NotFound(new DoesNotExist("Team", team));
             }
         }
 
@@ -108,7 +109,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
             .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -131,7 +132,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         [FromQuery] int? gameNumber = null) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         List<Dictionary<string, dynamic?>> statsList;
@@ -198,7 +199,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 

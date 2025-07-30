@@ -4,6 +4,7 @@ using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,7 @@ public class EditGamesController : ControllerBase {
     public IActionResult CreateGame([FromBody] CreateRequest create) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, create.Tournament, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(create.Tournament));
         }
 
         if (!PermissionHelper.IsUmpire(tournament)) {
@@ -47,7 +48,7 @@ public class EditGamesController : ControllerBase {
         var official = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.Official);
         var scorer = db.Officials.FirstOrDefault(o => o.Person.SearchableName == create.Scorer);
         if (official == null) {
-            return BadRequest("Official not found");
+            return NotFound(new DoesNotExist("Official", create.Official));
         }
 
         var g = GameManager.CreateGame(
@@ -113,7 +114,7 @@ public class EditGamesController : ControllerBase {
             GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
                 scorePointRequest.LeftPlayer.Value, scorePointRequest.Method);
         } else {
-            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+            return BadRequest(new MustProvideArgument(nameof(scorePointRequest.LeftPlayer), nameof(scorePointRequest.PlayerSearchable)));
         }
 
         return NoContent();
@@ -144,7 +145,7 @@ public class EditGamesController : ControllerBase {
             GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.LeftPlayer.Value, cardRequest.Color,
                 cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
         } else {
-            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+            return BadRequest(new MustProvideArgument(nameof(cardRequest.LeftPlayer), nameof(cardRequest.PlayerSearchable)));
         }
 
         return NoContent();
@@ -251,7 +252,7 @@ public class EditGamesController : ControllerBase {
             GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
                 substituteRequest.LeftPlayer.Value);
         } else {
-            return BadRequest("Either leftPlayer or playerSearchable must be provided.");
+            return BadRequest(new MustProvideArgument(nameof(substituteRequest.LeftPlayer), nameof(substituteRequest.PlayerSearchable)));
         }
 
         return NoContent();

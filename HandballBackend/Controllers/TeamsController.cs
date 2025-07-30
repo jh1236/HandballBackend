@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +28,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         TeamData teamData;
@@ -39,7 +40,7 @@ public class TeamsController : ControllerBase {
                 .ThenInclude(pgs => pgs.Game)
                 .FirstOrDefault();
             if (team is null) {
-                return NotFound();
+                return NotFound(new DoesNotExist("Team", searchable));
             }
 
             teamData = team.ToSendableData(true, true, formatData);
@@ -51,14 +52,13 @@ public class TeamsController : ControllerBase {
                 .ThenInclude(pgs => pgs.Game)
                 .FirstOrDefault();
             if (team is null) {
-                return NotFound();
+                return NotFound(new DoesNotExist("Team", searchable));
             }
 
             teamData = team.ToSendableData(true, true, formatData);
         }
-
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -84,7 +84,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         TeamData[] teamData;
@@ -142,9 +142,8 @@ public class TeamsController : ControllerBase {
                 .Select(t => t.ToSendableData(includeStats, includePlayerStats, formatData, null)).ToArray();
         }
 
-
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -174,7 +173,7 @@ public class TeamsController : ControllerBase {
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         if (tournament is not null) {
@@ -219,9 +218,8 @@ public class TeamsController : ControllerBase {
                 }
             }
         }
-
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 

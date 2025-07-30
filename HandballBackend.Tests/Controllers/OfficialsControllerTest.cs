@@ -13,11 +13,11 @@ namespace HandballBackend.Tests.Controllers;
 public class OfficialsControllerTest {
     [ClassInitialize]
     public static void Initialize(TestContext testContext) {
-        Directory.SetCurrentDirectory("../../../");
+        Directory.SetCurrentDirectory("../../../../HandballBackend/build/");
 
         Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\Config\secrets";
-        Config.RESOURCES_FOLDER = @"..\HandballBackend\resources\";
+        Config.SECRETS_FOLDER = @".\secrets";
+        Config.RESOURCES_FOLDER = @".\resources\";
     }
 
     [TestInitialize]
