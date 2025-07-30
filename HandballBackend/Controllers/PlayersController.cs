@@ -3,7 +3,6 @@ using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +10,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlayersController(IAuthorizationService authorizationService) : ControllerBase {
+public class PlayersController() : ControllerBase {
     public record GetPlayerResponse {
         public required PersonData Player { get; set; }
         public TournamentData? Tournament { get; set; }
@@ -35,13 +34,13 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
-        var player = db.People
+        var player = await db.People
             .Where(t => t.SearchableName == searchable)
             .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
             .Include(p => p.Official.TournamentOfficials)!
             .ThenInclude(to => to.Tournament)!
-            .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefault();
+            .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefaultAsync();
         if (player is null) {
             return NotFound();
         }
@@ -102,10 +101,10 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
-        var playerSendable = query.OrderBy(p => p.SearchableName)
+        var playerSendable = await query.OrderBy(p => p.SearchableName)
             .Where(p => !includeStats || tournament == null || !tournament.Editable || p.PlayerGameStats!.Any(pgs =>
                 pgs.TournamentId == tournament.Id))
-            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArray();
+            .Select(t => t.ToSendableData(tournament, includeStats, teamObj, formatData, isAdmin)).ToArrayAsync();
 
         if (returnTournament && tournament is null) {
             return BadRequest("Cannot return null tournament");
@@ -124,7 +123,7 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
     }
 
     [HttpGet("stats")]
-    public ActionResult<GetStatsResponse> GetAveragePlayerStats(
+    public async Task<ActionResult<GetStatsResponse>> GetAveragePlayerStats(
         [FromQuery] bool formatData = false,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false,
@@ -154,14 +153,14 @@ public class PlayersController(IAuthorizationService authorizationService) : Con
                 .ToArray()
                 .Select(p => p.ToSendableData(tournament, true).Stats!).ToList();
         } else {
-            statsList = db.People
-                .Include(p => p.PlayerGameStats!
-                    .Where(pgs => pgs.Team.NonCaptainId != null &&
-                                  pgs.Opponent.NonCaptainId != null
+            statsList = (await db.People
+                    .Include(p => p.PlayerGameStats!
+                        .Where(pgs => pgs.Team.NonCaptainId != null &&
+                                      pgs.Opponent.NonCaptainId != null
+                        )
                     )
-                )
-                .ThenInclude(pgs => pgs.Game)
-                .ToArray()
+                    .ThenInclude(pgs => pgs.Game)
+                    .ToArrayAsync())
                 .Select(p => p.ToSendableData(null, true).Stats!).ToList();
         }
 
