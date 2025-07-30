@@ -1,5 +1,6 @@
 ﻿using HandballBackend.Database;
 using HandballBackend.EndpointHelpers.GameManagement;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
 
@@ -12,23 +13,19 @@ public class RoundRobin : AbstractFixtureGenerator {
     }
 
 
-    public override bool EndOfRound() {
+    public override async Task<bool> EndOfRound() {
         var db = new HandballContext();
-        var tournament = db.Tournaments.Find(_tournamentId)!;
-        var tournamentTeams = db.TournamentTeams
-            .Where(t => t.TournamentId == _tournamentId)
-            .IncludeRelevant()
-            .ToList();
+        var tournament = (await db.Tournaments.FindAsync(_tournamentId))!;
 
-        var rounds = db.Games
+        var rounds = await db.Games
             .Where(g => g.TournamentId == _tournamentId)
-            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefault();
+            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefaultAsync();
 
-        var teams = db.TournamentTeams.Where(t => t.TournamentId == _tournamentId).IncludeRelevant().Select(t => t.Team).ToList();
+        var teams = await db.TournamentTeams.Where(t => t.TournamentId == _tournamentId).IncludeRelevant().Select(t => t.Team).ToListAsync();
         if (teams.Count <= rounds + 1) {
             // we are now in finals
             tournament.InFinals = true;
-            db.SaveChanges();
+            await db.SaveChangesAsync();
             return true;
         }
 
@@ -41,10 +38,10 @@ public class RoundRobin : AbstractFixtureGenerator {
         for (var i = 0; i < teams.Count / 2; i++) {
             var teamOne = teams[i];
             var teamTwo = teams[teams.Count - i - 1];
-            GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
 
-        db.SaveChanges();
-        return base.EndOfRound();
+        await db.SaveChangesAsync();
+        return await base.EndOfRound();
     }
 }

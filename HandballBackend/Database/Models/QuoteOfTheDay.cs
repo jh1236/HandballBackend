@@ -18,7 +18,5 @@ public class QuoteOfTheDay {
     [Column("author", TypeName = "TEXT")]
     public required string Author { get; set; }
 
-    public QuoteOfTheDayData ToSendableData() {
-        return new QuoteOfTheDayData(this);
-    }
+    public QuoteOfTheDayData ToSendableData() => new(this);
 }

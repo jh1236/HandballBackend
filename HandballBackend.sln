@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandballBackend", "HandballBackend\HandballBackend.csproj", "{04C5DFAD-5237-4B3A-BBBA-0FF26D064B04}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandballBackend.Tests", "HandballBackend.Tests\HandballBackend.Tests.csproj", "{0A5264C2-3E8D-4E30-97F4-026DE0A04A52}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{04C5DFAD-5237-4B3A-BBBA-0FF26D064B04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04C5DFAD-5237-4B3A-BBBA-0FF26D064B04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04C5DFAD-5237-4B3A-BBBA-0FF26D064B04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A5264C2-3E8D-4E30-97F4-026DE0A04A52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A5264C2-3E8D-4E30-97F4-026DE0A04A52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A5264C2-3E8D-4E30-97F4-026DE0A04A52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A5264C2-3E8D-4E30-97F4-026DE0A04A52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
