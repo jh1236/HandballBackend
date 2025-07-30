@@ -3,7 +3,7 @@
 public static class GitHelper {
     private static Timer _timer;
 
-    private static void CheckForUpdates(bool force) {
+    public static void CheckForUpdates(bool force) {
         RunGitCommand("fetch --all");
         var localHash = RunGitCommand("rev-parse master");
         var newHash = RunGitCommand("rev-parse origin/master");

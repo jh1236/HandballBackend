@@ -23,4 +23,12 @@ public class TestController : ControllerBase {
         await PostgresBackup.MakeTimestampedBackup("requested", force: true);
         return Ok();
     }
+
+    [Authorize(Policy = Policies.IsAdmin)]
+    [HttpPost("Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> UpdateFromGit() {
+        GitHelper.CheckForUpdates(true);
+        return Ok();
+    }
 }
