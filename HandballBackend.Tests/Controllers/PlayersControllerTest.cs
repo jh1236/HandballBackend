@@ -3,8 +3,10 @@ using System.Security.Claims;
 using HandballBackend.Controllers;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -90,12 +92,29 @@ public class PlayersControllerTest {
 
     [TestMethod]
     public void TestGetPlayer() {
-        var authService = new Mock<IAuthorizationService>();
-        authService.Setup(auth => auth.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<string>()).Result)
-            .Returns(AuthorizationResult.Success);
-        var controller = new PlayersController(authService.Object);
+        var controller = new PlayersController();
         var result = controller.GetOnePlayer("foo_bar").Result.Value;
         Assert.IsNotNull(result);
         Assert.AreEqual("Fooseph Barionette", result.Player.Name);
+    }
+
+    [TestMethod]
+    public void TestGetPlayerBadName() {
+        var controller = new PlayersController();
+        var response = controller.GetOnePlayer("a_name_not_existing").Result.Result;
+        var actual = response as NotFoundObjectResult;
+        Assert.IsNotNull(actual);
+        Assert.IsInstanceOfType<DoesNotExist>(actual.Value);
+        Assert.AreEqual(404, actual.StatusCode);
+    }
+
+    [TestMethod]
+    public void TestGetPlayerBadTournamentName() {
+        var controller = new PlayersController();
+        var response = controller.GetOnePlayer("foo_bar", tournamentSearchable:"fake_tournament").Result.Result;
+        var actual = response as NotFoundObjectResult;
+        Assert.IsNotNull(actual);
+        Assert.IsInstanceOfType<InvalidTournament>(actual.Value);
+        Assert.AreEqual(404, actual.StatusCode);
     }
 }
