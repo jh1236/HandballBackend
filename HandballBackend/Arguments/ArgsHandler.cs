@@ -5,7 +5,8 @@ public static class ArgsHandler {
         new WorkingDirectoryArgHandler(),
         new LoggingArgHandler(),
         new PortArgHandler(),
-        new WorkingDirectoryArgHandler()
+        new WorkingDirectoryArgHandler(),
+        new GitArgHandler()
     ];
 
     public static void Parse(string[] args, WebApplicationBuilder builder) {
