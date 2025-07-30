@@ -586,6 +586,7 @@ public static class GameManager {
 
         await db.SaveChangesAsync();
         if (game.Tournament.TextAlerts && markedForReview) {
+            _ = TextHelper.TextTournamentStaff(game);
         }
 
         var remainingGames =
