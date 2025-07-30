@@ -32,8 +32,8 @@ public static class GitHelper {
         return output.Trim();
     }
 
-    public static void StartCheckingForUpdates(bool force) {
+    public static void StartCheckingForUpdates(bool force, int frequency = 60 * 60) {
         CheckForUpdates(force);
-        _timer = new Timer(_ => CheckForUpdates(false), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+        _timer = new Timer(_ => CheckForUpdates(false), null, TimeSpan.Zero, TimeSpan.FromSeconds(frequency));
     }
 }
