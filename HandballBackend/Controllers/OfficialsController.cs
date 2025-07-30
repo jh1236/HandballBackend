@@ -20,7 +20,7 @@ public class OfficialsController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialsResponse> GetManyOfficials(
+    public async Task<ActionResult<GetOfficialsResponse>> GetManyOfficials(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
@@ -32,19 +32,20 @@ public class OfficialsController : ControllerBase {
         }
 
         if (tournament is not null) {
-            officials = db.TournamentOfficials
+            var intermediate = await db.TournamentOfficials
                 .Where(a => a.TournamentId == tournament.Id)
                 .IncludeRelevant()
                 .OrderBy(p => p.Official.Person.SearchableName)
-                .ToArray()
-                .Select(to => to.Official.ToSendableData(tournament))
+                .ToArrayAsync();
+            officials = intermediate.Select(to => to.Official.ToSendableData(tournament))
                 .OrderByDescending(o => o.Role).ToArray();
+            ;
         } else {
-            officials = db.Officials
+            officials = await db.Officials
                 .IncludeRelevant()
                 .OrderBy(p => p.Person.SearchableName)
                 .Select(o => o.ToSendableData(null, false))
-                .ToArray();
+                .ToArrayAsync();
         }
 
         if (returnTournament && tournament is null) {
@@ -67,16 +68,16 @@ public class OfficialsController : ControllerBase {
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialResponse> GetOneOfficial(
+    public async Task<ActionResult<GetOfficialResponse>> GetOneOfficial(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        var official = db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
+        var official = await db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
             .Include(o => o.Games)
             .ThenInclude(g => g.Players)
-            .FirstOrDefault();
+            .FirstOrDefaultAsync();
         if (official is null) {
             return NotFound("Invalid Name");
         }
