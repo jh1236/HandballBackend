@@ -596,7 +596,7 @@ public static class GameManager {
         }
 
         BroadcastUpdate(gameNumber);
-        await PostgresBackup.MakeBackup("latest");
+        await PostgresBackup.MakeBackup();
     }
 
     public static async Task<Game> CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,

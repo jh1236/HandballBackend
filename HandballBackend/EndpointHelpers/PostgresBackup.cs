@@ -6,17 +6,18 @@ public static class PostgresBackup {
     private static Timer? _timer;
 
 
-    public static async Task MakeTimestampedBackup(string backupTitle = "auto") {
-        if (!await HasDatabaseChanged()) {
+    public static async Task MakeTimestampedBackup(string backupTitle = "auto", bool force = false) {
+        if (!await HasDatabaseChanged() && !force) {
             Console.WriteLine("Backup not necessary; files are the same");
             return;
         }
+        Console.WriteLine($"Making Backup '{backupTitle}'");
 
         await MakeBackup($"{DateTime.Now:yyyy-MM-dd HH-mm-ss} {backupTitle}");
         await SaveLengthToFile();
     }
 
-    public static async Task MakeBackup(string filename) {
+    public static async Task MakeBackup(string filename = "latest") {
         var process = new System.Diagnostics.Process();
         var connArgs = ParseConnectionString(HandballContext.ConnectionString);
 
@@ -42,7 +43,6 @@ public static class PostgresBackup {
         }
 
 
-        Console.WriteLine($"Making Backup {backupFile}");
 
         await process.WaitForExitAsync();
     }
@@ -63,7 +63,8 @@ public static class PostgresBackup {
 
     public static void PeriodicBackups(int backupTime) {
         //we run this to initialise the _rowCounts dict.
-        _timer ??= new Timer(_ => MakeTimestampedBackup(), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
+        _ = MakeBackup();
+        _timer ??= new Timer(__ => _ = MakeTimestampedBackup(), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
     }
 
     private static async Task<Dictionary<string, long>> LoadLengthFromFile() {
