@@ -1,5 +1,4 @@
-﻿using System.Text;
-using HandballBackend.EndpointHelpers;
+﻿using HandballBackend.EndpointHelpers;
 
 namespace HandballBackend.Arguments;
 

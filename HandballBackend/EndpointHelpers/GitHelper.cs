@@ -10,7 +10,7 @@ public static class GitHelper {
 
         if (localHash == newHash) return;
         Console.WriteLine("Updates on master found; restarting ");
-        System.Diagnostics.Process.Start("..\\download.cmd");
+        System.Diagnostics.Process.Start("..\\download-latest.cmd");
         Environment.Exit(0);
     }
 
