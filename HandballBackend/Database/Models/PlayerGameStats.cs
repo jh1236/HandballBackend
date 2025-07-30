@@ -13,23 +13,23 @@ public class PlayerGameStats {
 
     [Required]
     [Column("game_id")]
-    public int GameId { get; set; }
+    public required int GameId { get; set; }
 
     [Required]
     [Column("player_id")]
-    public int PlayerId { get; set; }
+    public required int PlayerId { get; set; }
 
     [Required]
     [Column("team_id")]
-    public int TeamId { get; set; }
+    public required int TeamId { get; set; }
 
     [Required]
     [Column("opponent_id")]
-    public int? OpponentId { get; set; }
+    public required int? OpponentId { get; set; }
 
     [Required]
     [Column("tournament_id")]
-    public int TournamentId { get; set; }
+    public required int TournamentId { get; set; }
 
     [Required]
     [Column("rounds_on_court")]

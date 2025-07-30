@@ -72,7 +72,7 @@ public class OfficialsControllerTest {
     [TestMethod]
     public void TestGetOfficial() {
         var controller = new OfficialsController();
-        OfficialsController.GetOfficialResponse response = controller.GetSingleOfficial("foo").Value;
+        OfficialsController.GetOfficialResponse response = controller.GetOneOfficial("foo").Value;
         Assert.IsNotNull(response);
         Assert.AreEqual("Foo", response.Official.Name);
         Assert.AreEqual("foo", response.Official.SearchableName);
@@ -82,7 +82,7 @@ public class OfficialsControllerTest {
     [TestMethod]
     public void TestTestGetOfficialBadTournamentName() {
         var controller = new OfficialsController();
-        var response = controller.GetSingleOfficial("foo", "a_name_not_existing").Result;
+        var response = controller.GetOneOfficial("foo", "a_name_not_existing").Result;
         Assert.IsNotNull(response);
         var actual = response as NotFoundObjectResult;
         Assert.IsNotNull(actual);
@@ -93,7 +93,7 @@ public class OfficialsControllerTest {
     [TestMethod]
     public void TestTestGetOfficialBadOfficialName() {
         var controller = new OfficialsController();
-        var response = controller.GetSingleOfficial("a_name_not_existing").Result;
+        var response = controller.GetOneOfficial("a_name_not_existing").Result;
         var actual = response as NotFoundObjectResult;
         Assert.IsNotNull(actual);
         Assert.AreEqual(404, actual.StatusCode);

@@ -13,7 +13,7 @@ namespace HandballBackend.Controllers;
 [ApiController]
 public class SmsController : TwilioController {
     [HttpPost]
-    public TwiMLResult Post() {
+    public TwiMLResult ReceiveTextMessage() {
         // Read incoming SMS data
         var db = new HandballContext();
         var from = ((string) Request.Form["From"]!).Trim();

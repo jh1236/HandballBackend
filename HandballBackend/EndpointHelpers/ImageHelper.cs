@@ -10,7 +10,7 @@ public static class ImageHelper {
         Config.RESOURCES_FOLDER + "/images/circle_outline.png"
     );
 
-    public static string CreatePlayerImage(Stream image, string searchableName = "test") {
+    public static string CreatePlayerImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
             bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/users/{searchableName}.png");
         }
@@ -19,10 +19,11 @@ public static class ImageHelper {
         using (var smallImage = AddCircleToImage(image, false)) {
             smallImage.Write(Config.RESOURCES_FOLDER + $"/images/users/{searchableName}.png");
         }
+
         return $"/api/people/image?name={searchableName}";
     }
 
-    public static string CreateTeamImage(Stream image, string searchableName = "test") {
+    public static string CreateTeamImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
             bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
         }
@@ -35,6 +36,33 @@ public static class ImageHelper {
         return $"/api/teams/image?name={searchableName}";
     }
 
+    public static string CreateTeamImage(Stream imageIn, string searchableName) {
+        using (var image = new MagickImage(imageIn)) {
+            var circleOutline = new MagickImage(CircleOutline);
+            image.Resize(circleOutline.Width, circleOutline.Height);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
+
+            image.Resize(200, 200);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/teams/{searchableName}.png");
+        }
+
+        return $"/api/teams/image?name={searchableName}";
+    }
+
+
+    public static string CreateTournamentImage(Stream imageIn, string searchableName) {
+        using (var image = new MagickImage(imageIn)) {
+            var circleOutline = new MagickImage(CircleOutline);
+            image.Resize(circleOutline.Width, circleOutline.Height);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/big/tournaments/{searchableName}.png");
+
+            image.Resize(200, 200);
+            image.Write(Config.RESOURCES_FOLDER + $"/images/tournaments/{searchableName}.png");
+        }
+
+        return $"/api/tournaments/image?name={searchableName}";
+    }
+
     public static async Task SetGoogleImageForTeam(int teamId) {
         var db = new HandballContext();
         var team = (await db.Teams.FindAsync(teamId))!;
@@ -42,7 +70,7 @@ public static class ImageHelper {
         if (imageLink == null)
             return;
         var stream = await GetImageFromLink(imageLink);
-        var localLink = CreateTeamImage(stream, team.SearchableName);
+        var localLink = CreateTeamImageWithCircle(stream, team.SearchableName);
         team.ImageUrl = localLink;
         team.BigImageUrl = localLink + "?big=true";
         await db.SaveChangesAsync();

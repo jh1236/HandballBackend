@@ -14,14 +14,15 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
 
     [Required]
     [Column("tournament_id")]
-    public int TournamentId { get; set; }
+    public required int TournamentId { get; set; }
 
     [Required]
     [Column("team_id")]
-    public int TeamId { get; set; }
+    public required int TeamId { get; set; }
 
+    [Required]
     [Column("pool")]
-    public int? Pool { get; set; }
+    public int? Pool { get; set; } = 0;
 
     [Required]
     [Column("created_at")]

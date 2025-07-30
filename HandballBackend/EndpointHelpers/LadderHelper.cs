@@ -41,6 +41,7 @@ public static class LadderHelper {
             .ThenBy(t => t.Stats!["Double Faults"])
             .ThenBy(t => t.Stats!["Faults"])
             .ThenBy(t => t.Stats!["Timeouts Called"])
+            .ThenBy(t => t.Elo)
             .ToArray();
     }
 

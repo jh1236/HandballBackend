@@ -1,12 +1,14 @@
 ﻿using System.Text;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.EndpointHelpers;
 
 using BCrypt.Net;
 
 public enum PermissionType {
+    None,
     LoggedIn,
     Umpire,
     UmpireManager,
@@ -14,36 +16,83 @@ public enum PermissionType {
 }
 
 public static class PermissionHelper {
+    public static int ToInt(this OfficialRole officialRole) {
+        return officialRole switch {
+            OfficialRole.Scorer or OfficialRole.Umpire => 2,
+            OfficialRole.TeamLiaison or OfficialRole.UmpireManager => 3,
+            OfficialRole.TournamentDirector => 4,
+            _ => throw new ArgumentOutOfRangeException(nameof(officialRole), officialRole, null)
+        };
+    }
+
+    public static PermissionType ToPermissionType(this OfficialRole permissionType) {
+        return IntToPermissionType(permissionType.ToInt());
+    }
+
     public static int ToInt(this PermissionType permissionType) {
         return permissionType switch {
-            PermissionType.LoggedIn => 0,
+            PermissionType.None => 0,
+            PermissionType.LoggedIn => 1,
             PermissionType.Umpire => 2,
-            PermissionType.UmpireManager => 4,
+            PermissionType.UmpireManager => 3,
             PermissionType.Admin => 5,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(permissionType),
-                permissionType,
-                null
-            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
         };
+    }
+
+    public static bool IsUmpireManager(Tournament? tournament) {
+        var person = PersonByToken(GetToken());
+        if (person == null) return false;
+        if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.UmpireManager.ToInt();
+        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
+               person.Official!.TournamentOfficials.Any(to =>
+                   to.TournamentId == tournament.Id &&
+                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+    }
+
+    public static bool IsUmpireManager(Game g) {
+        var person = PersonByToken(GetToken());
+        if (person == null) return false;
+        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
+               person.Official!.TournamentOfficials.Any(to =>
+                   to.TournamentId == g.TournamentId &&
+                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+    }
+
+    public static bool IsUmpire(Tournament? tournament) {
+        var person = PersonByToken(GetToken());
+        if (person == null) return false;
+        if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.UmpireManager.ToInt();
+        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
+               person.Official!.TournamentOfficials.Any(to =>
+                   to.TournamentId == tournament.Id &&
+                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+    }
+
+    public static bool IsUmpire(Game g) {
+        var person = PersonByToken(GetToken());
+        if (person == null) return false;
+        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
+               person.Official!.TournamentOfficials.Any(to =>
+                   to.TournamentId == g.TournamentId &&
+                   to.Role.ToInt() >= PermissionType.Umpire.ToInt());
     }
 
     public static PermissionType IntToPermissionType(int permissionType) {
         return permissionType switch {
+            0 => PermissionType.None,
             1 => PermissionType.LoggedIn,
-            2 or 3 => PermissionType.Umpire,
-            4 => PermissionType.UmpireManager,
+            2 => PermissionType.Umpire,
+            3 => PermissionType.UmpireManager,
             5 => PermissionType.Admin,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(permissionType),
-                permissionType,
-                null
-            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(permissionType), permissionType, null)
         };
     }
 
     private static bool PersonOrElse(HandballContext db, int personId, out Person person) {
-        person = db.People.Find(personId);
+        person = db.People.Include(p => p.Official.TournamentOfficials)!
+            .ThenInclude(to => to.Tournament)!
+            .First(p => p.Id == personId);
         return person is not null;
     }
 
@@ -61,6 +110,7 @@ public static class PermissionHelper {
         return pwd;
     }
 
+
     private static bool CheckPassword(int personId, string checkPassword) {
         var db = new HandballContext();
         if (!PersonOrElse(db, personId, out var person)) {
@@ -74,6 +124,7 @@ public static class PermissionHelper {
 
         return BCrypt.Verify(checkPassword, realPassword);
     }
+
 
     private static bool CheckToken(int personId, string token) {
         var db = new HandballContext();
@@ -95,7 +146,8 @@ public static class PermissionHelper {
         db.SaveChanges();
     }
 
-    private static string? GetToken() {
+
+    public static string? GetToken() {
         // Access the current HTTP context
         var httpContext = new HttpContextAccessor().HttpContext;
         if (httpContext == null) {
@@ -112,6 +164,7 @@ public static class PermissionHelper {
         return authHeader["Bearer ".Length..].Trim();
     }
 
+
     public static void SetPassword(int personId, string password) {
         var db = new HandballContext();
         if (!PersonOrElse(db, personId, out var person)) {
@@ -124,18 +177,18 @@ public static class PermissionHelper {
 
     public static Person? Login(int personId, string password, bool longSession = false) {
         var pwCheck = CheckPassword(personId, password);
-        var db = new HandballContext();
         if (!pwCheck) {
             return null;
         }
 
+        var db = new HandballContext();
         if (!PersonOrElse(db, personId, out var person)) {
             return null;
         }
 
         if (person.SessionToken is null || person.TokenTimeout < Time() + 60 * 60) //an hour
         {
-            //our old token either didn't exist, wasn't valid or was about to expire.  New One!!
+            //Our old token either didn't exist, wasn't valid or was about to expire.  New One!!
 
             var ret = GenerateToken();
             person.SessionToken = ret;
@@ -159,8 +212,7 @@ public static class PermissionHelper {
 
         var person = db.People.FirstOrDefault(p => p.SessionToken == token);
 
-        if (person == null)
-            return null;
+        if (person == null) return null;
 
         if (person.TokenTimeout < Time()) {
             ResetTokenForPerson(person.Id);

@@ -9,12 +9,9 @@ using Microsoft.Extensions.Options;
 namespace HandballBackend.Authentication;
 
 public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOptions> {
-    public TokenAuthenticator(
-        IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder
-    )
-        : base(options, logger, encoder) { }
+    public TokenAuthenticator(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger,
+        UrlEncoder encoder) : base(options, logger, encoder) {
+    }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
         if (!Request.Headers.ContainsKey("Authorization")) {
@@ -28,19 +25,16 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
             return AuthenticateResult.Fail("Invalid Token");
         }
 
-        List<Claim> claims =
-        [
-            new Claim(CustomClaimTypes.SearchableName, person.SearchableName),
-            new Claim(ClaimTypes.Name, person.Name),
-            new Claim(CustomClaimTypes.UserId, person.Id.ToString()),
-            new Claim(CustomClaimTypes.Token, person.SessionToken!),
+        List<Claim> claims = [
+            new(CustomClaimTypes.SearchableName, person.SearchableName),
+            new(ClaimTypes.Name, person.Name),
+            new(CustomClaimTypes.UserId, person.Id.ToString()),
+            new(CustomClaimTypes.Token, person.SessionToken!)
         ];
-        claims.AddRange(
-            Enum.GetValues(typeof(PermissionType))
-                .Cast<PermissionType>()
-                .Where(permission => permission.ToInt() <= person.PermissionLevel)
-                .Select(permission => new Claim(ClaimTypes.Role, permission.ToString()))
-        );
+        claims.AddRange(Enum.GetValues<PermissionType>()
+            .Where(permission => permission <= person.PermissionLevel)
+            .Select(permission => new Claim(ClaimTypes.Role, permission.ToString())));
+
 
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims));
         var ticket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);

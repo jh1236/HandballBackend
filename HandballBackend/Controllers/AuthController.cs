@@ -1,6 +1,5 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using HandballBackend.Authentication;
-using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController : ControllerBase {
+public class AuthController(IAuthorizationService authorizationService) : ControllerBase {
     public class LoginRequest {
         public required int UserID { get; set; }
         public required string Password { get; set; }
@@ -21,40 +20,64 @@ public class AuthController : ControllerBase {
         public required string Token { get; set; }
         public int UserID { get; set; }
         public long Timeout { get; set; }
+
+        public int BasePermission { get; set; }
+
         public required string Username { get; set; }
-        public int PermissionLevel { get; set; }
+        public Dictionary<string, int> Permissions { get; set; } = new();
     }
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<LoginResponse> Login([FromBody] LoginRequest loginRequest) {
+    public ActionResult<LoginResponse> Login(
+        [FromBody] LoginRequest loginRequest
+    ) {
         var userId = loginRequest.UserID;
         var password = loginRequest.Password;
         var longSession = loginRequest.LongSession;
-
+        var db = new HandballContext();
+        var tournaments = db.Tournaments.ToList();
         var user = PermissionHelper.Login(userId, password, longSession);
         if (user?.SessionToken is null) {
             return Unauthorized();
         }
+
+        var tournamentOfficials = user.Official?.TournamentOfficials;
 
         var response = new LoginResponse {
             Token = user.SessionToken,
             UserID = user.Id,
             Timeout = user.TokenTimeout!.Value * 1000L, //convert to ms for frontend
             Username = user.Name,
-            PermissionLevel = user.PermissionLevel,
+            BasePermission = user.PermissionLevel.ToInt(),
         };
+        foreach (var tournament in tournaments) {
+            response.Permissions[tournament.SearchableName] = (user.PermissionLevel == PermissionType.Admin
+                ? PermissionType.Admin
+                : tournament.Editable
+                    ? PermissionType.Umpire
+                    : PermissionType.None).ToInt();
+        }
+
+        if (user.PermissionLevel.ToInt() < PermissionType.Admin.ToInt()) {
+            foreach (var tournamentOfficial in tournamentOfficials ?? []) {
+                var responsePermission = tournamentOfficial.Role.ToInt();
+                Console.WriteLine(responsePermission);
+                response.Permissions[tournamentOfficial.Tournament.SearchableName] =
+                    responsePermission;
+            }
+        }
+
         return response;
     }
+
 
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize]
     [HttpPost("logout")]
     public Task<IActionResult> Logout() {
-        var userId = int.Parse(
-            HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value
-        );
+        var userId = int.Parse(HttpContext.User.Claims.Single(c => c.Type == CustomClaimTypes.Token).Value);
         PermissionHelper.Logout(userId);
         return Task.FromResult<IActionResult>(NoContent());
     }

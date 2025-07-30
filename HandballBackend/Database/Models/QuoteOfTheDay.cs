@@ -12,11 +12,11 @@ public class QuoteOfTheDay {
 
     [Required]
     [Column("quote", TypeName = "TEXT")]
-    public string Quote { get; set; }
+    public required string Quote { get; set; }
 
     [Required]
     [Column("author", TypeName = "TEXT")]
-    public string Author { get; set; }
+    public required string Author { get; set; }
 
     public QuoteOfTheDayData ToSendableData() => new(this);
 }

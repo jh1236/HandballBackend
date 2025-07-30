@@ -1,19 +1,27 @@
 ﻿namespace HandballBackend.Arguments;
 
 public static class ArgsHandler {
-    public static AbstractArgumentHandler[] Handlers =
-    [
-        new HelpArgumentHandler(),
-        new LoggingArgumentHandler(),
-        new PortArgumentHandler(),
+    public static AbstractArgumentHandler[] Handlers = [
+        new WorkingDirectoryArgHandler(),
+        new LoggingArgHandler(),
+        new PortArgHandler(),
+        new WorkingDirectoryArgHandler()
     ];
 
     public static void Parse(string[] args, WebApplicationBuilder builder) {
         var index = 0;
         while (index < args.Length) {
+            var fail = true;
             foreach (var handler in Handlers) {
-                if (handler.Parse(args, ref index, builder))
+                if (handler.Parse(args, ref index, builder)) {
+                    fail = false;
                     break;
+                }
+            }
+
+            if (fail) {
+                Console.WriteLine($"Unrecognised Argument {args[index]}.  Run with --help for more information.");
+                break;
             }
         }
     }
@@ -31,16 +39,11 @@ public abstract class AbstractArgumentHandler {
     }
 
     public virtual bool Parse(string[] args, ref int index, WebApplicationBuilder builder) {
-        if (args[index] != $"-{ShortName}" && args[index] != $"--{LongName}")
-            return false;
+        if (args[index] != $"-{ShortName}" && args[index] != $"--{LongName}") return false;
         index++;
         ParseIfMatched(args, ref index, builder);
         return true;
     }
 
-    protected abstract void ParseIfMatched(
-        string[] args,
-        ref int index,
-        WebApplicationBuilder builder
-    );
+    protected abstract void ParseIfMatched(string[] args, ref int index, WebApplicationBuilder builder);
 }

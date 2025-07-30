@@ -14,11 +14,11 @@ public class Official : IHasRelevant<Official> {
 
     [Required]
     [Column("person_id")]
-    public int PersonId { get; set; }
+    public required int PersonId { get; set; }
 
     [Required]
     [Column("proficiency")]
-    public int Proficiency { get; set; }
+    public required int Proficiency { get; set; }
 
     [Required]
     [Column("created_at")]
@@ -27,13 +27,15 @@ public class Official : IHasRelevant<Official> {
     [ForeignKey("PersonId")]
     public Person Person { get; set; }
 
-    public List<Game> Games { get; set; } = new List<Game>();
+    public List<Game> Games { get; set; } = [];
+
+    public List<TournamentOfficial> TournamentOfficials { get; set; } = [];
 
     public OfficialData ToSendableData(Tournament? tournament = null, bool includeStats = false) {
         return new OfficialData(this, tournament, includeStats);
     }
 
     public static IQueryable<Official> GetRelevant(IQueryable<Official> query) {
-        return query.Include(o => o.Person);
+        return query.Include(o => o.Person).Include(o => o.TournamentOfficials);
     }
 }

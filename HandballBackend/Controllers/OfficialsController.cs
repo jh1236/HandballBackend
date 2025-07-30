@@ -2,7 +2,7 @@
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.ErrorTypes;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ public class OfficialsController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialsResponse> GetOfficials(
+    public ActionResult<GetOfficialsResponse> GetManyOfficials(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
@@ -28,31 +28,33 @@ public class OfficialsController : ControllerBase {
         OfficialData[]? officials;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest(new InvalidTournament(tournamentSearchable!));
+            return BadRequest("Invalid Tournament");
         }
 
         if (tournament is not null) {
-            officials = db
-                .TournamentOfficials.Where(a => a.TournamentId == tournament.Id)
+            officials = db.TournamentOfficials
+                .Where(a => a.TournamentId == tournament.Id)
                 .IncludeRelevant()
                 .OrderBy(p => p.Official.Person.SearchableName)
-                .Select(to => to.Official.ToSendableData(tournament, false))
-                .ToArray();
+                .ToArray()
+                .Select(to => to.Official.ToSendableData(tournament))
+                .OrderByDescending(o => o.Role).ToArray();
         } else {
-            officials = db
-                .Officials.IncludeRelevant()
+            officials = db.Officials
+                .IncludeRelevant()
                 .OrderBy(p => p.Person.SearchableName)
                 .Select(o => o.ToSendableData(null, false))
                 .ToArray();
         }
 
         if (returnTournament && tournament is null) {
-            return BadRequest(new TournamentNotProvidedForReturn());
+            return BadRequest("Cannot return null tournament");
         }
+
 
         return new GetOfficialsResponse {
             Officials = officials,
-            Tournament = returnTournament ? tournament!.ToSendableData() : null,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 
@@ -61,36 +63,37 @@ public class OfficialsController : ControllerBase {
         public TournamentData? tournament { get; set; }
     }
 
+
     [HttpGet("{searchable}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<GetOfficialResponse> GetSingleOfficial(
+    public ActionResult<GetOfficialResponse> GetOneOfficial(
         string searchable,
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
-        var official = db
-            .Officials.Where(o => o.Person.SearchableName == searchable)
-            .IncludeRelevant()
-            .Include(g => g.Games)
+        var official = db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
+            .Include(o => o.Games)
             .ThenInclude(g => g.Players)
             .FirstOrDefault();
         if (official is null) {
-            return NotFound(new DoesNotExist(nameof(Official), searchable));
+            return NotFound("Invalid Name");
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable!));
+            return BadRequest("invalid Tournament");
         }
 
+
         if (returnTournament && tournament is null) {
-            return BadRequest(new TournamentNotProvidedForReturn());
+            return BadRequest("Cannot return null tournament");
         }
+
 
         return new GetOfficialResponse {
             Official = official.ToSendableData(tournament, true),
-            tournament = returnTournament ? tournament!.ToSendableData() : null,
+            tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 }

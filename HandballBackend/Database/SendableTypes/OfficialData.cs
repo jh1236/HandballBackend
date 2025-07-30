@@ -3,28 +3,33 @@
 namespace HandballBackend.Database.SendableTypes;
 
 public class OfficialData : PersonData {
-    public OfficialData(Official official, Tournament? tournament = null, bool includeStats = false)
-        : base(official.Person) {
-        if (!includeStats)
-            return;
+    public OfficialRole Role { get; set; }
 
-        var playerGameStats = official
-            .Games.Where(g => tournament == null || g.TournamentId == tournament.Id)
-            .Where(g => !g.IsBye && (g.Ranked || (!tournament?.Ranked ?? false)))
-            .OrderBy(g => g.Id)
-            .SelectMany(g => g.Players);
+    public OfficialData(Official official, Tournament? tournament = null, bool includeStats = false) : base(
+        official.Person) {
+        Role = tournament == null
+            ? OfficialRole.Umpire
+            : official.TournamentOfficials.FirstOrDefault(to => tournament.Id == to.TournamentId)?.Role ??
+              OfficialRole.Scorer;
+
+        if (!includeStats) return;
+
+        var playerGameStats =
+            official.Games
+                .Where(g => tournament == null || g.TournamentId == tournament.Id)
+                .Where(g => !g.IsBye && (g.Ranked || (!tournament?.Ranked ?? false)))
+                .OrderBy(g => g.Id).SelectMany(g => g.Players);
         var prevGameId = 0;
-        Stats = new Dictionary<string, dynamic?>
-        {
-            { "Games Umpired", 0 },
-            { "Caps", 0 },
-            { "Rounds Umpired", 0 },
-            { "Green Cards Given", 0 },
-            { "Yellow Cards Given", 0 },
-            { "Red Cards Given", 0 },
-            { "Cards Given", 0 },
-            { "Faults Called", 0 },
-            { "Double Faults Called", 0 },
+        Stats = new Dictionary<string, dynamic?> {
+            {"Games Umpired", 0},
+            {"Caps", 0},
+            {"Rounds Umpired", 0},
+            {"Green Cards Given", 0},
+            {"Yellow Cards Given", 0},
+            {"Red Cards Given", 0},
+            {"Cards Given", 0},
+            {"Faults Called", 0},
+            {"Double Faults Called", 0},
         };
         foreach (var pgs in playerGameStats) {
             if (pgs.GameId > prevGameId) {

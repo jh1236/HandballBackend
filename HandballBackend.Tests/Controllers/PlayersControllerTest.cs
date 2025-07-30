@@ -37,7 +37,8 @@ public class PlayersControllerTest {
             IsPooled = false,
             Notes = "These are the tournament notes!",
             ImageUrl = "/tournament/image",
-            BadmintonServes = true
+            BadmintonServes = true,
+            Started = false
         });
         db.People.Add(new Person {
             Name = "Fooseph Barionette",
@@ -45,7 +46,7 @@ public class PlayersControllerTest {
             Password = null,
             ImageUrl = "/a/local/image",
             BigImageUrl = "/a/local/image?big=true",
-            PermissionLevel = 2,
+            PermissionLevel = PermissionType.Umpire,
         });
         var personOne = new Person {
             Name = "Digby Test",
@@ -53,7 +54,7 @@ public class PlayersControllerTest {
             Password = null,
             ImageUrl = "/a/different/local/image",
             BigImageUrl = "/a/different/local/image?big=true",
-            PermissionLevel = 2,
+            PermissionLevel = PermissionType.Umpire,
         };
         var personTwo = new Person {
             Name = "Charlie Walters",
@@ -61,7 +62,7 @@ public class PlayersControllerTest {
             Password = null,
             ImageUrl =
                 "https://scontent.fper10-1.fna.fbcdn.net/v/t1.6435-9/159559563_1348265148862883_366387183636859896_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=0b6b33&_nc_ohc=K8qmireMGj4Q7kNvwHRhYNP&_nc_oc=AdlEG6AQGwztfey-xZkTmb_xNcJq2ZMArouac4_3y5Nl4JdKYiaeM194ctRSv8GHJdo&_nc_zt=23&_nc_ht=scontent.fper10-1.fna&_nc_gid=a377dmAsw09kmiD3OkjZ6A&oh=00_AfQxp5wXLw7uaYvErZ_MRI8LAYIpeLkOdNquWYH2XxJEPA&oe=68941AD4",
-            PermissionLevel = 0,
+            PermissionLevel = PermissionType.None,
         };
         db.People.Add(personOne);
         db.People.Add(personTwo);
@@ -90,7 +91,7 @@ public class PlayersControllerTest {
         authService.Setup(auth => auth.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<string>()).Result)
             .Returns(AuthorizationResult.Success);
         var controller = new PlayersController(authService.Object);
-        var result = controller.GetSingle("foo_bar").Result.Value;
+        var result = controller.GetOnePlayer("foo_bar").Result.Value;
         Assert.IsNotNull(result);
         Assert.AreEqual("Fooseph Barionette", result.Player.Name);
     }
