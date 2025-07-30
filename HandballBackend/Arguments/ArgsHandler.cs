@@ -5,6 +5,8 @@ public static class ArgsHandler {
         new WorkingDirectoryArgHandler(),
         new LoggingArgHandler(),
         new PortArgHandler(),
+        new WorkingDirectoryArgHandler(),
+        new GitArgHandler(),
         new HelpArgHandler(),
         new BackupArgHandler(),
     ];
