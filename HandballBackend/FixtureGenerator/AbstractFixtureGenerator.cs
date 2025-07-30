@@ -1,5 +1,6 @@
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Controllers;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -104,28 +105,83 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         await db.SaveChangesAsync();
     }
 
-    private class UmpiringSolution {
-        public required int gameId;
-        public required int courtId;
-        public required List<int> teamOneIds;
-        public required List<int> teamTwoIds;
-        public int? officialId;
-        public int? scorerId;
+    internal class UmpiringSolution {
+        public required int GameId;
+        public required int CourtId;
+        public required List<int> PlayerIds;
+        public int? OfficialId;
+        public int? ScorerId;
     }
 
     private async Task AddUmpires() {
         var db = new HandballContext();
-        var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started).ToListAsync();
-        var tournamentOfficials = await db.TournamentOfficials.Where(to => to.TournamentId == tournamentId)
-            .Include(to => to.Official).ToListAsync();
-        var officialDict = new Dictionary<int, int>();
-        foreach (var to in tournamentOfficials) {
-            officialDict.Add(to.Official.Proficiency, to.OfficialId);
+        var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started && !g.IsBye)
+            .IncludeRelevant().ToListAsync();
+        var courtOneGames = games.Where(g => g.Court == 0).ToList();
+        var courtTwoGames = games.Where(g => g.Court == 1).Cast<Game?>().ToList();
+        var officials = (await db.TournamentOfficials.Where(to => to.TournamentId == tournamentId)
+                .Include(to => to.Official).GroupBy(to => to.Official.Proficiency)
+                .OrderBy(g => g.Key).ToListAsync())
+            .Select(g => g.Select(to => to.Official.Id).ToList())
+            .ToList();
+
+        while (courtOneGames.Count > courtTwoGames.Count) {
+            courtTwoGames.Add(null);
         }
-        var solution = new List<UmpiringSolution>();
+
+        var solution = new List<(UmpiringSolution, UmpiringSolution?)>();
+        foreach (var (courtOne, courtTwo) in courtOneGames.Zip(courtTwoGames)) {
+            var courtOneGame = new UmpiringSolution {
+                GameId = courtOne.Id,
+                CourtId = 0,
+                PlayerIds = courtOne.TeamOne.People.Concat(courtOne.TeamTwo.People).Select(p => p.Id).ToList(),
+            };
+            var courtTwoGame = courtTwo == null
+                ? null
+                : new UmpiringSolution {
+                    GameId = courtTwo.Id,
+                    CourtId = 1,
+                    PlayerIds = courtTwo.TeamOne.People.Concat(courtTwo.TeamTwo.People).Select(p => p.Id).ToList(),
+                };
+            solution.Add(new(courtOneGame, courtTwoGame));
+        }
+
+        var solutionArray = solution.ToArray();
+        TrySolution(solutionArray, 0, true, officials);
     }
 
-    private bool TrySolution(List<UmpiringSolution> solutions, int index) {
+    internal bool TrySolution((UmpiringSolution, UmpiringSolution?)[] solutions, int index, bool courtOne,
+        List<List<int>> officialsByProficiency) {
+        var (myGame, otherGame) = solutions[index];
+        if (!courtOne) {
+            (myGame, otherGame) = (otherGame, myGame);
+        }
+
+        if (myGame == null) {
+            return TrySolution(solutions, index + (courtOne ? 0 : 1), !courtOne, officialsByProficiency);
+        }
+
+        List<List<int>> officialsByPreference = [..officialsByProficiency];
+        if (!courtOne) {
+            // we are on court two
+            officialsByPreference.Reverse();
+        }
+
+        foreach (var officials in officialsByPreference) {
+            foreach (var official in officials) {
+                if (myGame.PlayerIds.Contains(official)) continue;
+                if (otherGame?.PlayerIds.Contains(official) ?? false) continue;
+                if (otherGame?.OfficialId == official) continue;
+
+                myGame.OfficialId = official;
+                var success = TrySolution(solutions, index + (courtOne ? 0 : 1), !courtOne, officialsByProficiency);
+
+                if (!success) {
+                    myGame.OfficialId = null;
+                }
+            }
+        }
+
         return false;
     }
 }
