@@ -1,45 +1,43 @@
 ﻿namespace HandballBackend.EndpointHelpers;
 
 public static class GitHelper {
-    private static string? _hash = null;
     private static Timer _timer;
 
     private static void CheckForUpdates() {
         Console.WriteLine("Begin checking for updates...");
-        var process = new System.Diagnostics.Process();
 
-        var startInfo = new System.Diagnostics.ProcessStartInfo {
-            WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-            FileName = "cmd.exe",
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
+        RunGitCommand("fetch --all");
+        var localHash = RunGitCommand("rev-parse master");
+        var newHash = RunGitCommand("rev-parse origin/master");
 
-        process.StartInfo = startInfo;
-        process.Start();
-        using var sw = process.StandardInput;
-        if (sw.BaseStream.CanWrite) {
-            sw.WriteLine("git fetch --all");
-            sw.Flush();
-            sw.WriteLine("git rev-parse origin/master");
-            sw.Flush();
-        }
 
-        using var output = process.StandardOutput;
-        var head = output.ReadToEnd();
-        Console.WriteLine(head);
-        _hash ??= head;
-
-        if (_hash == head) return;
+        Console.WriteLine($"hash = {newHash}");
+        if (localHash == newHash) return;
         Console.WriteLine("Updates on master found; restarting ");
-        sw.WriteLine("start download-latest.cmd");
-        sw.Flush();
+        System.Diagnostics.Process.Start("..\\download-latest.cmd");
         Environment.Exit(0);
     }
 
+    private static string RunGitCommand(string arguments) {
+        var process = new System.Diagnostics.Process {
+            StartInfo = new System.Diagnostics.ProcessStartInfo {
+                FileName = "git",
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        process.Start();
+        string output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return output.Trim();
+    }
+
     public static void StartCheckingForUpdates() {
+        CheckForUpdates();
         _timer = new Timer(_ => CheckForUpdates(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
     }
 }
