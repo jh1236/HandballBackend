@@ -78,14 +78,14 @@ public class Tournament {
     [Column("started")]
     public required bool Started { get; set; }
 
-    public void EndRound() {
+    public async Task EndRound() {
         var finals = InFinals;
         if (!finals) {
-            finals = GetFixtureGenerator.EndOfRound();
+            finals = await GetFixtureGenerator.EndOfRound();
         }
 
         if (finals && !Finished) {
-            GetFinalGenerator.EndOfRound();
+            await GetFinalGenerator.EndOfRound();
         }
     }
 

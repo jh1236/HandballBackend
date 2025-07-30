@@ -1,11 +1,9 @@
-﻿using HandballBackend.Authentication;
-using HandballBackend.Database;
+﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +12,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GamesController(IAuthorizationService authorizationService) : ControllerBase {
+public class GamesController() : ControllerBase {
     public record ChangeCodeResponse {
         public int Code { get; set; }
     }
@@ -148,9 +146,9 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
                 .ThenInclude(gE => gE.Player);
         }
 
-        var games = query.OrderBy(g => g.Id)
+        var games = await query.OrderBy(g => g.Id)
             .Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
-            .ToArray();
+            .ToArrayAsync();
 
         if (returnTournament && tournament is null) {
             return BadRequest(new TournamentNotProvidedForReturn());
@@ -170,7 +168,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
     [HttpGet("noteable")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult<GetNoteableResponse> GetNoteableGames(
+    public async Task<ActionResult<GetNoteableResponse>> GetNoteableGames(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool returnTournament = false,
@@ -200,8 +198,8 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         query = query.Include(g => g.Events);
 
 
-        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
-            .ToArray();
+        var games = await query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
+            .ToArrayAsync();
 
         if (returnTournament && tournament is null) {
             return BadRequest(new TournamentNotProvidedForReturn());
@@ -241,7 +239,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         query = query.OrderBy(g => g.Id);
 
 
-        var games = query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArray();
+        var games = await query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArrayAsync();
 
         List<FixturesRound> fixtures = [];
 
@@ -268,9 +266,9 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             fixtures = fixtures.TakeLast(maxRounds).ToList();
         }
 
-        var output = new GetFixturesResponse() {
+        var output = new GetFixturesResponse {
             Fixtures = separateFinals ? fixtures.Where(f => !f.Final).ToArray() : fixtures.ToArray(),
-            Finals = separateFinals ? fixtures?.Where(f => f.Final).ToArray() : null
+            Finals = separateFinals ? fixtures.Where(f => f.Final).ToArray() : null
         };
 
         if (returnTournament) {

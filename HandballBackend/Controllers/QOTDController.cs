@@ -1,6 +1,6 @@
-﻿using HandballBackend.Database.Models;
-using HandballBackend.Database.SendableTypes;
+﻿using HandballBackend.Database.SendableTypes;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Controllers;
 
@@ -9,11 +9,12 @@ namespace HandballBackend.Controllers;
 public class QOTDController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<QuoteOfTheDayData> GetQuoteOfTheDay() {
-        HandballContext db = new();
-        int today = DateTime.Today.DayOfYear;
-        QuoteOfTheDay[] quotes = db.QuotesOfTheDay.ToArray();
-        QuoteOfTheDay quote = quotes[today % quotes.Length];
+    public async Task<ActionResult<QuoteOfTheDayData>> GetQotd() {
+        var db = new HandballContext();
+        var today = DateTime.Today.DayOfYear;
+        var quotes = await db.QuotesOfTheDay
+            .ToArrayAsync();
+        var quote = quotes[today % quotes.Length];
         return quote.ToSendableData();
     }
 }

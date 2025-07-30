@@ -16,13 +16,13 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         };
     }
 
-    public virtual bool EndOfRound() {
+    public virtual async Task<bool> EndOfRound() {
         if (fillCourts) {
-            AddCourts();
+            await AddCourts();
         }
 
         if (fillOfficials) {
-            AddUmpires();
+            await AddUmpires();
         }
 
         return false;
@@ -45,18 +45,18 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
 
-    public void AddCourts(int rounds = -1) {
+    public async Task AddCourts(int rounds = -1) {
         var db = new HandballContext();
         // Get the highest round number
 
         if (rounds == -1) {
-            rounds = db.Games
+            rounds = (await db.Games
                 .Where(g => g.TournamentId == tournamentId)
                 .OrderByDescending(g => g.Round)
-                .FirstOrDefault()?.Round ?? 0;
+                .FirstOrDefaultAsync())?.Round ?? 0;
         }
 
-        var games = db.Games
+        var games = await db.Games
             .Where(g => g.TournamentId == tournamentId &&
                         g.Round == rounds &&
                         !g.IsBye &&
@@ -66,17 +66,17 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             .ThenInclude(pgs => pgs.Game)
             .Include(g => g.TeamTwo.PlayerGameStats.Where(pgs => pgs.Game.TournamentId == tournamentId))
             .ThenInclude(pgs => pgs.Game)
-            .ToList();
+            .ToListAsync();
         var tourney = db.Tournaments
             .FirstOrDefault(t => t.Id == tournamentId);
 
-        var finals = db.Games
+        var finals = await db.Games
             .Where(g => g.TournamentId == tournamentId &&
                         g.Round == rounds &&
                         !g.IsBye &&
                         !g.Started &&
                         g.IsFinal)
-            .ToList();
+            .ToListAsync();
 
         // Calculate the split point
         var splitPoint = (int) Math.Ceiling(games.Count / 2.0) - 1;
@@ -97,33 +97,33 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             final.Court = 0;
         }
 
-        db.SaveChanges();
+        await db.SaveChangesAsync();
     }
 
-    private void AddUmpires() {
+    private async Task AddUmpires() {
         // Get all necessary data
         var db = new HandballContext();
-        var gamesQuery = db.Games
+        var gamesQuery = await db.Games
             .Where(g => g.TournamentId == tournamentId && !g.IsBye)
             .OrderBy(g => g.Id)
-            .ToList();
+            .ToListAsync();
 
-        var players = db.PlayerGameStats
+        var players = await db.PlayerGameStats
             .Join(db.Games,
                 pgs => pgs.GameId,
                 g => g.Id,
                 (pgs, g) => new { pgs, g })
             .Where(x => x.pgs.TournamentId == tournamentId && !x.g.IsBye)
             .Select(x => x.pgs)
-            .ToList();
+            .ToListAsync();
 
-        var tourney = db.Tournaments
-            .FirstOrDefault(t => t.Id == tournamentId);
+        var tourney = await db.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentId);
 
-        var officials = db.TournamentOfficials
+        var officials = await db.TournamentOfficials
             .Where(to => to.TournamentId == tournamentId)
             .Include(to => to.Official)
-            .ToList();
+            .ToListAsync();
 
         // Organize data
         var rounds = gamesQuery
@@ -174,7 +174,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                             continue;
 
                         game.OfficialId = official.OfficialId;
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                         break;
                     }
                 }
@@ -216,14 +216,14 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                             continue;
 
                         game.ScorerId = official.OfficialId;
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                         break;
                     }
 
                     // If no scorer found, set to umpire
                     if (game.ScorerId == null && game.OfficialId != null) {
                         game.ScorerId = game.OfficialId;
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
                 }
             }

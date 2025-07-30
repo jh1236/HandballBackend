@@ -8,8 +8,8 @@ namespace HandballBackend.FixtureGenerator;
 public class Pooled : AbstractFixtureGenerator {
     private readonly int _tournamentId;
 
-    public Pooled(int tournamentId)
-        : base(tournamentId, true, true) {
+
+    public Pooled(int tournamentId) : base(tournamentId, true, true) {
         _tournamentId = tournamentId;
     }
 
@@ -18,12 +18,10 @@ public class Pooled : AbstractFixtureGenerator {
         var tournament = db.Tournaments.Find(_tournamentId)!;
         tournament.IsPooled = true;
 
-        var teams = db
-            .TournamentTeams.Where(t => t.TournamentId == _tournamentId)
+        var teams = db.TournamentTeams
+            .Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
-            .ToArray()
-            .OrderByDescending(t => t.Team.Elo())
-            .ToList();
+            .ToArray().OrderByDescending(t => t.Team.Elo()).ToList();
 
         var pool = 0;
         foreach (var team in teams) {
@@ -35,30 +33,20 @@ public class Pooled : AbstractFixtureGenerator {
         base.BeginTournament();
     }
 
-    public override bool EndOfRound() {
+    public override async Task<bool> EndOfRound() {
         var db = new HandballContext();
-        var tournament = db.Tournaments.Find(_tournamentId)!;
-        var tournamentTeams = db
-            .TournamentTeams.Where(t => t.TournamentId == _tournamentId)
+        var tournament = (await db.Tournaments.FindAsync(_tournamentId))!;
+        var tournamentTeams =await db.TournamentTeams
+            .Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
-            .ToList();
+            .ToListAsync();
 
-        var rounds = db
-            .Games.Where(g => g.TournamentId == _tournamentId)
-            .OrderByDescending(g => g.Round)
-            .Select(g => g.Round)
-            .FirstOrDefault();
+        var rounds = await db.Games
+            .Where(g => g.TournamentId == _tournamentId)
+            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefaultAsync();
 
-        var poolOne = tournamentTeams
-            .Where(tt => tt.Pool == 1)
-            .Select(tt => tt.Team)
-            .OrderBy(t => t.Id)
-            .ToList();
-        var poolTwo = tournamentTeams
-            .Where(tt => tt.Pool == 2)
-            .Select(tt => tt.Team)
-            .OrderBy(t => t.Id)
-            .ToList();
+        var poolOne = tournamentTeams.Where(tt => tt.Pool == 1).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
+        var poolTwo = tournamentTeams.Where(tt => tt.Pool == 2).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
         if (poolOne.Count % 2 != 0) {
             poolOne.Add(db.Teams.First(t => t.Id == 1));
         }
@@ -70,7 +58,7 @@ public class Pooled : AbstractFixtureGenerator {
         if (Math.Min(poolTwo.Count, poolOne.Count) <= rounds + 1) {
             // we are now in finals
             tournament.InFinals = true;
-            db.SaveChanges();
+            await db.SaveChangesAsync();
             return true;
         }
 
@@ -91,7 +79,7 @@ public class Pooled : AbstractFixtureGenerator {
             GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
 
-        db.SaveChanges();
-        return base.EndOfRound();
+        await db.SaveChangesAsync();
+        return await base.EndOfRound();
     }
 }

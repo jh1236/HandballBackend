@@ -3,7 +3,6 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
-using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,13 +19,15 @@ public class TournamentsController : ControllerBase {
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<GetTournamentsRepsonse> GetManyTournaments() {
+    public async Task<ActionResult<GetTournamentsRepsonse>> GetManyTournaments() {
         var db = new HandballContext();
-        var tournaments = db
-            .Tournaments.OrderBy(t => t.Id)
+        var tournaments = await db.Tournaments
+            .OrderBy(t => t.Id)
             .Select(t => t.ToSendableData())
-            .ToArray();
-        return new GetTournamentsRepsonse {Tournaments = tournaments};
+            .ToArrayAsync();
+        return new GetTournamentsRepsonse {
+            Tournaments = tournaments
+        };
     }
 
     public record GetTournamentResponse {
@@ -34,25 +35,28 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpGet("{searchable}")]
-    public ActionResult<GetTournamentResponse> GetOneTournament(string searchable) {
+    public async Task<ActionResult<GetTournamentResponse>> GetOneTournament(string searchable) {
         var db = new HandballContext();
-        var tournament = db.Tournaments.FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
-        return new GetTournamentResponse {Tournament = tournament.ToSendableData()};
+        return new GetTournamentResponse {
+            Tournament = tournament.ToSendableData()
+        };
     }
 
 
     [HttpPost("{searchable}/start")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult StartTournament(string searchable) {
+    public async Task<ActionResult> StartTournament(string searchable) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         tournament.BeginTournament();
@@ -61,16 +65,16 @@ public class TournamentsController : ControllerBase {
 
     [HttpPost("{searchable}/finalsNextRound")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult PutTournamentInFinals(string searchable) {
+    public async Task<ActionResult> PutTournamentInFinals(string searchable) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         tournament.InFinals = true;
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return Ok();
     }
 
@@ -88,24 +92,24 @@ public class TournamentsController : ControllerBase {
 
     [HttpPost("{searchable}/addTeam")]
     [Authorize(Policy = Policies.IsAdmin)]
-    public ActionResult<AddTeamResponse> AddTeamToTournament([FromRoute] string searchable,
+    public async Task<ActionResult<AddTeamResponse>> AddTeamToTournament([FromRoute] string searchable,
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
             .FirstOrDefault(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         if (tournament.Started) {
-            return BadRequest(new ActionNotAllowed("The Tournament has already been started"));
+            return NotFound("Tournament has already started!");
         }
 
-        var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
-            .FirstOrDefault(t => t.Name == request.TeamName);
+        var team = await db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
+            .FirstOrDefaultAsync(t => t.Name == request.TeamName);
         if (team is not null && (request.CaptainName is not null || request.NonCaptainName is not null ||
                                  request.SubstituteName is not null)) {
-            return BadRequest(new ActionNotAllowed("This Team already exists; you may not provide players"));
+            return BadRequest("This Team already exists; you may not provide players");
         }
 
 
@@ -137,25 +141,25 @@ public class TournamentsController : ControllerBase {
                     Name = request.TeamName!,
                     SearchableName = Utilities.ToSearchable(request.TeamName!)
                 };
-                db.Teams.Add(team);
-                db.SaveChanges();
+                await db.Teams.AddAsync(team);
+                await db.SaveChangesAsync();
             } else {
                 team = maybeTeam;
             }
         }
 
         if (team.TournamentTeams.Any(tt => tt.TournamentId == tournament.Id)) {
-            return BadRequest(new ActionNotAllowed("That team is already in this tournament!"));
+            return BadRequest("That team is already in this tournament!");
         }
 
-        db.TournamentTeams.Add(new TournamentTeam {
+        await db.TournamentTeams.AddAsync(new TournamentTeam {
             TournamentId = tournament.Id,
             TeamId = team.Id,
             Name = request.TeamName == null || request.TeamName == team.Name ? null : request.TeamName,
         });
 
 
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return Ok(new AddTeamResponse {
             Team = team.ToSendableData()
         });
@@ -174,24 +178,24 @@ public class TournamentsController : ControllerBase {
 
     [HttpPatch("{searchable}/updateTeam")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult<UpdateTeamResponse> UpdateTeamForTournament(string searchable,
+    public async Task<ActionResult<UpdateTeamResponse>> UpdateTeamForTournament(string searchable,
         [FromBody] UpdateTeamRequest request) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         if (tournament.Started) {
-            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
+            return NotFound("Tournament has already started!");
         }
 
-        var team = db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
-            .Single(team => team.SearchableName == request.TeamSearchableName);
+        var team = await db.Teams.IncludeRelevant().Include(team => team.TournamentTeams)
+            .SingleAsync(team => team.SearchableName == request.TeamSearchableName);
 
         if (team.TournamentTeams.All(tt => tt.TournamentId != tournament.Id)) {
-            return BadRequest(new ActionNotAllowed("Team not in tournament!"));
+            return BadRequest("Team not in tournament!");
         }
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
@@ -215,7 +219,7 @@ public class TournamentsController : ControllerBase {
         }
 
 
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return Ok(new UpdateTeamResponse {
             Team = tournamentTeam.ToSendableData()
         });
@@ -227,20 +231,20 @@ public class TournamentsController : ControllerBase {
 
     [HttpDelete("{searchable}/removeTeam")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
+    public async Task<ActionResult> RemoveTeamFromTournament(string searchable, [FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         if (tournament.Started) {
-            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
+            return NotFound("Tournament has already started!");
         }
 
-        var team = db.Teams.Include(team => team.TournamentTeams)
-            .Single(t => t.SearchableName == request.TeamSearchableName);
+        var team = await db.Teams.Include(team => team.TournamentTeams)
+            .SingleAsync(t => t.SearchableName == request.TeamSearchableName);
         var deleteTeam = team.TournamentTeams.Count(tt => tt.TournamentId != 1) <= 1;
 
         var tournamentTeam = team.TournamentTeams.Single(tt => tt.TournamentId == tournament.Id);
@@ -250,7 +254,7 @@ public class TournamentsController : ControllerBase {
         }
 
         db.TournamentTeams.Remove(tournamentTeam);
-        db.SaveChanges();
+        await db.SaveChangesAsync();
 
 
         return Ok();
@@ -262,38 +266,38 @@ public class TournamentsController : ControllerBase {
 
     [HttpPost("{searchable}/addOfficial")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult AddOfficialToTournament(string searchable,
+    public async Task<ActionResult> AddOfficialToTournament(string searchable,
         [FromBody] AddOfficialRequest request) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         if (tournament.Started) {
-            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
+            return NotFound("Tournament has already started!");
         }
 
-        var official = db.Officials.IncludeRelevant().Include(official => official.TournamentOfficials)
-            .FirstOrDefault(o => o.Person.SearchableName == request.OfficialSearchableName);
+        var official = await db.Officials.IncludeRelevant().Include(official => official.TournamentOfficials)
+            .FirstOrDefaultAsync(o => o.Person.SearchableName == request.OfficialSearchableName);
 
 
         if (official == null) {
-            return NotFound(new DoesNotExist("Official", request.OfficialSearchableName));
+            return BadRequest("The Official doesn't exist");
         }
 
         if (official.TournamentOfficials.Any(to => to.TournamentId == tournament.Id)) {
-            return BadRequest(new ActionNotAllowed("That official is already in this tournament!"));
+            return BadRequest("That official is already in this tournament!");
         }
 
-        db.TournamentOfficials.Add(new TournamentOfficial {
+        await db.TournamentOfficials.AddAsync(new TournamentOfficial {
             TournamentId = tournament.Id,
             OfficialId = official.Id,
             Role = OfficialRole.Umpire,
         });
 
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return Ok();
     }
 
@@ -303,30 +307,30 @@ public class TournamentsController : ControllerBase {
 
     [TournamentAuthorize(PermissionType.UmpireManager)]
     [HttpDelete("{searchable}/removeOfficial")]
-    public ActionResult RemoveOfficialFromTournament(string searchable,
+    public async Task<ActionResult> RemoveOfficialFromTournament(string searchable,
         [FromBody] RemoveOfficialRequest request) {
         var db = new HandballContext();
-        var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == searchable);
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == searchable);
         if (tournament is null) {
-            return NotFound(new InvalidTournament(searchable));
+            return NotFound("Invalid Tournament");
         }
 
         if (tournament.Started) {
-            return BadRequest(new ActionNotAllowed("Tournament has already started!"));
+            return NotFound("Tournament has already started!");
         }
 
-        var tournamentOfficial = db.TournamentOfficials.FirstOrDefault(to =>
+        var tournamentOfficial = await db.TournamentOfficials.FirstOrDefaultAsync(to =>
             to.TournamentId == tournament.Id && to.Official.Person.SearchableName == request.OfficialSearchableName);
 
 
         if (tournamentOfficial == null) {
-            return NotFound(new DoesNotExist("Official", request.OfficialSearchableName));
+            return BadRequest("The Official doesn't exist");
         }
 
         db.TournamentOfficials.Remove(tournamentOfficial);
 
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return Ok();
     }
 }
