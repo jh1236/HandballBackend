@@ -11,14 +11,6 @@ namespace HandballBackend.Tests.Controllers;
 [TestClass]
 [TestSubject(typeof(OfficialsController))]
 public class OfficialsControllerTest {
-    [ClassInitialize]
-    public static void Initialize(TestContext testContext) {
-        Directory.SetCurrentDirectory("../../../../HandballBackend/build/");
-
-        Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\secrets";
-        Config.RESOURCES_FOLDER = @".\resources\";
-    }
 
     [TestInitialize]
     public void Setup() {
@@ -70,7 +62,7 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestGetOfficial() {
+    public void TestGetOneOfficial() {
         var controller = new OfficialsController();
         OfficialsController.GetOfficialResponse response = controller.GetOneOfficial("foo").Value;
         Assert.IsNotNull(response);
@@ -80,7 +72,7 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestTestGetOfficialBadTournamentName() {
+    public void TestGetOneOfficialBadTournamentName() {
         var controller = new OfficialsController();
         var response = controller.GetOneOfficial("foo", "a_name_not_existing").Result;
         Assert.IsNotNull(response);
@@ -91,7 +83,7 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestTestGetOfficialBadOfficialName() {
+    public void TestGetOneOfficialBadName() {
         var controller = new OfficialsController();
         var response = controller.GetOneOfficial("a_name_not_existing").Result;
         var actual = response as NotFoundObjectResult;

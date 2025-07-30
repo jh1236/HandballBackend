@@ -15,14 +15,9 @@ namespace HandballBackend.Tests.Controllers;
 [TestClass]
 [TestSubject(typeof(PlayersController))]
 public class PlayersControllerTest {
-    [ClassInitialize]
-    public static void Initialize(TestContext testContext) {
-        Directory.SetCurrentDirectory("../../../../HandballBackend/build/");
 
-        Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\secrets";
-        Config.RESOURCES_FOLDER = @".\resources\";
-    }
+
+
     [TestInitialize]
     public void Setup() {
         var db = new HandballContext();
@@ -91,7 +86,7 @@ public class PlayersControllerTest {
     }
 
     [TestMethod]
-    public void TestGetPlayer() {
+    public void TestGetOnePlayer() {
         var controller = new PlayersController();
         var result = controller.GetOnePlayer("foo_bar").Result.Value;
         Assert.IsNotNull(result);
@@ -99,7 +94,7 @@ public class PlayersControllerTest {
     }
 
     [TestMethod]
-    public void TestGetPlayerBadName() {
+    public void TestGetOnePlayerBadName() {
         var controller = new PlayersController();
         var response = controller.GetOnePlayer("a_name_not_existing").Result.Result;
         var actual = response as NotFoundObjectResult;
@@ -109,7 +104,7 @@ public class PlayersControllerTest {
     }
 
     [TestMethod]
-    public void TestGetPlayerBadTournamentName() {
+    public void TestGetOnePlayerBadTournamentName() {
         var controller = new PlayersController();
         var response = controller.GetOnePlayer("foo_bar", tournamentSearchable:"fake_tournament").Result.Result;
         var actual = response as NotFoundObjectResult;
