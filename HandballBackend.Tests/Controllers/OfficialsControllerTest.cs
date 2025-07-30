@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using System.Threading.Tasks;
 using HandballBackend.Controllers;
 using HandballBackend.Database.Models;
 using HandballBackend.ErrorTypes;
@@ -11,7 +11,6 @@ namespace HandballBackend.Tests.Controllers;
 [TestClass]
 [TestSubject(typeof(OfficialsController))]
 public class OfficialsControllerTest {
-
     [TestInitialize]
     public void Setup() {
         var db = new HandballContext();
@@ -62,9 +61,9 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestGetOneOfficial() {
+    public async Task TestGetOneOfficial() {
         var controller = new OfficialsController();
-        OfficialsController.GetOfficialResponse response = controller.GetOneOfficial("foo").Value;
+        OfficialsController.GetOfficialResponse response = (await controller.GetOneOfficial("foo")).Value;
         Assert.IsNotNull(response);
         Assert.AreEqual("Foo", response.Official.Name);
         Assert.AreEqual("foo", response.Official.SearchableName);
@@ -72,9 +71,9 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestGetOneOfficialBadTournamentName() {
+    public async Task TestGetOneOfficialBadTournamentName() {
         var controller = new OfficialsController();
-        var response = controller.GetOneOfficial("foo", "a_name_not_existing").Result;
+        var response = (await controller.GetOneOfficial("foo", "a_name_not_existing")).Result;
         Assert.IsNotNull(response);
         var actual = response as NotFoundObjectResult;
         Assert.IsNotNull(actual);
@@ -83,9 +82,9 @@ public class OfficialsControllerTest {
     }
 
     [TestMethod]
-    public void TestGetOneOfficialBadName() {
+    public async Task TestGetOneOfficialBadName() {
         var controller = new OfficialsController();
-        var response = controller.GetOneOfficial("a_name_not_existing").Result;
+        var response = (await controller.GetOneOfficial("a_name_not_existing")).Result;
         var actual = response as NotFoundObjectResult;
         Assert.IsNotNull(actual);
         Assert.AreEqual(404, actual.StatusCode);
