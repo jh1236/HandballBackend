@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandballBackend.EndpointHelpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;
 
@@ -35,6 +36,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         tournament.Finished = true;
         tournament.Notes = note;
         db.SaveChanges();
+        _ = PostgresBackup.MakeTimestampedBackup("Post Tournament Backup");
     }
 
     public virtual void BeginTournament() {
