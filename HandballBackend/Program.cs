@@ -39,7 +39,7 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (Config.REQUEST_LOGGING) {
+if (Config.LOGGING) {
     app.UseMiddleware<RequestLogger>();
 }
 

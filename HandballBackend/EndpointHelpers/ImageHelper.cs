@@ -6,7 +6,9 @@ using ImageMagick.Drawing;
 namespace HandballBackend.EndpointHelpers;
 
 public static class ImageHelper {
-    private static readonly FileInfo CircleOutline = new(Config.RESOURCES_FOLDER + "/images/circle_outline.png");
+    private static readonly FileInfo CircleOutline = new(
+        Config.RESOURCES_FOLDER + "/images/circle_outline.png"
+    );
 
     public static string CreatePlayerImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
@@ -65,14 +67,14 @@ public static class ImageHelper {
         var db = new HandballContext();
         var team = (await db.Teams.FindAsync(teamId))!;
         var imageLink = await GetGoogleImageUrl(team.Name);
-        if (imageLink == null) return;
+        if (imageLink == null)
+            return;
         var stream = await GetImageFromLink(imageLink);
         var localLink = CreateTeamImageWithCircle(stream, team.SearchableName);
         team.ImageUrl = localLink;
         team.BigImageUrl = localLink + "?big=true";
         await db.SaveChangesAsync();
     }
-
 
     private static IMagickImage AddCircleToImage(Stream image, bool bigImage = false) {
         MagickImageCollection? images = null;
@@ -86,7 +88,6 @@ public static class ImageHelper {
 
         var finalSize = circleOutline.Height;
         // we want to resize so that the smaller of the two sizes is correct (otherwise we will get gaps)
-
 
         if (w > h) {
             imageIn.Resize(0, finalSize);
@@ -102,7 +103,8 @@ public static class ImageHelper {
         using var mask = new MagickImage(MagickColors.Transparent, finalSize, finalSize);
 
         //luciferian magic to make the circle look nice (I don't know how it works)
-        new Drawables().FillColor(MagickColors.White)
+        new Drawables()
+            .FillColor(MagickColors.White)
             .Circle(finalSize / 2.0, finalSize / 2.0, (finalSize - 70) / 2.0, 10)
             .Draw(mask);
         mask.Alpha(AlphaOption.Extract);
@@ -133,13 +135,12 @@ public static class ImageHelper {
     private static async Task<string?> GetGoogleImageUrl(string searchTerm) {
         var url = "https://www.google.com/search?tbm=isch&q=" + Utilities.ToSearchable(searchTerm);
 
-
         var web = new HtmlWeb {
             UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
             PreRequest = request => {
                 request.Accept = "text/html, application/xhtml+xml, */*";
                 return true;
-            }
+            },
         };
 
         var htmlDoc = await web.LoadFromWebAsync(url);
@@ -158,7 +159,8 @@ public static class ImageHelper {
             foreach (var scriptNode in scriptNodes) {
                 var scriptText = scriptNode.InnerText;
                 var startIndex = scriptText.IndexOf("_setImgSrc('", StringComparison.Ordinal);
-                if (startIndex < 0) continue;
+                if (startIndex < 0)
+                    continue;
                 startIndex += 12; // Length of "_setImgSrc('"
                 var endIndex = scriptText.IndexOf($"'", startIndex, StringComparison.Ordinal);
                 if (endIndex > startIndex) {

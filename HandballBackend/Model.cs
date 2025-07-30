@@ -21,7 +21,7 @@ public class HandballContext : DbContext {
     public DbSet<TournamentOfficial> TournamentOfficials { get; set; }
     public DbSet<TournamentTeam> TournamentTeams { get; set; }
 
-    public readonly string ConnectionString = File.ReadAllText(Config.SECRETS_FOLDER + "/DatabaseConnection.txt");
+    public static readonly string ConnectionString = File.ReadAllText(Config.SECRETS_FOLDER + "/DatabaseConnection.txt");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
