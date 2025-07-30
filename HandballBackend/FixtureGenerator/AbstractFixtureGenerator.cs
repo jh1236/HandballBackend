@@ -36,7 +36,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         tournament.Finished = true;
         tournament.Notes = note;
         db.SaveChanges();
-        _ = PostgresBackup.BackupDatabase("Post Tournament Backup");
+        _ = PostgresBackup.MakeTimestampedBackup("Post Tournament Backup");
     }
 
     public virtual void BeginTournament() {

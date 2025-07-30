@@ -6,12 +6,17 @@ public static class PostgresBackup {
     private static Timer? _timer;
 
 
-    public static async Task BackupDatabase(string backupTitle = "auto") {
+    public static async Task MakeTimestampedBackup(string backupTitle = "auto") {
         if (!await HasDatabaseChanged()) {
-            Console.WriteLine($"Backup not necessary; files are the same");
+            Console.WriteLine("Backup not necessary; files are the same");
             return;
         }
 
+        await MakeBackup($"{DateTime.Now:yyyy-MM-dd HH-mm-ss} {backupTitle}");
+        await SaveLengthToFile();
+    }
+
+    public static async Task MakeBackup(string filename) {
         var process = new System.Diagnostics.Process();
         var connArgs = ParseConnectionString(HandballContext.ConnectionString);
 
@@ -29,7 +34,7 @@ public static class PostgresBackup {
 
         process.StartInfo = startInfo;
         process.Start();
-        var backupFile = $"{Config.BACKUP_FOLDER}/{DateTime.Now:yyyy-MM-dd HH-mm-ss} {backupTitle}.txt";
+        var backupFile = $"{Config.BACKUP_FOLDER}/{filename}.txt";
         using (var output = process.StandardOutput) {
             await using (var file = File.CreateText(backupFile)) {
                 await file.WriteAsync(await output.ReadToEndAsync());
@@ -40,7 +45,6 @@ public static class PostgresBackup {
         Console.WriteLine($"Making Backup {backupFile}");
 
         await process.WaitForExitAsync();
-        await SaveLengthToFile();
     }
 
     private static Dictionary<string, string> ParseConnectionString(string connectionString) {
@@ -59,7 +63,7 @@ public static class PostgresBackup {
 
     public static void PeriodicBackups(int backupTime) {
         //we run this to initialise the _rowCounts dict.
-        _timer ??= new Timer(_ => BackupDatabase(), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
+        _timer ??= new Timer(_ => MakeTimestampedBackup(), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
     }
 
     private static async Task<Dictionary<string, long>> LoadLengthFromFile() {
