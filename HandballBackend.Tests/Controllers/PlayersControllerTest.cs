@@ -16,8 +16,6 @@ namespace HandballBackend.Tests.Controllers;
 [TestSubject(typeof(PlayersController))]
 public class PlayersControllerTest {
 
-
-
     [TestInitialize]
     public void Setup() {
         var db = new HandballContext();

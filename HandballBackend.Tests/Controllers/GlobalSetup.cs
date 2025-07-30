@@ -7,10 +7,10 @@ namespace HandballBackend.Tests.Controllers;
 public class GlobalSetup {
     [AssemblyInitialize]
     public static void AssemblyInitialize(TestContext testContext) {
-        Directory.SetCurrentDirectory("../../../../HandballBackend/build/");
+        Directory.SetCurrentDirectory("../../../");
 
         Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\secrets";
-        Config.RESOURCES_FOLDER = @".\resources\";
+        Config.SECRETS_FOLDER = @".\secrets\Config\setup";
+        Config.RESOURCES_FOLDER = @".\HandballBackend\build\resources\";
     }
 }
