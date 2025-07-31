@@ -133,20 +133,21 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         var courtOneGames = games.Where(g => g.Court == 0).ToList();
         var courtTwoGames = games.Where(g => g.Court == 1).Cast<Game?>().ToList();
         var officials =
-            (await db.TournamentOfficials
+            db.TournamentOfficials
                 .Where(to => to.TournamentId == tournamentId)
                 .Include(to => to.Official.Person)
                 .Include(to => to.Official.Games.Where(g => g.TournamentId == tournamentId && g.Round < round))
-                .Include(to => to.Official.ScoredGames.Where(g => g.TournamentId == tournamentId && g.Round < round))
-                .ToListAsync())
-            .Select(to => new OfficialContainer {
-                PlayerId = to.Official.PersonId,
-                OfficialId = to.OfficialId,
-                GamesUmpired = to.Official.Games.Count,
-                Name = to.Official.Person.Name,
-                GamesScored = to.Official.ScoredGames.Count,
-                Proficiency = to.Official.Proficiency,
-            }).OrderBy(o => o.GamesUmpired).ToList();
+                .Include(to =>
+                    to.Official.ScoredGames.Where(g => g.TournamentId == tournamentId && g.Round < round))
+                .ToList()
+                .Select(to => new OfficialContainer {
+                    PlayerId = to.Official.PersonId,
+                    OfficialId = to.OfficialId,
+                    GamesUmpired = to.Official.Games.Count(g => g.TournamentId == tournamentId && g.Round < round),
+                    Name = to.Official.Person.Name,
+                    GamesScored = to.Official.ScoredGames.Count(g => g.TournamentId == tournamentId && g.Round < round),
+                    Proficiency = to.Official.Proficiency,
+                }).OrderBy(o => o.GamesUmpired).ToList();
 
         while (courtOneGames.Count > courtTwoGames.Count) {
             courtTwoGames.Add(null);
@@ -203,11 +204,10 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
         List<List<OfficialContainer>> officialsByPreference;
         if (courtOne) {
-            // we are on court two
-            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key)
+            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderByDescending(k => k.Key)
                 .Select(to => to.ToList()).ToList();
         } else {
-            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key != 0).ThenBy(k => k.Key)
+            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key == 0).ThenBy(k => k.Key)
                 .Select(to => to.ToList()).ToList();
         }
 

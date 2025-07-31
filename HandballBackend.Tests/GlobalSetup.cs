@@ -5,6 +5,7 @@ namespace HandballBackend.Tests.Controllers;
 
 [TestClass]
 public class GlobalSetup {
+    public static object CONFIG_LOCK = new object();
     [AssemblyInitialize]
     public static void AssemblyInitialize(TestContext testContext) {
         Directory.SetCurrentDirectory("../../../");

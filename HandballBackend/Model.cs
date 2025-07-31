@@ -92,6 +92,11 @@ public class HandballContext : DbContext {
 
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseNpgsql(ConnectionString);
+    protected override void OnConfiguring(DbContextOptionsBuilder options) {
+        if (Config.USING_POSTGRES) {
+            options.UseNpgsql(ConnectionString);
+        } else {
+            options.UseSqlite(ConnectionString);
+        }
+    }
 }
