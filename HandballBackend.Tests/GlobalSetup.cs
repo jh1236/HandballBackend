@@ -10,7 +10,7 @@ public class GlobalSetup {
         Directory.SetCurrentDirectory("../../../");
 
         Config.USING_POSTGRES = false;
-        Config.SECRETS_FOLDER = @".\secrets\Config\setup";
+        Config.SECRETS_FOLDER = @".\Config\secrets\";
         Config.RESOURCES_FOLDER = @".\HandballBackend\build\resources\";
     }
 }

@@ -29,6 +29,8 @@ public class Official : IHasRelevant<Official> {
 
     public List<Game> Games { get; set; } = [];
 
+    public List<Game> ScoredGames { get; set; } = [];
+
     public List<TournamentOfficial> TournamentOfficials { get; set; } = [];
 
     public OfficialData ToSendableData(Tournament? tournament = null, bool includeStats = false) {

@@ -1,8 +1,11 @@
 using HandballBackend.EndpointHelpers;
+using System.Runtime.CompilerServices;
 using HandballBackend.Controllers;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
+
+[assembly: InternalsVisibleTo("HandballBackend.Tests")]
 
 namespace HandballBackend.FixtureGenerator;
 
@@ -50,7 +53,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
 
-    public async Task AddCourts(int rounds = -1) {
+    internal async Task AddCourts(int rounds = -1) {
         var db = new HandballContext();
         // Get the highest round number
 
@@ -109,21 +112,41 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         public required int GameId;
         public required int CourtId;
         public required List<int> PlayerIds;
-        public int? OfficialId;
-        public int? ScorerId;
+        public OfficialContainer? Official;
+        public OfficialContainer? Scorer;
+    }
+
+    internal class OfficialContainer {
+        public string Name;
+        public int PlayerId;
+        public int OfficialId;
+        public int GamesUmpired;
+        public int GamesScored;
+        public int Proficiency;
     }
 
     private async Task AddUmpires() {
         var db = new HandballContext();
         var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started && !g.IsBye)
             .IncludeRelevant().ToListAsync();
+        var round = games.Max(g => g.Round);
         var courtOneGames = games.Where(g => g.Court == 0).ToList();
         var courtTwoGames = games.Where(g => g.Court == 1).Cast<Game?>().ToList();
-        var officials = (await db.TournamentOfficials.Where(to => to.TournamentId == tournamentId)
-                .Include(to => to.Official).GroupBy(to => to.Official.Proficiency)
-                .OrderBy(g => g.Key).ToListAsync())
-            .Select(g => g.Select(to => to.Official.Id).ToList())
-            .ToList();
+        var officials =
+            (await db.TournamentOfficials
+                .Where(to => to.TournamentId == tournamentId)
+                .Include(to => to.Official.Person)
+                .Include(to => to.Official.Games.Where(g => g.TournamentId == tournamentId && g.Round < round))
+                .Include(to => to.Official.ScoredGames.Where(g => g.TournamentId == tournamentId && g.Round < round))
+                .ToListAsync())
+            .Select(to => new OfficialContainer {
+                PlayerId = to.Official.PersonId,
+                OfficialId = to.OfficialId,
+                GamesUmpired = to.Official.Games.Count,
+                Name = to.Official.Person.Name,
+                GamesScored = to.Official.ScoredGames.Count,
+                Proficiency = to.Official.Proficiency,
+            }).OrderBy(o => o.GamesUmpired).ToList();
 
         while (courtOneGames.Count > courtTwoGames.Count) {
             courtTwoGames.Add(null);
@@ -147,39 +170,102 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         }
 
         var solutionArray = solution.ToArray();
-        TrySolution(solutionArray, 0, true, officials);
+        if (!TrySolution(solutionArray, officials)) {
+            //the solution found no possible result
+            TrySolution(solutionArray, officials, 0, true, false, true);
+        }
     }
 
-    internal bool TrySolution((UmpiringSolution, UmpiringSolution?)[] solutions, int index, bool courtOne,
-        List<List<int>> officialsByProficiency) {
+    internal static bool TrySolution((UmpiringSolution, UmpiringSolution?)[] solutions,
+        List<OfficialContainer> officials,
+        int index = 0,
+        bool courtOne = true,
+        bool scorer = false,
+        bool force = false) {
+        if (index >= solutions.Length) {
+            if (scorer) return true;
+            // we have reached the last game
+            if (!TrySolution(solutions, officials, 0, true, true)) {
+                return TrySolution(solutions, officials, 0, true, true, true);
+            }
+
+            return true;
+        }
+
         var (myGame, otherGame) = solutions[index];
         if (!courtOne) {
             (myGame, otherGame) = (otherGame, myGame);
         }
 
         if (myGame == null) {
-            return TrySolution(solutions, index + (courtOne ? 0 : 1), !courtOne, officialsByProficiency);
+            return TrySolution(solutions, officials, index + (courtOne ? 0 : 1), !courtOne, scorer);
         }
 
-        List<List<int>> officialsByPreference = [..officialsByProficiency];
-        if (!courtOne) {
+        List<List<OfficialContainer>> officialsByPreference;
+        if (courtOne) {
             // we are on court two
-            officialsByPreference.Reverse();
+            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key)
+                .Select(to => to.ToList()).ToList();
+        } else {
+            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key != 0).ThenBy(k => k.Key)
+                .Select(to => to.ToList()).ToList();
         }
 
-        foreach (var officials in officialsByPreference) {
-            foreach (var official in officials) {
-                if (myGame.PlayerIds.Contains(official)) continue;
-                if (otherGame?.PlayerIds.Contains(official) ?? false) continue;
-                if (otherGame?.OfficialId == official) continue;
+        foreach (var officialsList in officialsByPreference) {
+            foreach (var official in officialsList.OrderBy(o => scorer ? o.GamesScored : o.GamesUmpired)
+                         .ThenBy(o => scorer ? o.GamesUmpired : o.GamesScored)) {
+                if (myGame.PlayerIds.Contains(official.PlayerId)) continue;
+                if (otherGame?.PlayerIds.Contains(official.PlayerId) ?? false) continue;
+                if (otherGame?.Official == official) continue;
 
-                myGame.OfficialId = official;
-                var success = TrySolution(solutions, index + (courtOne ? 0 : 1), !courtOne, officialsByProficiency);
+                if (myGame.Official == official) continue;
+                if (otherGame?.Scorer == official) continue;
 
-                if (!success) {
-                    myGame.OfficialId = null;
+                if (scorer) {
+                    myGame.Scorer = official;
+                    official.GamesScored++;
+                } else {
+                    myGame.Official = official;
+                    official.GamesUmpired++;
+                }
+
+                var success = TrySolution(solutions,
+                    officials, index + (courtOne ? 0 : 1), !courtOne, scorer, force);
+
+                if (success) {
+                    return true;
+                }
+
+                if (scorer) {
+                    myGame.Scorer = null;
+                    official.GamesScored--;
+                } else {
+                    myGame.Official = null;
+                    official.GamesUmpired--;
                 }
             }
+        }
+
+        if (force) {
+            if (scorer) {
+                var official = myGame.Official!;
+
+                myGame.Scorer = official;
+                official.GamesScored++;
+            } else {
+                var official = new OfficialContainer() {
+                    GamesScored = 0,
+                    GamesUmpired = 0,
+                    Name = "Unfillable",
+                    OfficialId = -1,
+                    PlayerId = -1,
+                };
+
+                myGame.Official = official;
+            }
+
+            return TrySolution(solutions,
+                officials, index + (courtOne ? 0 : 1), !courtOne, scorer, force);
         }
 
         return false;
