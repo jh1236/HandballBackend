@@ -1,4 +1,6 @@
-﻿using HandballBackend.Database.Models;
+﻿using HandballBackend.Database;
+using HandballBackend.Database.Models;
+using Microsoft.EntityFrameworkCore;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
@@ -24,7 +26,7 @@ public static class TextHelper {
 
     public static async Task<bool> TextPeopleForGame(Game game) {
         var tasks = new List<Task<bool>>();
-        tasks.Add(Text(game.Official.Person,
+        tasks.Add(Text(game.Official!.Person,
             $"You are umpiring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}. https://squarers.club/games/{game.GameNumber}"
         ));
         if (game.ScorerId != null && game.ScorerId != game.OfficialId) {
@@ -36,7 +38,7 @@ public static class TextHelper {
         for (var j = 0; j < teams.Length; j++) {
             var team = teams[j];
             var oppTeam = teams[1 - j];
-            tasks.Add(Text(team.Captain,
+            tasks.Add(Text(team.Captain!,
                 $"Your game against {oppTeam.Name} is beginning soon on court {game.Court + 1}."));
         }
 
@@ -46,20 +48,19 @@ public static class TextHelper {
 
     public static async Task<bool> TextTournamentStaff(Game game) {
         var tasks = new List<Task<bool>>();
-        tasks.Add(Text(game.Official.Person,
-            $"You are umpiring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}. https://squarers.club/games/{game.GameNumber}"
-        ));
-        if (game.ScorerId != null && game.ScorerId != game.OfficialId) {
-            tasks.Add(Text(game.Official.Person,
-                $"You are scoring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}."));
-        }
+        var db = new HandballContext();
+        var tournamentOfficials =
+            await db.TournamentOfficials.Where(to => to.TournamentId == game.TournamentId).IncludeRelevant()
+                .ToListAsync();
 
-        var teams = new[] {game.TeamOne, game.TeamTwo};
-        for (var j = 0; j < teams.Length; j++) {
-            var team = teams[j];
-            var oppTeam = teams[1 - j];
-            tasks.Add(Text(team.Captain,
-                $"Your game against {oppTeam.Name} is beginning soon on court {game.Court + 1}."));
+        var tournamentStaff = tournamentOfficials.Where(to => to.Role >= OfficialRole.UmpireManager)
+            .Select(to => to.Official.Person!).ToList();
+
+
+        foreach (var tournamentDirector in tournamentStaff) {
+            tasks.Add(Text(tournamentDirector,
+                $"Game #{game.GameNumber} between {game.TeamOne.Name} and {game.TeamTwo.Name} has been marked for review. Status: {game.NoteableStatus}, Umpire: {game.Official?.Person.Name ?? "None"}, Scorer: {game.Scorer?.Person.Name ?? "None"}"
+            ));
         }
 
         await Task.WhenAll(tasks);

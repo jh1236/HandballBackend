@@ -5,9 +5,10 @@ namespace HandballBackend.EndpointHelpers;
 
 public static class EncryptionHelper {
     private static byte[] Key() {
-        return Convert.FromBase64String(File.ReadAllText(Config.SECRETS_FOLDER + "/PhoneNumberKey.txt"));
+        return Convert.FromBase64String(
+            File.ReadAllText(Config.SECRETS_FOLDER + "/PhoneNumberKey.txt")
+        );
     }
-
 
     public static string Encrypt(string plaintext) {
         using var aesAlg = Aes.Create();

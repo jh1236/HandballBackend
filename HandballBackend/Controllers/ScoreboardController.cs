@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
+using HandballBackend.ErrorTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -77,7 +78,7 @@ public class ScoreboardController : ControllerBase {
     [HttpGet]
     public async Task<IActionResult> GetScoreboardSocket(int gameId) {
         if (!HttpContext.WebSockets.IsWebSocketRequest) {
-            return BadRequest();
+            return BadRequest(new ActionNotAllowed("This is not a WebSocket request"));
         }
 
         using var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();

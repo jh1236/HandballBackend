@@ -7,7 +7,7 @@ namespace HandballBackend.Utils;
 
 public static partial class Utilities {
     public static Dictionary<string, dynamic?> WrapInDictionary(string key, dynamic? objectToWrap) {
-        return new Dictionary<string, dynamic?> {{key, objectToWrap}};
+        return new Dictionary<string, dynamic?> { { key, objectToWrap } };
     }
 
     public static int GetUnixSeconds() {
@@ -32,7 +32,11 @@ public static partial class Utilities {
         return rgx.Replace(str, "");
     }
 
-    public static bool TournamentOrElse(HandballContext db, string? searchable, out Tournament? tournament) {
+    public static bool TournamentOrElse(
+        HandballContext db,
+        string? searchable,
+        out Tournament? tournament
+    ) {
         if (searchable is null) {
             tournament = null;
             return true;
@@ -45,7 +49,6 @@ public static partial class Utilities {
     public static string SplitCamelCase(string input) {
         return SplitCamelCase().Replace(input, " $1").Trim();
     }
-
 
     [GeneratedRegex("([A-Z])", RegexOptions.Compiled)]
     private static partial Regex SplitCamelCase();

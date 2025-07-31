@@ -46,6 +46,9 @@ public class Person {
     [Column("phone_number", TypeName = "TEXT")]
     public string? PhoneNumber { get; set; }
 
+    [Column("availability")]
+    public int? Availability { get; set; }
+
     public IEnumerable<PlayerGameStats>? PlayerGameStats { get; set; }
 
     public List<GameEvent>? Events { get; set; }
@@ -54,13 +57,12 @@ public class Person {
 
     public string InitialLastName {
         get {
-            if (!Name.Contains(' ')) return Name;
+            if (!Name.Contains(' '))
+                return Name;
             return Name[0] + ". " + string.Join(" ", Name.Split(" ")[1..]);
         }
     }
 
-    [Column("availability")]
-    public int? Availability { get; set; }
 
     public double Elo(int? gameId = null, int? tournamentId = null) {
         if (gameId.HasValue) {
@@ -75,7 +77,8 @@ public class Person {
         }
 
         if (tournamentId.HasValue) {
-            var pgs = PlayerGameStats?.Where(pgs => pgs.TournamentId == tournamentId)
+            var pgs = PlayerGameStats
+                ?.Where(pgs => pgs.TournamentId == tournamentId)
                 .OrderByDescending(pgs => pgs.GameId)
                 .FirstOrDefault();
             if (pgs is not null) {
@@ -87,10 +90,7 @@ public class Person {
             }
         }
 
-
-        var player = PlayerGameStats?
-            .OrderByDescending(pgs => pgs.GameId)
-            .FirstOrDefault();
+        var player = PlayerGameStats?.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
         if (player is {EloDelta: not null}) {
             return (double) (player.EloDelta + player.InitialElo);
         }
@@ -98,8 +98,13 @@ public class Person {
         return player?.InitialElo ?? 1500.0;
     }
 
-    public PersonData ToSendableData(Tournament? tournament = null, bool generateStats = false, Team? team = null,
-        bool formatData = false, bool admin = false) {
+    public PersonData ToSendableData(
+        Tournament? tournament = null,
+        bool generateStats = false,
+        Team? team = null,
+        bool formatData = false,
+        bool admin = false
+    ) {
         return new PersonData(this, tournament, generateStats, team, formatData, admin);
     }
 }

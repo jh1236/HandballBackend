@@ -586,6 +586,7 @@ public static class GameManager {
 
         await db.SaveChangesAsync();
         if (game.Tournament.TextAlerts && markedForReview) {
+            _ = TextHelper.TextTournamentStaff(game);
         }
 
         var remainingGames =
@@ -596,6 +597,7 @@ public static class GameManager {
         }
 
         BroadcastUpdate(gameNumber);
+        await PostgresBackup.MakeBackup();
     }
 
     public static async Task<Game> CreateGame(int tournamentId, string?[]? playersTeamOne, string?[]? playersTeamTwo,
