@@ -19,6 +19,7 @@ builder.Services.AddControllers().AddJsonOptions(options => {
     options.JsonSerializerOptions.Converters.Add(new EnumConverter<OfficialRole>());
     options.JsonSerializerOptions.Converters.Add(new EnumConverter<GameEventType>());
 });
+builder.Services.AddDbContext<HandballContext>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpLogging(o => { });
