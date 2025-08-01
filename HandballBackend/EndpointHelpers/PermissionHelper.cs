@@ -57,12 +57,9 @@ public static class PermissionHelper {
     }
 
     public static bool IsUmpireManager(Game g) {
-        Console.WriteLine(g.TournamentId);
         var person = PersonByToken(GetToken());
-        Console.WriteLine(person?.Name ?? "Fuckin No one!!");
         if (person == null) return false;
         if (IsAdmin()) return true;
-        Console.WriteLine("Not An Admin!");
         return person.Official!.TournamentOfficials.Any(to =>
             to.TournamentId == g.TournamentId &&
             to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
