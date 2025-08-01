@@ -1,4 +1,4 @@
-﻿using HandballBackend.EndpointHelpers;
+using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;
 using Microsoft.EntityFrameworkCore;
 

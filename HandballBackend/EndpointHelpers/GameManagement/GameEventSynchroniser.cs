@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -239,7 +239,7 @@ internal static class GameEventSynchroniser {
         }
 
 
-        end:
+    end:
         if (isFirstTeam) {
             game.TeamOneScore += 1;
         } else {
