@@ -1,4 +1,4 @@
-﻿namespace HandballBackend.Database;
+namespace HandballBackend.Database;
 
 public static class IncludeExtensions {
     public static IQueryable<T> IncludeRelevant<T>(this IQueryable<T> thiz)

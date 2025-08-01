@@ -1,4 +1,4 @@
-﻿namespace HandballBackend.Arguments;
+namespace HandballBackend.Arguments;
 
 public static class ArgsHandler {
     public static AbstractArgumentHandler[] Handlers = [

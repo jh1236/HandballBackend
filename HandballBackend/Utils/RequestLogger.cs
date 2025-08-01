@@ -1,4 +1,4 @@
-﻿namespace HandballBackend.Utils;
+namespace HandballBackend.Utils;
 
 public class RequestLogger {
     private readonly RequestDelegate _next;

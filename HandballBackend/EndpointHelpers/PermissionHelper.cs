@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;

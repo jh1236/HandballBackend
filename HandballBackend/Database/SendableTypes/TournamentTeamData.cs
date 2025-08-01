@@ -1,4 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
+// ReSharper disable InconsistentNaming
 // Disabled as these are sent to the frontend; we don't care too much about the cs naming conventions
 
 using System.Drawing;

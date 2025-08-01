@@ -23,9 +23,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpLogging(o => { });
 builder.Services.AddAuthentication(options => {
-        options.DefaultAuthenticateScheme = "TokenAuthentication";
-        options.DefaultChallengeScheme = "TokenAuthentication";
-    })
+    options.DefaultAuthenticateScheme = "TokenAuthentication";
+    options.DefaultChallengeScheme = "TokenAuthentication";
+})
     .AddScheme<AuthenticationSchemeOptions, TokenAuthenticator>(
         "TokenAuthentication", null);
 builder.Services.AddAuthorization(Policies.RegisterPolicies);

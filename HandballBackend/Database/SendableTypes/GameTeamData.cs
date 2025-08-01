@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database.Models;
+using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;

@@ -1,4 +1,4 @@
-﻿namespace HandballBackend.ErrorTypes;
+namespace HandballBackend.ErrorTypes;
 
 public class MustProvideArgument(params string[] argumentName)
     : ErrorType(nameof(MustProvideArgument),

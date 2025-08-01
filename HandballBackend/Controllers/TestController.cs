@@ -1,4 +1,4 @@
-﻿using HandballBackend.Authentication;
+using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

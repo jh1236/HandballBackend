@@ -1,4 +1,4 @@
-﻿namespace HandballBackend.Arguments;
+namespace HandballBackend.Arguments;
 
 public class LoggingArgHandler()
     : AbstractArgumentHandler("l", "logRequest", "Logs Requests that the server receives.") {
