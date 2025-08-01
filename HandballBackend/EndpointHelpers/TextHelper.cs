@@ -1,4 +1,4 @@
-using HandballBackend.Database;
+﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using Twilio;
@@ -34,7 +34,7 @@ public static class TextHelper {
                 $"You are scoring the game between {game.TeamOne.Name} and {game.TeamTwo.Name} on court {game.Court + 1}."));
         }
 
-        var teams = new[] { game.TeamOne, game.TeamTwo };
+        var teams = new[] {game.TeamOne, game.TeamTwo};
         for (var j = 0; j < teams.Length; j++) {
             var team = teams[j];
             var oppTeam = teams[1 - j];

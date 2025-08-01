@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
@@ -91,7 +91,7 @@ public class Person {
         }
 
         var player = PlayerGameStats?.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
-        if (player is { EloDelta: not null }) {
+        if (player is {EloDelta: not null}) {
             return (double) (player.EloDelta + player.InitialElo);
         }
 

@@ -1,4 +1,4 @@
-using HandballBackend.Database;
+﻿using HandballBackend.Database;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;

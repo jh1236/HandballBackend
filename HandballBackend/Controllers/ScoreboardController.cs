@@ -1,4 +1,4 @@
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using HandballBackend.Database;
@@ -49,7 +49,7 @@ public class ScoreboardController : ControllerBase {
     }
 
     private static async Task SocketSendEvent(WebSocket socket, GameEvent e) {
-        await SendAsync(socket, new { type = "event", Event = e.ToSendableData() });
+        await SendAsync(socket, new {type = "event", Event = e.ToSendableData()});
     }
 
     private static async Task SocketSendUpdate(WebSocket socket, int gameId) {
@@ -60,7 +60,7 @@ public class ScoreboardController : ControllerBase {
             .Include(g => g.Players)
             .ThenInclude(pgs => pgs.Player).Single(g => g.GameNumber == gameId);
         await SendAsync(socket,
-            new { type = "update", game = game.ToSendableData(true, true, formatData: true) });
+            new {type = "update", game = game.ToSendableData(true, true, formatData: true)});
     }
 
     public static async Task SendGame(int gameId) {

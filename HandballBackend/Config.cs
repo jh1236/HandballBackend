@@ -1,4 +1,4 @@
-namespace HandballBackend;
+﻿namespace HandballBackend;
 
 public static class Config {
     public static string BACKUP_FOLDER = "./backup";

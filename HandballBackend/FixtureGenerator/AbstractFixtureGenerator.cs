@@ -1,4 +1,4 @@
-using HandballBackend.EndpointHelpers;
+﻿using HandballBackend.EndpointHelpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.FixtureGenerator;

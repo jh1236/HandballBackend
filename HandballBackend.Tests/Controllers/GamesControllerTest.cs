@@ -1,4 +1,4 @@
-using HandballBackend.Controllers;
+﻿using HandballBackend.Controllers;
 using JetBrains.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

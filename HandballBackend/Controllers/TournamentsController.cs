@@ -1,4 +1,4 @@
-using HandballBackend.Authentication;
+﻿using HandballBackend.Authentication;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;

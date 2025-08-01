@@ -1,4 +1,4 @@
-using HandballBackend.Database;
+﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers.GameManagement;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +36,7 @@ public class Pooled : AbstractFixtureGenerator {
     public override async Task<bool> EndOfRound() {
         var db = new HandballContext();
         var tournament = (await db.Tournaments.FindAsync(_tournamentId))!;
-        var tournamentTeams = await db.TournamentTeams
+        var tournamentTeams =await db.TournamentTeams
             .Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
             .ToListAsync();

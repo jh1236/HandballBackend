@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Security.Claims;
 using HandballBackend.Controllers;
 using HandballBackend.Database.Models;
@@ -104,7 +104,7 @@ public class PlayersControllerTest {
     [TestMethod]
     public void TestGetOnePlayerBadTournamentName() {
         var controller = new PlayersController();
-        var response = controller.GetOnePlayer("foo_bar", tournamentSearchable: "fake_tournament").Result.Result;
+        var response = controller.GetOnePlayer("foo_bar", tournamentSearchable:"fake_tournament").Result.Result;
         var actual = response as NotFoundObjectResult;
         Assert.IsNotNull(actual);
         Assert.IsInstanceOfType<InvalidTournament>(actual.Value);

@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Text.Json.Serialization;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;

@@ -1,4 +1,4 @@
-using System.Web.WebPages;
+﻿using System.Web.WebPages;
 using HandballBackend.EndpointHelpers;
 
 namespace HandballBackend.Arguments;
@@ -11,7 +11,9 @@ public class GitArgHandler() : AbstractArgumentHandler("u", "update", "Automatic
             if (args[index] == "force") {
                 force = true;
                 index++;
-            } else if (args[index].IsInt()) {
+            }
+
+            else if (args[index].IsInt()) {
                 frequency = int.Parse(args[index]);
             }
         }

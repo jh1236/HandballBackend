@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using Microsoft.AspNetCore.Mvc;

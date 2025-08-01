@@ -1,4 +1,4 @@
-namespace HandballBackend.EndpointHelpers;
+﻿namespace HandballBackend.EndpointHelpers;
 
 public static class GitHelper {
     private static Timer _timer;

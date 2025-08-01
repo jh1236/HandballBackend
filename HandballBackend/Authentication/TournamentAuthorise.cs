@@ -1,4 +1,4 @@
-using HandballBackend;
+﻿using HandballBackend;
 using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;

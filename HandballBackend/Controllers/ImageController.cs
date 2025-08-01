@@ -1,4 +1,4 @@
-using HandballBackend.Authentication;
+﻿using HandballBackend.Authentication;
 using HandballBackend.Database;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
@@ -108,7 +108,7 @@ public class ImageController : ControllerBase {
 
         // Save the changes (duh.)
         db.SaveChanges();
-        return Ok(new UploadTeamImageResponse { Team = team.ToSendableData() });
+        return Ok(new UploadTeamImageResponse {Team = team.ToSendableData()});
     }
 
     public class UploadTournamentImageResponse {
@@ -137,6 +137,6 @@ public class ImageController : ControllerBase {
 
         // Save the changes (duh.)
         db.SaveChanges();
-        return Ok(new UploadTournamentImageResponse { Tournament = tournament.ToSendableData() });
+        return Ok(new UploadTournamentImageResponse {Tournament = tournament.ToSendableData()});
     }
 }

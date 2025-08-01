@@ -1,4 +1,4 @@
-using HandballBackend.Database;
+﻿using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
@@ -51,7 +51,7 @@ public class GamesController() : ControllerBase {
             .ThenInclude(pgs => pgs.Player)
             .FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
-            return NotFound(new DoesNotExist("Game", gameNumber.ToString()));
+            return NotFound(new DoesNotExist("Game",  gameNumber.ToString()));
         }
 
         var cards = db.GameEvents.Where(gE =>
