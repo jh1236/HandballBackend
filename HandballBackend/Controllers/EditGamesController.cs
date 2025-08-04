@@ -318,7 +318,6 @@ public class EditGamesController : ControllerBase {
     }
 
     [HttpPost("alert")]
-    [TournamentAuthorize(PermissionType.UmpireManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult AlertGame([FromBody] AlertRequest alertRequest) {
         if (!PermissionHelper.IsUmpireManager(
@@ -338,7 +337,6 @@ public class EditGamesController : ControllerBase {
 
     [HttpPost("resolve")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<IActionResult> ResolveGame([FromBody] ResolveRequest resolveRequest) {
         if (!PermissionHelper.IsUmpireManager(
                 new HandballContext().Games.First(g => g.GameNumber == resolveRequest.Id))) {

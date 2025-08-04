@@ -1,6 +1,5 @@
 using HandballBackend;
-using HandballBackend.Database;
-using HandballBackend.Database.Models;
+using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ public class TournamentAuthorizeAttribute : Attribute, IAuthorizationFilter {
 
     public void OnAuthorization(AuthorizationFilterContext context) {
         var db = new HandballContext();
-        var token = PermissionHelper.GetToken();
+        var token = context.HttpContext.User.Claims.First(c => c.Type == CustomClaimTypes.Token).Value;
         var person = PermissionHelper.PersonByToken(token);
 
         if (person is null) {
