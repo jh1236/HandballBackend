@@ -30,7 +30,7 @@ public class TestController : ControllerBase {
     public ActionResult UpdateFromGit() {
         _ = Task.Run(async () => {
             await Task.Delay(200);
-            GitHelper.CheckForUpdates(true);
+            ServerManagmentHelper.UpdateServer();
         });
         return Ok();
     }
