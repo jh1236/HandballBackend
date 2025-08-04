@@ -1,4 +1,4 @@
-﻿using System.Web.WebPages;
+using System.Web.WebPages;
 using HandballBackend.EndpointHelpers;
 
 namespace HandballBackend.Arguments;
