@@ -28,7 +28,7 @@ public class TestController : ControllerBase {
     [HttpPost("Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> UpdateFromGit() {
-        GitHelper.CheckForUpdates(true);
+        ServerManagmentHelper.UpdateServer();
         return Ok();
     }
 }

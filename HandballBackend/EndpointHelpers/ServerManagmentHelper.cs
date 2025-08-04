@@ -1,17 +1,28 @@
 namespace HandballBackend.EndpointHelpers;
 
-public static class GitHelper {
+public static class ServerManagmentHelper {
     private static Timer _timer;
 
-    public static void CheckForUpdates(bool force) {
+    public static void CheckForUpdates() {
         RunGitCommand("fetch --all");
         var localHash = RunGitCommand("rev-parse master");
         var newHash = RunGitCommand("rev-parse origin/master");
 
-        if (localHash == newHash && !force) return;
+        if (localHash == newHash) return;
         Console.WriteLine("Updates on master found; restarting ");
-        System.Diagnostics.Process.Start(".\\download-latest.cmd");
-        Environment.Exit(0);
+        UpdateServer();
+    }
+
+    public static void RestartServer() {
+        Environment.Exit(1);
+    }
+
+    public static void RebuildServer() {
+        Environment.Exit(2);
+    }
+
+    public static void UpdateServer() {
+        Environment.Exit(3);
     }
 
     private static string RunGitCommand(string arguments) {
@@ -32,8 +43,7 @@ public static class GitHelper {
         return output.Trim();
     }
 
-    public static void StartCheckingForUpdates(bool force, int frequency = 60 * 60) {
-        CheckForUpdates(force);
-        _timer = new Timer(_ => CheckForUpdates(false), null, TimeSpan.Zero, TimeSpan.FromSeconds(frequency));
+    public static void StartCheckingForUpdates(int frequency = 60 * 60) {
+        _timer = new Timer(_ => CheckForUpdates(), null, TimeSpan.Zero, TimeSpan.FromSeconds(frequency));
     }
 }
