@@ -219,6 +219,7 @@ public static class GameManager {
 
         var e = SetUpGameEvent(game, GameEventType.Merit, firstTeam, player, notes: meritReason);
         await db.AddAsync(e);
+        GameEventSynchroniser.SyncMerit(game, e);
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, e);
     }
@@ -230,11 +231,11 @@ public static class GameManager {
         if (!game.Started) throw new InvalidOperationException("The game has not started");
         if (game.Ended) throw new InvalidOperationException("The game has ended");
 
-
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable);
 
         var e = SetUpGameEvent(game, GameEventType.Merit, firstTeam, player.PlayerId, notes: meritReason);
         await db.AddAsync(e);
+        GameEventSynchroniser.SyncMerit(game, e);
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, e);
     }

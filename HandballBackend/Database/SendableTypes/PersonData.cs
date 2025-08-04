@@ -76,7 +76,8 @@ public class PersonData {
             ["Max Ace Streak"] = 0.0,
             ["Serve Return Rate"] = 0.0,
             ["Votes per 100 Games"] = 0.0,
-            ["Average Rating"] = 0.0
+            ["Average Rating"] = 0.0,
+            ["Merits"] = 0.0
         };
         var teamPoints = 0;
         var servedPointsWon = 0;
@@ -120,6 +121,7 @@ public class PersonData {
                 ratedGames++;
             }
 
+            Stats["Merits"] += pgs.Merits;
             Stats["Rounds on Court"] += pgs.RoundsOnCourt;
             Stats["Rounds Carded"] += pgs.RoundsCarded;
             Stats["Cards"] += pgs.GreenCards + pgs.YellowCards + pgs.RedCards;

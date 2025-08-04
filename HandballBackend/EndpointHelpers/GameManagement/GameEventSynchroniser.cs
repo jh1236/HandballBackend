@@ -58,6 +58,9 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Abandon:
                     SyncAbandon(game, gameEvent);
                     break;
+                case GameEventType.Merit:
+                    SyncMerit(game, gameEvent);
+                    break;
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
@@ -124,6 +127,10 @@ internal static class GameEventSynchroniser {
         game.Notes = gameEvent.Notes;
     }
 
+    public static void SyncMerit(Game game, GameEvent gameEvent) {
+        var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
+        player.Merits++;
+    }
     public static void SyncCard(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
         switch (gameEvent.EventType) {
