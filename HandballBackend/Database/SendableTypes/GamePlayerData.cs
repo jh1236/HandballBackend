@@ -17,7 +17,8 @@ public class GamePlayerData : PersonData {
         bool includeStats = false,
         bool formatData = false
     )
-        : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) { }
+        : this(game.Players.First(p => p.PlayerId == player.Id), includeStats, formatData) {
+    }
 
     public GamePlayerData(
         PlayerGameStats pgs,
@@ -35,7 +36,8 @@ public class GamePlayerData : PersonData {
         PrevCards = isAdmin
             ? pgs.Player.Events?.Where(gE =>
                     gE.TournamentId == pgs.TournamentId && gE.IsCard && gE.GameId < pgs.GameId
-                )
+                ).OrderBy(gE => gE.GameId)
+                .ThenBy(gE => gE.Id)
                 .Select(gE => gE.ToSendableData())
                 .ToList() ?? []
             : [];

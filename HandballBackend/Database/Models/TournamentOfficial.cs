@@ -77,6 +77,7 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
         return query
             .Include(to => to.Tournament)
             .Include(to => to.Official.Person)
-            .Include(to => to.Official.TournamentOfficials);
+            .Include(to =>
+                to.Official.TournamentOfficials.OrderBy(to1 => to1.TournamentId == 1).ThenBy(to1 => to1.TournamentId));
     }
 }
