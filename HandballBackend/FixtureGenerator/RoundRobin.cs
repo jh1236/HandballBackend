@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database;
+using HandballBackend.Database;
 using HandballBackend.EndpointHelpers.GameManagement;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +34,7 @@ public class RoundRobin : AbstractFixtureGenerator {
             teams.RemoveAt(teams.Count - 1);
         }
 
-        
+
         for (var i = 0; i < teams.Count / 2; i++) {
             var teamOne = teams[i];
             var teamTwo = teams[teams.Count - i - 1];

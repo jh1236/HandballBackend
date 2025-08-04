@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using HandballBackend.Controllers;
 using HandballBackend.Database.Models;
 using HandballBackend.ErrorTypes;

@@ -1,4 +1,4 @@
-﻿using HandballBackend.Utils;
+using HandballBackend.Utils;
 using HtmlAgilityPack;
 using ImageMagick;
 using ImageMagick.Drawing;
