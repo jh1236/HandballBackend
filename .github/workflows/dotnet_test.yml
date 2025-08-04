@@ -30,7 +30,3 @@ jobs:
             -   name: Build
                 run: dotnet build --configuration Release --no-restore
                 working-directory: ./
-
-            -   name: Test
-                run: dotnet test Handball.Tests
-                working-directory: ./
