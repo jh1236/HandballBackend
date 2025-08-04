@@ -84,7 +84,8 @@ public class EditGamesController : ControllerBase {
             return Forbid();
         }
 
-        await GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne, startRequest.TeamTwo,
+        await GameManager.StartGame(startRequest.Id, startRequest.SwapService, startRequest.TeamOne,
+            startRequest.TeamTwo,
             startRequest.TeamOneIga, startRequest.Official, startRequest.Scorer);
         return NoContent();
     }
@@ -111,7 +112,37 @@ public class EditGamesController : ControllerBase {
             await GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
                 scorePointRequest.LeftPlayer.Value, scorePointRequest.Method);
         } else {
-            return BadRequest(new MustProvideArgument(nameof(scorePointRequest.LeftPlayer), nameof(scorePointRequest.PlayerSearchable)));
+            return BadRequest(new MustProvideArgument(nameof(scorePointRequest.LeftPlayer),
+                nameof(scorePointRequest.PlayerSearchable)));
+        }
+
+        return NoContent();
+    }
+
+    public class MeritRequest {
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
+        public bool? LeftPlayer { get; set; }
+        public string? PlayerSearchable { get; set; }
+        public string? Reason { get; set; }
+    }
+
+    [HttpPost("merit")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> MeritForGame([FromBody] MeritRequest meritRequest) {
+        if (!PermissionHelper.IsUmpire(new HandballContext().Games.First(g => g.GameNumber == meritRequest.Id))) {
+            return Forbid();
+        }
+
+        if (!string.IsNullOrEmpty(meritRequest.PlayerSearchable)) {
+            await GameManager.Merit(meritRequest.Id, meritRequest.FirstTeam,
+                meritRequest.PlayerSearchable, meritRequest.Reason);
+        } else if (meritRequest.LeftPlayer.HasValue) {
+            await GameManager.Merit(meritRequest.Id, meritRequest.FirstTeam,
+                meritRequest.LeftPlayer.Value, meritRequest.Reason);
+        } else {
+            return BadRequest(new MustProvideArgument(nameof(meritRequest.LeftPlayer),
+                nameof(meritRequest.PlayerSearchable)));
         }
 
         return NoContent();
@@ -136,13 +167,16 @@ public class EditGamesController : ControllerBase {
         }
 
         if (!string.IsNullOrEmpty(cardRequest.PlayerSearchable)) {
-            await GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable, cardRequest.Color,
+            await GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.PlayerSearchable,
+                cardRequest.Color,
                 cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
         } else if (cardRequest.LeftPlayer.HasValue) {
-            await GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.LeftPlayer.Value, cardRequest.Color,
+            await GameManager.Card(cardRequest.Id, cardRequest.FirstTeam, cardRequest.LeftPlayer.Value,
+                cardRequest.Color,
                 cardRequest.Duration, cardRequest.Reason ?? "Not Provided");
         } else {
-            return BadRequest(new MustProvideArgument(nameof(cardRequest.LeftPlayer), nameof(cardRequest.PlayerSearchable)));
+            return BadRequest(new MustProvideArgument(nameof(cardRequest.LeftPlayer),
+                nameof(cardRequest.PlayerSearchable)));
         }
 
         return NoContent();
@@ -249,7 +283,8 @@ public class EditGamesController : ControllerBase {
             await GameManager.Substitute(substituteRequest.Id, substituteRequest.FirstTeam,
                 substituteRequest.LeftPlayer.Value);
         } else {
-            return BadRequest(new MustProvideArgument(nameof(substituteRequest.LeftPlayer), nameof(substituteRequest.PlayerSearchable)));
+            return BadRequest(new MustProvideArgument(nameof(substituteRequest.LeftPlayer),
+                nameof(substituteRequest.PlayerSearchable)));
         }
 
         return NoContent();
