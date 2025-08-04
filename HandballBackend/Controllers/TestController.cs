@@ -27,8 +27,11 @@ public class TestController : ControllerBase {
     [Authorize(Policy = Policies.IsAdmin)]
     [HttpPost("Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> UpdateFromGit() {
-        ServerManagmentHelper.UpdateServer();
+    public ActionResult UpdateFromGit() {
+        _ = Task.Run(async () => {
+            await Task.Delay(200);
+            ServerManagmentHelper.UpdateServer();
+        });
         return Ok();
     }
 }
