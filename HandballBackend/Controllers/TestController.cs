@@ -6,31 +6,42 @@ using Microsoft.AspNetCore.Mvc;
 namespace HandballBackend.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.IsAdmin)]
 [Route("/api/[controller]")]
 public class TestController : ControllerBase {
-    [HttpGet("Mirror")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Dictionary<string, string>> Mirror(
-        [FromQuery] Dictionary<string, string> input
-    ) {
-        return input;
-    }
-
-    [Authorize(Policy = Policies.IsAdmin)]
-    [HttpPost("Backup")]
+    [HttpPost("backup")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> CreateBackup() {
         await PostgresBackup.MakeTimestampedBackup("requested", force: true);
         return Ok();
     }
 
-    [Authorize(Policy = Policies.IsAdmin)]
-    [HttpPost("Update")]
+    [HttpPost("update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult UpdateFromGit() {
         _ = Task.Run(async () => {
             await Task.Delay(200);
             ServerManagmentHelper.UpdateServer();
+        });
+        return Ok();
+    }
+
+    [HttpPost("restart")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult RestartServer() {
+        _ = Task.Run(async () => {
+            await Task.Delay(200);
+            ServerManagmentHelper.RestartServer();
+        });
+        return Ok();
+    }
+
+    [HttpPost("rebuild")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult RebuildServer() {
+        _ = Task.Run(async () => {
+            await Task.Delay(200);
+            ServerManagmentHelper.RebuildServer();
         });
         return Ok();
     }
