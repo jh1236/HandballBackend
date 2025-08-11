@@ -1,4 +1,4 @@
-using HandballBackend.Authentication;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
@@ -11,7 +11,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlayersController() : ControllerBase {
+public class PlayersController : ControllerBase {
     public record GetPlayerResponse {
         public required PersonData Player { get; set; }
         public TournamentData? Tournament { get; set; }
@@ -172,8 +172,7 @@ public class PlayersController() : ControllerBase {
             foreach (var (k, v) in stats) {
                 if (v is string) continue;
                 if (v is double && (double.IsNaN(v) || double.IsInfinity(v))) continue;
-                if (!ret.ContainsKey(k)) {
-                    ret[k] = v;
+                if (ret.TryAdd(k, v)) {
                     counts[k] = 1;
                 } else {
                     ret[k] += v;
@@ -204,6 +203,38 @@ public class PlayersController() : ControllerBase {
 
         return new GetStatsResponse {
             Stats = ret,
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
+        };
+    }
+
+    public record GetMeritsResponse {
+        public List<GameEventData> Merits { get; set; }
+        public TournamentData? Tournament { get; set; }
+    }
+
+    [HttpGet("merits")]
+    public async Task<ActionResult<GetMeritsResponse>> GetMerits(
+        [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
+        [FromQuery] bool returnTournament = false) {
+        var db = new HandballContext();
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
+            return NotFound(new InvalidTournament(tournamentSearchable));
+        }
+
+        var merits = db.GameEvents.Where(gE => gE.EventType == GameEventType.Merit).IncludeRelevant();
+
+        if (tournament != null) {
+            merits = merits.Where(gE => gE.TournamentId == tournament.Id);
+        }
+
+        var meritsSendable = await merits.Select(gE => gE.ToSendableData(false)).ToListAsync();
+
+        if (returnTournament && tournament is null) {
+            return BadRequest(new TournamentNotProvidedForReturn());
+        }
+
+        return new GetMeritsResponse {
+            Merits = meritsSendable,
             Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
