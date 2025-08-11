@@ -48,6 +48,10 @@ public class PlayerGameStats {
     public int AcesScored { get; set; } = 0;
 
     [Required]
+    [Column("merits")]
+    public int Merits { get; set; } = 0;
+
+    [Required]
     [Column("faults")]
     public int Faults { get; set; } = 0;
 
@@ -167,5 +171,6 @@ public class PlayerGameStats {
         CardTime = 0;
         CardTimeRemaining = 0;
         BestPlayerVotes = 0;
+        Merits = 0;
     }
 }

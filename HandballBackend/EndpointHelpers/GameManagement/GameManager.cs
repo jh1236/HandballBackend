@@ -203,6 +203,43 @@ public static class GameManager {
         BroadcastUpdate(gameNumber);
     }
 
+    public static async Task Merit(int gameNumber, bool firstTeam, bool leftPlayer, string? meritReason) {
+        var db = new HandballContext();
+        var game = await db.Games.IncludeRelevant().Include(g => g.Events).FirstAsync(g => g.GameNumber == gameNumber);
+        if (!game.Started) throw new InvalidOperationException("The game has not started");
+        if (game.Ended) throw new InvalidOperationException("The game has ended");
+
+        int? player;
+        var gameEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
+        if (firstTeam) {
+            player = leftPlayer ? gameEvent.TeamOneLeftId : gameEvent.TeamOneRightId;
+        } else {
+            player = leftPlayer ? gameEvent.TeamTwoLeftId : gameEvent.TeamTwoRightId;
+        }
+
+        var e = SetUpGameEvent(game, GameEventType.Merit, firstTeam, player, notes: meritReason);
+        await db.AddAsync(e);
+        GameEventSynchroniser.SyncMerit(game, e);
+        await db.SaveChangesAsync();
+        BroadcastEvent(gameNumber, e);
+    }
+
+    public static async Task Merit(int gameNumber, bool firstTeam, string playerSearchable, string? meritReason) {
+        var db = new HandballContext();
+        var game = await db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events)
+            .FirstAsync();
+        if (!game.Started) throw new InvalidOperationException("The game has not started");
+        if (game.Ended) throw new InvalidOperationException("The game has ended");
+
+        var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable);
+
+        var e = SetUpGameEvent(game, GameEventType.Merit, firstTeam, player.PlayerId, notes: meritReason);
+        await db.AddAsync(e);
+        GameEventSynchroniser.SyncMerit(game, e);
+        await db.SaveChangesAsync();
+        BroadcastEvent(gameNumber, e);
+    }
+
     public static async Task ScorePoint(int gameNumber, bool firstTeam, bool leftPlayer, string? scoreMethod) {
         var db = new HandballContext();
         var game = await db.Games.IncludeRelevant().Include(g => g.Events).FirstAsync(g => g.GameNumber == gameNumber);
