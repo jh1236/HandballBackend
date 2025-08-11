@@ -83,9 +83,9 @@ public class PersonData {
         var servedPointsWon = 0;
         var ratedGames = 0;
         var tournamentGames = 0;
-        var tournaments = new HashSet<int>();
+        var playedTournaments = new HashSet<int>();
         foreach (var pgs in (person.PlayerGameStats ?? []).OrderBy(pgs => pgs.GameId)) {
-            tournaments.Add(pgs.TournamentId);
+            playedTournaments.Add(pgs.TournamentId);
             if (tournament != null && pgs.TournamentId != tournament.Id) continue;
             if (team != null && pgs.TeamId != team.Id) continue;
             if (pgs.RoundsCarded + pgs.RoundsOnCourt == 0) continue;
@@ -142,6 +142,8 @@ public class PersonData {
             }
         }
 
+        var tournaments = new HashSet<int>();
+        tournaments.UnionWith(playedTournaments);
         if (tournament == null && person.Official is not null) {
             var umpiredTournaments = person.Official!.TournamentOfficials.Where(to => to.Tournament.Started)
                 .Select(to => to.TournamentId).ToHashSet();
@@ -174,6 +176,8 @@ public class PersonData {
         Stats["Serve Return Rate"] = Stats["Serves Returned"] / Math.Max(Stats["Serves Received"], 1);
         if (tournament == null) {
             Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / tournamentGames;
+            Stats["Votes per Tournament"] = Stats["B&F Votes"] / playedTournaments.Count;
+            Stats["Merits per Tournament"] = Stats["Merits"] / playedTournaments.Count;
         } else {
             Stats["Votes per 100 Games"] = 100.0f * Stats["B&F Votes"] / gamesPlayed;
         }
