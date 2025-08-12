@@ -27,12 +27,17 @@ public class TournamentAuthorizeAttribute : Attribute, IAuthorizationFilter {
 
         var tournamentSearch = context.HttpContext.Request.Query["tournament"].FirstOrDefault();
         if (tournamentSearch is null) {
+
             if (!context.RouteData.Values.TryGetValue(_routeKey, out var rawSearchable) ||
                 rawSearchable is not string searchable) {
-                context.Result = new BadRequestObjectResult($"Missing or invalid route parameter '{_routeKey}'");
+                //this is not a tournament-specific request
+                if (person.PermissionLevel.ToInt() < _requiredRole.ToInt()) {
+                    context.Result = new ForbidResult();
+                }
                 return;
+            } else {
+                tournamentSearch = searchable;
             }
-            tournamentSearch = searchable;
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearch, out var tournament)) {
