@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -uo pipefail
 
 errors=0
 echo "Starting the server!!"
@@ -63,19 +63,19 @@ ERROR() {
 
 SUCCESS() {
     errors=0
-    clear
-    cd ./build || exit 1
-    ./HandballBackend -l false -u -b
-    EXIT_CODE=$?
-    cd ..
-
-    case $EXIT_CODE in
-        0) exit 0 ;;
-        1) echo "A server restart was requested!" && sleep 1 && SUCCESS ;;
-        2) echo "A server rebuild was requested!" && sleep 1 && BUILD ;;
-        3) echo "A server git update was requested!" && sleep 1 && START ;;
-        *) echo "Server exited with code $EXIT_CODE" && exit $EXIT_CODE ;;
-    esac
+    while true; do
+            clear
+            ./HandballBackend -l false -u -b
+            EXIT_CODE=$?
+    
+            case $EXIT_CODE in
+                0) echo "Server exited normally." ; exit 0 ;;
+                1) echo "A server restart was requested!" ; sleep 1 ;;
+                2) echo "A server rebuild was requested!" ; sleep 1 ; cd .. ; BUILD ; return ;;
+                3) echo "A server git update was requested!" ; sleep 1 ; cd .. ; START ; return ;;
+                *) echo "Server exited with code $EXIT_CODE" ; exit $EXIT_CODE ;;
+            esac
+        done
 }
 
 START
