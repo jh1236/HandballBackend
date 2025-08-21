@@ -28,11 +28,11 @@ BUILD() {
     fi
 
     if ! dotnet publish ./HandballBackend/HandballBackend.csproj -c Release \
-        --runtime win-x64 \
+        --runtime linux-x64 \
         --self-contained true \
         /p:PublishSingleFile=true \
         --framework net9.0 \
-        --output /g/Programming/c#/HandballBackend/build; then
+        --output ./build; then
         ERROR
         return
     fi
