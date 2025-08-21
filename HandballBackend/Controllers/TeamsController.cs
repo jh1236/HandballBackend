@@ -182,16 +182,7 @@ public class TeamsController : ControllerBase {
             }
         } else {
             //Not null captain removes bye team
-            var query = await db.Teams.IncludeRelevant()
-                .Include(t => t.PlayerGameStats)
-                .ThenInclude(pgs => pgs.Game)
-                .Where(t => t.Captain != null
-                            && t.Captain.SearchableName != "worstie"
-                            && (t.NonCaptain == null || t.NonCaptain.SearchableName != "worstie")
-                            && (t.Substitute == null || t.Substitute.SearchableName != "worstie"))
-                .Where(t => t.TournamentTeams.Any(tt => tt.TournamentId != 1)).ToArrayAsync();
-            ladder = LadderHelper.SortTeamsNoTournament(query.Select(t => t.ToSendableData(true, false, false, null))
-                .ToArray());
+            ladder = await LadderHelper.GetLadder(db);
             ladder = ladder.Where(t => t.Stats!["Games Played"] > 0).ToArray();
         }
 

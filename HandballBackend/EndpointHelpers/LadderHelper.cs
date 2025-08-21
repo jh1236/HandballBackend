@@ -24,6 +24,18 @@ public static class LadderHelper {
             poolTwo.Length > 0 ? poolTwo : null);
     }
 
+    public static async Task<TeamData[]> GetLadder(HandballContext db) {
+        var ladderTt = await db.TournamentTeams
+            // .Where(t => t.Team.TournamentTeams.Any(tt => tt.TournamentId != 1))
+            .Include(t => t.Team.Captain)
+            .Include(t => t.Team.NonCaptain)
+            .Include(t => t.Team.Substitute)
+            .Include(t => t.Team.PlayerGameStats)
+            .ThenInclude(pgs => pgs.Game).ToArrayAsync();
+        var ladder = SortTeamsNoTournament(ladderTt.Select(tt => tt.ToSendableData(true)).ToArray());
+        return ladder;
+    }
+
 
     public static TeamData[] SortTeams(TeamData[] teams) {
         return teams
