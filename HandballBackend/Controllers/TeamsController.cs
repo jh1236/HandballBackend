@@ -31,32 +31,29 @@ public class TeamsController : ControllerBase {
             return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
-        TeamData teamData;
+        TeamData? teamData;
         if (tournament == null) {
-            var team = await db.Teams
+            teamData = await db.Teams
                 .Where(t => t.SearchableName == searchable)
                 .IncludeRelevant()
                 .Include(t => t.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
+                .Select(t => t.ToSendableData(true, true, formatData, null))
                 .FirstOrDefaultAsync();
-            if (team is null) {
-                return NotFound(new DoesNotExist("Team", searchable));
-            }
-
-            teamData = team.ToSendableData(true, true, formatData);
         } else {
-            var team = await db.TournamentTeams
+            teamData = await db.TournamentTeams
                 .Where(t => t.Team.SearchableName == searchable && t.TournamentId == tournament.Id)
                 .IncludeRelevant()
                 .Include(t => t.Team.PlayerGameStats)
                 .ThenInclude(pgs => pgs.Game)
+                .Select(tt => tt.ToSendableData(true, true, formatData))
                 .FirstOrDefaultAsync();
-            if (team is null) {
-                return NotFound(new DoesNotExist("Team", searchable));
-            }
-
-            teamData = team.ToSendableData(true, true, formatData);
         }
+
+        if (teamData is null) {
+            return NotFound(new DoesNotExist("Team", searchable));
+        }
+
         if (returnTournament && tournament is null) {
             return BadRequest(new TournamentNotProvidedForReturn());
         }
@@ -104,9 +101,9 @@ public class TeamsController : ControllerBase {
             if (player != null) {
                 foreach (var p in player) {
                     query = query.Where(t =>
-                        t.Team.Captain != null && p == t.Team.Captain.SearchableName ||
-                        t.Team.NonCaptain != null && p == t.Team.NonCaptain.SearchableName ||
-                        t.Team.Substitute != null && p == t.Team.Substitute.SearchableName
+                        (t.Team.Captain != null && player.Contains(t.Team.Captain.SearchableName)) ||
+                        (t.Team.NonCaptain != null && player.Contains(t.Team.NonCaptain.SearchableName)) ||
+                        (t.Team.Substitute != null && player.Contains(t.Team.Substitute.SearchableName))
                     );
                 }
             }
@@ -218,6 +215,7 @@ public class TeamsController : ControllerBase {
                 }
             }
         }
+
         if (returnTournament && tournament is null) {
             return BadRequest(new TournamentNotProvidedForReturn());
         }
