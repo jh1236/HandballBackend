@@ -234,7 +234,7 @@ public class GamesController() : ControllerBase {
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
 
-        var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();
+        var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant().OrderBy(g => g.Round);
 
         query = query.OrderBy(g => g.Id);
 
