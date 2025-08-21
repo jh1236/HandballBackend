@@ -44,7 +44,7 @@ public class TeamsController : ControllerBase {
             teamData = await db.TournamentTeams
                 .Where(t => t.Team.SearchableName == searchable && t.TournamentId == tournament.Id)
                 .IncludeRelevant()
-                .Include(t => t.Team.PlayerGameStats)
+                .Include(t => t.Team.PlayerGameStats.Where(pgs => pgs.TournamentId == tournament.Id))
                 .ThenInclude(pgs => pgs.Game)
                 .Select(tt => tt.ToSendableData(true, true, formatData))
                 .FirstOrDefaultAsync();
@@ -93,7 +93,7 @@ public class TeamsController : ControllerBase {
                 .Include(t => t.Team.Substitute);
             if (includeStats) {
                 query = query
-                    .Include(t => t.Team.PlayerGameStats)
+                    .Include(t => t.Team.PlayerGameStats.Where(pgs => pgs.TournamentId == tournament.Id))
                     .ThenInclude(pgs => pgs.Game);
             }
 
