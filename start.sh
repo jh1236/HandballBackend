@@ -65,7 +65,7 @@ SUCCESS() {
     errors=0
     while true; do
             clear
-            ./HandballBackend -l false -u -b
+            ./build/HandballBackend -l false -u -b
             EXIT_CODE=$?
     
             case $EXIT_CODE in
