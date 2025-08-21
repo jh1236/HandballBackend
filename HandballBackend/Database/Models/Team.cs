@@ -94,10 +94,7 @@ public class Team : IHasRelevant<Team> {
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
         return query
             .Include(t => t.Captain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
             .Include(t => t.NonCaptain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
-            .Include(t => t.Substitute)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1));
+            .Include(t => t.Substitute);
     }
 }

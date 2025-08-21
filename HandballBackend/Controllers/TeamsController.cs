@@ -99,13 +99,11 @@ public class TeamsController : ControllerBase {
 
 
             if (player != null) {
-                foreach (var p in player) {
-                    query = query.Where(t =>
-                        (t.Team.Captain != null && player.Contains(t.Team.Captain.SearchableName)) ||
-                        (t.Team.NonCaptain != null && player.Contains(t.Team.NonCaptain.SearchableName)) ||
-                        (t.Team.Substitute != null && player.Contains(t.Team.Substitute.SearchableName))
-                    );
-                }
+                query = query.Where(t =>
+                    (t.Team.Captain != null && player.Contains(t.Team.Captain.SearchableName)) ||
+                    (t.Team.NonCaptain != null && player.Contains(t.Team.NonCaptain.SearchableName)) ||
+                    (t.Team.Substitute != null && player.Contains(t.Team.Substitute.SearchableName))
+                );
             }
 
             teamData = await query.OrderBy(t => EF.Functions.Like(t.Team.SearchableName, "solo_%"))

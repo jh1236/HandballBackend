@@ -60,10 +60,7 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
     public static IQueryable<TournamentTeam> GetRelevant(IQueryable<TournamentTeam> query) {
         return query
             .Include(t => t.Team.Captain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
             .Include(t => t.Team.NonCaptain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
-            .Include(t => t.Team.Substitute)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1));
+            .Include(t => t.Team.Substitute);
     }
 }
