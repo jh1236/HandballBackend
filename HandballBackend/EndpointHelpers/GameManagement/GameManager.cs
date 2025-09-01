@@ -603,11 +603,11 @@ public static class GameManager {
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         GameEventSynchroniser.SyncGameEnd(game, endEvent);
         if (!isRandomAbandonment && game is {
-                Ranked:
+            Ranked:
                 true,
-                IsFinal:
+            IsFinal:
                 false
-            }) {
+        }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
             var teamOneElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
@@ -646,7 +646,7 @@ public static class GameManager {
         var teams = new List<Team>();
         var people = await
             db.People.Where(p => allNames.Contains(p.Name)).ToListAsync();
-        foreach (var (players, teamName) in new[] {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
+        foreach (var (players, teamName) in new[] { (playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName) }) {
             Team team;
             if (players == null || players.Length == 0) {
                 if (teamName == null) {
@@ -710,7 +710,7 @@ public static class GameManager {
         var ranked = tournament.Ranked;
         var isBye = false;
         var tasks = new List<Task>();
-        foreach (var team in new[] {teamOne, teamTwo}) {
+        foreach (var team in new[] { teamOne, teamTwo }) {
             if (team.Id == 1) {
                 // this is the bye team
                 isBye = true;
@@ -795,7 +795,7 @@ public static class GameManager {
             .ToDictionaryAsync(pgs => pgs!.PlayerId);
 
         tasks.Clear();
-        foreach (var team in new[] {teamOne, teamTwo}) {
+        foreach (var team in new[] { teamOne, teamTwo }) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
             foreach (var p in teamPlayers.Where(p => p != null).Cast<Person>()) {
