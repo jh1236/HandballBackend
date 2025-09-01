@@ -36,7 +36,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         tournament.Finished = true;
         tournament.Notes = note;
         db.SaveChanges();
-        _ = PostgresBackup.MakeTimestampedBackup("Post Tournament Backup");
+        _ = Task.Run(() => PostgresBackup.MakeTimestampedBackup("Post Tournament Backup"));
     }
 
     public virtual void BeginTournament() {
@@ -114,7 +114,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             .Join(db.Games,
                 pgs => pgs.GameId,
                 g => g.Id,
-                (pgs, g) => new { pgs, g })
+                (pgs, g) => new {pgs, g})
             .Where(x => x.pgs.TournamentId == tournamentId && !x.g.IsBye)
             .Select(x => x.pgs)
             .ToListAsync();
@@ -147,11 +147,11 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             for (var i = 0; i < maxCount; i++) {
                 var game1 = i < courtOneGames.Count ? courtOneGames[i] : null;
                 var game2 = i < courtTwoGames.Count ? courtTwoGames[i] : null;
-                var games = new[] { game1, game2 }.Where(g => g != null).ToList();
+                var games = new[] {game1, game2}.Where(g => g != null).ToList();
 
                 // Assign umpires
                 foreach (var game in games) {
-                    if (game is not { OfficialId: null })
+                    if (game is not {OfficialId: null})
                         continue;
 
                     var officialsForCourt = game.Court == 0
@@ -190,10 +190,10 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             for (var i = 0; i < maxCount; i++) {
                 var game1 = i < courtOneGames.Count ? courtOneGames[i] : null;
                 var game2 = i < courtTwoGames.Count ? courtTwoGames[i] : null;
-                var games = new[] { game1, game2 }.Where(g => g != null).ToList();
+                var games = new[] {game1, game2}.Where(g => g != null).ToList();
 
                 foreach (var game in games) {
-                    if (game is not { ScorerId: null })
+                    if (game is not {ScorerId: null})
                         continue;
 
                     var scorerCandidates = officials

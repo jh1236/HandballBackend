@@ -63,8 +63,8 @@ public static class PostgresBackup {
 
     public static void PeriodicBackups(int backupTime) {
         //we run this to initialise the _rowCounts dict.
-        _ = MakeBackup();
-        _timer ??= new Timer(__ => _ = MakeTimestampedBackup(), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
+        _ = Task.Run(() => MakeBackup());
+        _timer ??= new Timer(_ => Task.Run(() => MakeBackup()), null, TimeSpan.Zero, TimeSpan.FromHours(backupTime));
     }
 
     private static async Task<Dictionary<string, long>> LoadLengthFromFile() {

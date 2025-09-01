@@ -44,6 +44,6 @@ public static class ServerManagmentHelper {
     }
 
     public static void StartCheckingForUpdates(int frequency = 60 * 60) {
-        _timer = new Timer(_ => CheckForUpdates(), null, TimeSpan.Zero, TimeSpan.FromSeconds(frequency));
+        _timer = new Timer(_ => Task.Run(() => CheckForUpdates()), null, TimeSpan.Zero, TimeSpan.FromSeconds(frequency));
     }
 }
