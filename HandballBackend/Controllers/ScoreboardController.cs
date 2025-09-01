@@ -65,7 +65,7 @@ public class ScoreboardController : ControllerBase {
 
     public static async Task SendGame(int gameId) {
         if (!Sockets.TryGetValue(gameId, out var sockets)) return;
-        var tasks = sockets.Select(ws => _ = SocketSendUpdate(ws, gameId)).ToList();
+        var tasks = sockets.Select(ws => SocketSendUpdate(ws, gameId)).ToList();
         await Task.WhenAll(tasks);
     }
 

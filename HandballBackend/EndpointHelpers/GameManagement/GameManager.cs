@@ -30,11 +30,11 @@ public static class GameManager {
 
 
     private static void BroadcastEvent(int gameId, GameEvent e) {
-        _ = ScoreboardController.SendGameUpdate(gameId, e);
+        _ = Task.Run(() => ScoreboardController.SendGameUpdate(gameId, e));
     }
 
     private static void BroadcastUpdate(int gameId) {
-        _ = ScoreboardController.SendGame(gameId);
+        _ = Task.Run(() => ScoreboardController.SendGame(gameId));
     }
 
     internal static GameEvent SetUpGameEvent(Game game, GameEventType type, bool? firstTeam, int? playerId,
@@ -623,7 +623,7 @@ public static class GameManager {
 
         await db.SaveChangesAsync();
         if (game.Tournament.TextAlerts && markedForReview) {
-            _ = TextHelper.TextTournamentStaff(game);
+            _ = Task.Run(() => TextHelper.TextTournamentStaff(game));
         }
 
         var remainingGames =
@@ -641,8 +641,11 @@ public static class GameManager {
         string? teamOneName, string? teamTwoName, bool blitzGame, int officialId = -1,
         int scorerId = -1, int round = -1, int court = 0, bool isFinal = false) {
         var db = new HandballContext();
+        var allNames = (playersTeamOne ?? []).Concat(playersTeamTwo ?? []).Where(n => n != null).Cast<string>()
+            .ToList();
         var teams = new List<Team>();
-        var people = await db.People.ToListAsync();
+        var people = await
+            db.People.Where(p => allNames.Contains(p.Name)).ToListAsync();
         foreach (var (players, teamName) in new[] { (playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName) }) {
             Team team;
             if (players == null || players.Length == 0) {
@@ -678,7 +681,7 @@ public static class GameManager {
                         Name = teamName,
                         SearchableName = Utilities.ToSearchable(teamName)
                     };
-                    _ = ImageHelper.SetGoogleImageForTeam(team.Id);
+                    _ = Task.Run(() => ImageHelper.SetGoogleImageForTeam(team.Id));
                     await db.Teams.AddAsync(team);
                 } else {
                     team = maybeTeam;
