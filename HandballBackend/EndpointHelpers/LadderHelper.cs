@@ -26,7 +26,7 @@ public static class LadderHelper {
 
     public static async Task<TeamData[]> GetLadder(HandballContext db) {
         var ladderTt = await db.Teams
-            // .Where(t => t.Team.TournamentTeams.Any(tt => tt.TournamentId != 1))
+            .Where(t => t.TournamentTeams.Any(tt => tt.TournamentId != 1))
             .Include(t => t.Captain)
             .Include(t => t.NonCaptain)
             .Include(t => t.Substitute)
