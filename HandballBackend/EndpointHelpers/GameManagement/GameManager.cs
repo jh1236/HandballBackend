@@ -662,13 +662,17 @@ public static class GameManager {
                     playerIds.Add(null);
                 }
 
-                var maybeTeams = await db.Teams.IncludeRelevant().Where(t =>
+                var maybeTeam = await db.Teams.IncludeRelevant().FirstOrDefaultAsync(t =>
                     // Both players must be in one of the roles
-                    playerIds.Contains(t.CaptainId) &&
-                    playerIds.Contains(t.NonCaptainId) &&
-                    playerIds.Contains(t.SubstituteId)
-                ).ToListAsync();
-                var maybeTeam = maybeTeams.FirstOrDefault();
+                    (playerIds.Contains(t.CaptainId ?? null) &&
+                     playerIds.Contains(t.NonCaptainId ?? null) &&
+                     playerIds.Contains(t.SubstituteId ?? null)) &&
+
+                    // Count of non-null player references should be exactly 2
+                    ((t.CaptainId.HasValue ? 1 : 0) +
+                        (t.NonCaptainId.HasValue ? 1 : 0) +
+                        (t.SubstituteId.HasValue ? 1 : 0) == playerIds.Count(a => a.HasValue))
+                );
                 if (maybeTeam == null) {
                     team = new Team {
                         CaptainId = playerIds![0],
@@ -789,7 +793,7 @@ public static class GameManager {
             .GroupBy(pgs => pgs.PlayerId)
             .Select(g => g.OrderByDescending(x => x.GameId).FirstOrDefault())
             .ToDictionaryAsync(pgs => pgs!.PlayerId);
-        
+
         tasks.Clear();
         foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) continue;
