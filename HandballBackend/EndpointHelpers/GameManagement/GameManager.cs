@@ -703,8 +703,9 @@ public static class GameManager {
         var db = new HandballContext();
         var oneId = teamOneId;
         var twoId = teamTwoId;
-        var teamOne = await db.Teams.Where(t => t.Id == oneId).IncludeRelevant().SingleAsync();
-        var teamTwo = await db.Teams.Where(t => t.Id == twoId).IncludeRelevant().SingleAsync();
+        var teams = await db.Teams.Where(t => t.Id == oneId || t.Id == twoId).IncludeRelevant().ToListAsync();
+        var teamOne = teams.First(t => t.Id == oneId);
+        var teamTwo = teams.First(t => t.Id == twoId);
         var tournament = (await db.Tournaments.FindAsync(tournamentId))!;
         var ranked = tournament.Ranked;
         var isBye = false;
@@ -781,27 +782,24 @@ public static class GameManager {
         await db.AddAsync(game);
         await db.SaveChangesAsync();
         game = await db.Games.Where(g => g.Id == game.Id)
-            .Include(g =>
-                g.TeamOne.Captain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
-            .Include(g =>
-                g.TeamOne.NonCaptain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
-            .Include(g =>
-                g.TeamOne.Substitute.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
-            .Include(g =>
-                g.TeamTwo.Captain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
-            .Include(g =>
-                g.TeamTwo.NonCaptain.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
-            .Include(g =>
-                g.TeamTwo.Substitute.PlayerGameStats.OrderByDescending(pgs => pgs.GameId).Take(1))
             .IncludeRelevant()
             .SingleAsync(); //used to pull extra gamey data
+        var playerIds = new[] {
+            teamOne.CaptainId, teamOne.NonCaptainId, teamOne.SubstituteId, teamTwo.CaptainId, teamTwo.NonCaptainId,
+            teamTwo.SubstituteId
+        };
+        var prevGames = await db.PlayerGameStats
+            .Where(pgs => playerIds.Contains(pgs.PlayerId))
+            .GroupBy(pgs => pgs.PlayerId)
+            .Select(g => g.OrderByDescending(x => x.GameId).FirstOrDefault())
+            .ToDictionaryAsync(pgs => pgs!.PlayerId);
 
         tasks.Clear();
         foreach (var team in new[] { teamOne, teamTwo }) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
-            foreach (var p in teamPlayers.Where(p => p != null)) {
-                var prevGame = p!.PlayerGameStats!.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
+            foreach (var p in teamPlayers.Where(p => p != null).Cast<Person>()) {
+                prevGames.TryGetValue(p.Id, out var prevGame);
                 var carryCardTimes = game.TournamentId >= 7 && prevGame?.TournamentId == game.TournamentId;
                 tasks.Add(db.AddAsync(new PlayerGameStats {
                     GameId = game.Id,
