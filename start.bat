@@ -35,6 +35,8 @@ goto :START
 :SUCCESS
 SET /A errors=0
 cls
+mkdir .\build\resources
+xcopy .\HandballBackend\resources .\build\resources
 cd .\build
 .\HandballBackend.exe -l false -u -b
 SET /A EXIT_CODE=%ERRORLEVEL%
