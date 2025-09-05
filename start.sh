@@ -63,6 +63,7 @@ ERROR() {
 
 SUCCESS() {
     errors=0
+    cp -rf ./HandballBackend/resources ./build/resources
     cd ./build || exit 1
     while true; do
             clear
