@@ -24,7 +24,7 @@ public class GameEventData {
 
         Id = gameEvent.Id;
         EventType = gameEvent.EventType;
-        FirstTeam = gameEvent.TeamId == teamOneId;
+        FirstTeam = gameEvent.TeamId == null ? null : gameEvent.TeamId == teamOneId;
         Player = gameEvent.Player?.ToSendableData();
         Details = gameEvent.Details;
         Notes = gameEvent.Notes;
