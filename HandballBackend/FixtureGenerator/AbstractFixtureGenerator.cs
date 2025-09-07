@@ -45,11 +45,11 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         _ = Task.Run(() => PostgresBackup.MakeTimestampedBackup("Post Tournament Backup"));
     }
 
-    public virtual void BeginTournament() {
+    public virtual async Task BeginTournament() {
         var db = new HandballContext();
-        db.Tournaments.Find(tournamentId)!.Started = true;
-        EndOfRound();
-        db.SaveChanges();
+        (await db.Tournaments.FindAsync(tournamentId))!.Started = true;
+        await EndOfRound();
+        await db.SaveChangesAsync();
     }
 
 
@@ -122,7 +122,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         public int OfficialId;
         public int GamesUmpired;
         public int GamesScored;
-        public int Proficiency;
+        public int UmpireProficiency;
+        public int ScorerProficiency;
     }
 
     private async Task AddUmpires() {
@@ -146,7 +147,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                     GamesUmpired = to.Official.Games.Count(g => g.TournamentId == tournamentId && g.Round < round),
                     Name = to.Official.Person.Name,
                     GamesScored = to.Official.ScoredGames.Count(g => g.TournamentId == tournamentId && g.Round < round),
-                    Proficiency = to.Official.Proficiency,
+                    UmpireProficiency = to.UmpireProficiency,
+                    ScorerProficiency = to.ScorerProficiency
                 }).OrderBy(o => o.GamesUmpired).ToList();
 
         while (courtOneGames.Count > courtTwoGames.Count) {
@@ -202,13 +204,15 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             return TrySolution(solutions, officials, index + (courtOne ? 0 : 1), !courtOne, scorer);
         }
 
-        List<List<OfficialContainer>> officialsByPreference;
-        if (courtOne) {
-            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderByDescending(k => k.Key)
-                .Select(to => to.ToList()).ToList();
-        } else {
-            officialsByPreference = officials.GroupBy(to => to.Proficiency).OrderBy(k => k.Key == 0).ThenBy(k => k.Key)
-                .Select(to => to.ToList()).ToList();
+        var officialsByPreference = officials
+            .Where(to => (scorer ? to.ScorerProficiency : to.UmpireProficiency) != 0)
+            .GroupBy(to => scorer ? to.ScorerProficiency : to.UmpireProficiency)
+            .OrderByDescending(k => k.Key)
+            .Select(to => to.ToList())
+            .ToList();
+
+        if (courtOne && !scorer) {
+            officialsByPreference.Reverse();
         }
 
         foreach (var officialsList in officialsByPreference) {

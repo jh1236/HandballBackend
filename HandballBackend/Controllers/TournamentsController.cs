@@ -295,6 +295,8 @@ public class TournamentsController : ControllerBase {
             TournamentId = tournament.Id,
             OfficialId = official.Id,
             Role = OfficialRole.Umpire,
+            UmpireProficiency = official.Proficiency,
+            ScorerProficiency = official.Proficiency,
         });
 
         await db.SaveChangesAsync();

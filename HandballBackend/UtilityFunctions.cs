@@ -1,4 +1,3 @@
-using System.Web.WebPages;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
@@ -280,7 +279,8 @@ internal static class UtilityFunctions {
                     GamesUmpired = to.Official.Games.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     Name = to.Official.Person.Name,
                     GamesScored = to.Official.ScoredGames.Count(g => g is {TournamentId: tournamentId, Round: < round}),
-                    Proficiency = to.Official.Proficiency,
+                    UmpireProficiency = to.UmpireProficiency,
+                    ScorerProficiency = to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
 
 
@@ -308,7 +308,7 @@ internal static class UtilityFunctions {
 
         var solutionArray = solution.ToArray();
         Console.WriteLine("All Umpires:");
-        foreach (var officialList in officials.GroupBy(o => o.Proficiency)) {
+        foreach (var officialList in officials.GroupBy(o => o.UmpireProficiency)) {
             Console.WriteLine($"Proficiency: {officialList.Key}");
             Console.WriteLine(
                 $"{string.Join("\n", officialList.Select(o => $"\t{o.Name} ({o.PlayerId}) : {o.GamesUmpired}, {o.GamesScored}"))}");
@@ -328,7 +328,7 @@ internal static class UtilityFunctions {
         Console.WriteLine("--------------------");
         Console.WriteLine("All Umpires:");
         Console.WriteLine("--------------------");
-        foreach (var officialList in officials.GroupBy(o => o.Proficiency)) {
+        foreach (var officialList in officials.GroupBy(o => o.UmpireProficiency)) {
             Console.WriteLine($"Proficiency: {officialList.Key}");
             Console.WriteLine(
                 $"{string.Join("\n", officialList.Select(o => $"\t{o.Name} ({o.PlayerId}) : {o.GamesUmpired}, {o.GamesScored}"))}");
