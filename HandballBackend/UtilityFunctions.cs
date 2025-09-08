@@ -11,9 +11,9 @@ namespace HandballBackend;
 internal static class UtilityFunctions {
     public static void init() {
         Config.SECRETS_FOLDER =
-            @"G:\Programming\c#\HandballBackend\HandballBackend\build\secrets";
+            @"G:\Programming\c#\HandballBackend\build\secrets";
         Config.RESOURCES_FOLDER =
-            @"G:\Programming\c#\HandballBackend\HandballBackend\build\resources";
+            @"G:\Programming\c#\HandballBackend\build\resources";
     }
 
 
@@ -39,7 +39,6 @@ internal static class UtilityFunctions {
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
             if (isRandomAbandonment) continue;
-            // Console.WriteLine($"{game.Id} ({game.GameNumber}): Game {game.TeamOne.Name} vs {game.TeamTwo.Name}");
             var playingPlayers = game.Players
                 .Where(pgs =>
                     game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
@@ -276,9 +275,9 @@ internal static class UtilityFunctions {
                 .Select(to => new AbstractFixtureGenerator.OfficialContainer {
                     PlayerId = to.Official.PersonId,
                     OfficialId = to.OfficialId,
-                    GamesUmpired = to.Official.Games.Count(g => g is {TournamentId: tournamentId, Round: < round}),
+                    GamesUmpired = to.Official.Games.Count(g => g is { TournamentId: tournamentId, Round: < round }),
                     Name = to.Official.Person.Name,
-                    GamesScored = to.Official.ScoredGames.Count(g => g is {TournamentId: tournamentId, Round: < round}),
+                    GamesScored = to.Official.ScoredGames.Count(g => g is { TournamentId: tournamentId, Round: < round }),
                     UmpireProficiency = to.UmpireProficiency,
                     ScorerProficiency = to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
@@ -317,7 +316,7 @@ internal static class UtilityFunctions {
         Console.WriteLine("--------------------");
         Console.WriteLine($"Success: {AbstractFixtureGenerator.TrySolution(solutionArray, officials, force: true)}");
         Console.WriteLine("--------------------");
-        foreach (var game in solutionArray.SelectMany(g => new[] {g.Item1, g.Item2})) {
+        foreach (var game in solutionArray.SelectMany(g => new[] { g.Item1, g.Item2 })) {
             if (game == null) continue;
             Console.WriteLine($"Game {game.GameId} on Court {game.CourtId + 1}");
             Console.WriteLine($"\tPlayers: {string.Join(", ", game.PlayerIds)}");
