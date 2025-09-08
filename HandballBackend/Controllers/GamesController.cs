@@ -94,7 +94,7 @@ public class GamesController() : ControllerBase {
         }
 
 
-        var query = db.Games.IncludeRelevant();
+        var query = db.Games.IncludeRelevant().Where(g => g.GameNumber > -2);
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
         }
@@ -182,7 +182,7 @@ public class GamesController() : ControllerBase {
             return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
-        var query = db.Games.IncludeRelevant()
+        var query = db.Games.Where(g => g.GameNumber > -2).IncludeRelevant()
             .Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
@@ -234,7 +234,7 @@ public class GamesController() : ControllerBase {
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
 
-        var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant().OrderBy(g => g.Round);
+        var query = db.Games.Where(g => g.GameNumber > -2 && g.TournamentId == tournament!.Id).IncludeRelevant().OrderBy(g => g.Round);
 
         query = query.OrderBy(g => g.Id);
 
