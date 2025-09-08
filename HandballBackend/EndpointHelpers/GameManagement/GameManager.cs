@@ -846,4 +846,16 @@ public static class GameManager {
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, gameEvent);
     }
+    
+    public static async Task Replay(int gameNumber) {
+        var db = new HandballContext();
+        var game = await db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events)
+            .FirstAsync();
+        if (!game.Started) throw new InvalidOperationException("The game has not started");
+        if (game.Ended) throw new InvalidOperationException("The game has ended");
+        var gameEvent = SetUpGameEvent(game, GameEventType.Replay, null, null);
+        await db.AddAsync(gameEvent);
+        await db.SaveChangesAsync();
+        BroadcastEvent(gameNumber, gameEvent);
+    }
 }
