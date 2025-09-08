@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database.Models;
+using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 
 namespace HandballBackend.Database.SendableTypes;
@@ -10,6 +10,8 @@ public class GameEventData {
     public PersonData? Player { get; private set; }
     public int? Details { get; private set; }
     public string? Notes { get; private set; }
+
+    public long? Time { get; private set; }
     public bool? FirstTeamJustServed { get; private set; }
     public string? SideServed { get; private set; }
     public bool FirstTeamToServe { get; private set; }
@@ -22,7 +24,7 @@ public class GameEventData {
 
         Id = gameEvent.Id;
         EventType = gameEvent.EventType;
-        FirstTeam = gameEvent.TeamId == teamOneId;
+        FirstTeam = gameEvent.TeamId == null ? null : gameEvent.TeamId == teamOneId;
         Player = gameEvent.Player?.ToSendableData();
         Details = gameEvent.Details;
         Notes = gameEvent.Notes;
@@ -30,6 +32,7 @@ public class GameEventData {
         SideServed = gameEvent.SideServed;
         FirstTeamToServe = gameEvent.TeamToServeId == teamOneId;
         SideToServe = gameEvent.SideToServe;
+        Time = gameEvent.CreatedAt > 0 ? gameEvent.CreatedAt : null;
         if (includeGame) {
             Game = gameEvent.Game.ToSendableData();
         }

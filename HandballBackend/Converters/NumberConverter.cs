@@ -1,13 +1,10 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace HandballBackend.Converters;
 
 public class NumberConverter : JsonConverter<double> {
-    public override void Write(
-        Utf8JsonWriter writer,
-        double value,
-        JsonSerializerOptions options) {
+    public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options) {
         if (double.IsInfinity(value)) {
             writer.WriteStringValue("\u221e");
         } else if (double.IsNaN(value)) {
@@ -20,7 +17,8 @@ public class NumberConverter : JsonConverter<double> {
     public override double Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
-        JsonSerializerOptions options) {
+        JsonSerializerOptions options
+    ) {
         if (reader.TryGetDouble(out var value)) {
             return value;
         }
@@ -29,7 +27,7 @@ public class NumberConverter : JsonConverter<double> {
         return str switch {
             "-" => double.NaN,
             "\u221e" => double.PositiveInfinity,
-            _ => throw new JsonException()
+            _ => throw new JsonException(),
         };
     }
 }

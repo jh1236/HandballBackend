@@ -1,19 +1,19 @@
-﻿using HandballBackend.Database.Models;
+using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.EndpointHelpers;
 
 public static class LadderHelper {
-    public static (TeamData[]?, TeamData[]?, TeamData[]?)
-        GetTournamentLadder(HandballContext db, Tournament tournament) {
-        var innerQuery = db.TournamentTeams
+    public static async Task<(TeamData[]?, TeamData[]?, TeamData[]?)> GetTournamentLadder(HandballContext db,
+        Tournament tournament) {
+        var innerQuery = await db.TournamentTeams
             .Where(t => t.TournamentId == tournament.Id)
             .Include(t => t.Team.Captain)
             .Include(t => t.Team.NonCaptain)
             .Include(t => t.Team.Substitute)
             .Include(t => t.Team.PlayerGameStats)
-            .ThenInclude(pgs => pgs.Game).ToArray();
+            .ThenInclude(pgs => pgs.Game).ToArrayAsync();
         var ladderTt = innerQuery.Where(t => t.Pool == 0).ToArray();
         var poolOneTt = innerQuery.Where(t => t.Pool == 1).ToArray();
         var poolTwoTt = innerQuery.Where(t => t.Pool == 2).ToArray();
@@ -22,6 +22,18 @@ public static class LadderHelper {
         var poolTwo = SortTeams(poolTwoTt.Select(tt => tt.ToSendableData(true)).ToArray());
         return (ladder.Length > 0 ? ladder : null, poolOne.Length > 0 ? poolOne : null,
             poolTwo.Length > 0 ? poolTwo : null);
+    }
+
+    public static async Task<TeamData[]> GetLadder(HandballContext db) {
+        var ladderTt = await db.Teams
+            // .Where(t => t.Team.TournamentTeams.Any(tt => tt.TournamentId != 1))
+            .Include(t => t.Captain)
+            .Include(t => t.NonCaptain)
+            .Include(t => t.Substitute)
+            .Include(t => t.PlayerGameStats)
+            .ThenInclude(pgs => pgs.Game).ToArrayAsync();
+        var ladder = SortTeamsNoTournament(ladderTt.Select(t => t.ToSendableData(true)).ToArray());
+        return ladder;
     }
 
 

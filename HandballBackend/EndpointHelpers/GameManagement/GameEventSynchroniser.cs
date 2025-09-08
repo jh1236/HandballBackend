@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,6 +57,9 @@ internal static class GameEventSynchroniser {
                     break;
                 case GameEventType.Abandon:
                     SyncAbandon(game, gameEvent);
+                    break;
+                case GameEventType.Merit:
+                    SyncMerit(game, gameEvent);
                     break;
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
@@ -124,6 +127,10 @@ internal static class GameEventSynchroniser {
         game.Notes = gameEvent.Notes;
     }
 
+    public static void SyncMerit(Game game, GameEvent gameEvent) {
+        var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
+        player.Merits++;
+    }
     public static void SyncCard(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
         switch (gameEvent.EventType) {
@@ -239,7 +246,7 @@ internal static class GameEventSynchroniser {
         }
 
 
-        end:
+    end:
         if (isFirstTeam) {
             game.TeamOneScore += 1;
         } else {

@@ -1,8 +1,9 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
+using HandballBackend.ErrorTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -48,7 +49,7 @@ public class ScoreboardController : ControllerBase {
     }
 
     private static async Task SocketSendEvent(WebSocket socket, GameEvent e) {
-        await SendAsync(socket, new {type = "event", Event = e.ToSendableData()});
+        await SendAsync(socket, new { type = "event", Event = e.ToSendableData() });
     }
 
     private static async Task SocketSendUpdate(WebSocket socket, int gameId) {
@@ -59,12 +60,12 @@ public class ScoreboardController : ControllerBase {
             .Include(g => g.Players)
             .ThenInclude(pgs => pgs.Player).Single(g => g.GameNumber == gameId);
         await SendAsync(socket,
-            new {type = "update", game = game.ToSendableData(true, true, formatData: true)});
+            new { type = "update", game = game.ToSendableData(true, true, formatData: true) });
     }
 
     public static async Task SendGame(int gameId) {
         if (!Sockets.TryGetValue(gameId, out var sockets)) return;
-        var tasks = sockets.Select(ws => _ = SocketSendUpdate(ws, gameId)).ToList();
+        var tasks = sockets.Select(ws => SocketSendUpdate(ws, gameId)).ToList();
         await Task.WhenAll(tasks);
     }
 
@@ -77,7 +78,7 @@ public class ScoreboardController : ControllerBase {
     [HttpGet]
     public async Task<IActionResult> GetScoreboardSocket(int gameId) {
         if (!HttpContext.WebSockets.IsWebSocketRequest) {
-            return BadRequest();
+            return BadRequest(new ActionNotAllowed("This is not a WebSocket request"));
         }
 
         using var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();

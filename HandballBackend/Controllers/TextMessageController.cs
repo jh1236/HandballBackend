@@ -1,4 +1,4 @@
-﻿// Install required NuGet packages:
+// Install required NuGet packages:
 // dotnet add package Twilio.AspNet.Core
 // dotnet add package Microsoft.AspNetCore.Mvc
 
@@ -26,13 +26,17 @@ public class SmsController : TwilioController {
         switch (body.ToLower()) {
             case "y":
             case "yes":
-                response.Message("Thank you for accepting the invitation! We are excited to see you at the courts!");
+                response.Message(
+                    "Thank you for accepting the invitation! We are excited to see you at the courts!"
+                );
                 person = db.People.ToList().First(a => a.PhoneNumber == from);
                 person.Availability = 1;
                 break;
             case "n":
             case "no":
-                response.Message("Thank you for your response! Hopefully we can see you down next time!");
+                response.Message(
+                    "Thank you for your response! Hopefully we can see you down next time!"
+                );
                 person = db.People.ToList().First(a => a.PhoneNumber == from);
                 person.Availability = 0;
                 break;

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using HandballBackend.Database.Models;
 using HandballBackend.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -40,42 +40,48 @@ public static class PermissionHelper {
         };
     }
 
+    public static bool IsAdmin() {
+        var person = PersonByToken(GetToken());
+        if (person == null) return false;
+        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt();
+    }
+
     public static bool IsUmpireManager(Tournament? tournament) {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
+        if (IsAdmin()) return true;
         if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.UmpireManager.ToInt();
-        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
-               person.Official!.TournamentOfficials.Any(to =>
-                   to.TournamentId == tournament.Id &&
-                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+        return person.Official!.TournamentOfficials.Any(to =>
+            to.TournamentId == tournament.Id &&
+            to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
     }
 
     public static bool IsUmpireManager(Game g) {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
-        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
-               person.Official!.TournamentOfficials.Any(to =>
-                   to.TournamentId == g.TournamentId &&
-                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+        if (IsAdmin()) return true;
+        return person.Official!.TournamentOfficials.Any(to =>
+            to.TournamentId == g.TournamentId &&
+            to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
     }
 
     public static bool IsUmpire(Tournament? tournament) {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
+        if (IsAdmin()) return true;
         if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.UmpireManager.ToInt();
-        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
-               person.Official!.TournamentOfficials.Any(to =>
-                   to.TournamentId == tournament.Id &&
-                   to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+        return person.Official!.TournamentOfficials.Any(to =>
+            to.TournamentId == tournament.Id &&
+            to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
     }
 
     public static bool IsUmpire(Game g) {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
-        return person.PermissionLevel.ToInt() >= PermissionType.Admin.ToInt() ||
-               person.Official!.TournamentOfficials.Any(to =>
-                   to.TournamentId == g.TournamentId &&
-                   to.Role.ToInt() >= PermissionType.Umpire.ToInt());
+        if (IsAdmin()) return true;
+        return person.Official!.TournamentOfficials.Any(to =>
+            to.TournamentId == g.TournamentId &&
+            to.Role.ToInt() >= PermissionType.Umpire.ToInt());
     }
 
     public static PermissionType IntToPermissionType(int permissionType) {
@@ -147,7 +153,7 @@ public static class PermissionHelper {
     }
 
 
-    public static string? GetToken() {
+    private static string? GetToken() {
         // Access the current HTTP context
         var httpContext = new HttpContextAccessor().HttpContext;
         if (httpContext == null) {
@@ -210,7 +216,8 @@ public static class PermissionHelper {
             return null;
         }
 
-        var person = db.People.FirstOrDefault(p => p.SessionToken == token);
+        var person = db.People.Include(p => p.Official).ThenInclude(o => o != null ? o.TournamentOfficials : null)
+            .FirstOrDefault(p => p.SessionToken == token);
 
         if (person == null) return null;
 

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers;
@@ -36,7 +36,8 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
             .Select(permission => new Claim(ClaimTypes.Role, permission.ToString())));
 
 
-        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims));
+        var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
         var ticket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
 
         return AuthenticateResult.Success(ticket);

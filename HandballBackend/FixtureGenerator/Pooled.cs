@@ -1,4 +1,4 @@
-﻿using HandballBackend.Database;
+using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.EndpointHelpers.GameManagement;
 using Microsoft.EntityFrameworkCore;
@@ -33,17 +33,17 @@ public class Pooled : AbstractFixtureGenerator {
         base.BeginTournament();
     }
 
-    public override bool EndOfRound() {
+    public override async Task<bool> EndOfRound() {
         var db = new HandballContext();
-        var tournament = db.Tournaments.Find(_tournamentId)!;
-        var tournamentTeams = db.TournamentTeams
+        var tournament = (await db.Tournaments.FindAsync(_tournamentId))!;
+        var tournamentTeams = await db.TournamentTeams
             .Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
-            .ToList();
+            .ToListAsync();
 
-        var rounds = db.Games
+        var rounds = await db.Games
             .Where(g => g.TournamentId == _tournamentId)
-            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefault();
+            .OrderByDescending(g => g.Round).Select(g => g.Round).FirstOrDefaultAsync();
 
         var poolOne = tournamentTeams.Where(tt => tt.Pool == 1).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
         var poolTwo = tournamentTeams.Where(tt => tt.Pool == 2).Select(tt => tt.Team).OrderBy(t => t.Id).ToList();
@@ -58,7 +58,7 @@ public class Pooled : AbstractFixtureGenerator {
         if (Math.Min(poolTwo.Count, poolOne.Count) <= rounds + 1) {
             // we are now in finals
             tournament.InFinals = true;
-            db.SaveChanges();
+            await db.SaveChangesAsync();
             return true;
         }
 
@@ -79,7 +79,7 @@ public class Pooled : AbstractFixtureGenerator {
             GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
 
-        db.SaveChanges();
-        return base.EndOfRound();
+        await db.SaveChangesAsync();
+        return await base.EndOfRound();
     }
 }

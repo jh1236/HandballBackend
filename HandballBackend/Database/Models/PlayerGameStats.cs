@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
@@ -46,6 +46,10 @@ public class PlayerGameStats {
     [Required]
     [Column("aces_scored")]
     public int AcesScored { get; set; } = 0;
+
+    [Required]
+    [Column("merits")]
+    public int Merits { get; set; } = 0;
 
     [Required]
     [Column("faults")]
@@ -141,7 +145,11 @@ public class PlayerGameStats {
     [ForeignKey("TournamentId")]
     public Tournament Tournament { get; set; }
 
-    public GamePlayerData ToSendableData(bool includeStats = false, bool formatData = false, bool isAdmin = false) {
+    public GamePlayerData ToSendableData(
+        bool includeStats = false,
+        bool formatData = false,
+        bool isAdmin = false
+    ) {
         return new GamePlayerData(this, includeStats, formatData, isAdmin);
     }
 
@@ -163,5 +171,6 @@ public class PlayerGameStats {
         CardTime = 0;
         CardTimeRemaining = 0;
         BestPlayerVotes = 0;
+        Merits = 0;
     }
 }

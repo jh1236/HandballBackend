@@ -1,11 +1,14 @@
-﻿namespace HandballBackend.Arguments;
+namespace HandballBackend.Arguments;
 
 public static class ArgsHandler {
     public static AbstractArgumentHandler[] Handlers = [
         new WorkingDirectoryArgHandler(),
         new LoggingArgHandler(),
         new PortArgHandler(),
-        new WorkingDirectoryArgHandler()
+        new WorkingDirectoryArgHandler(),
+        new GitArgHandler(),
+        new HelpArgHandler(),
+        new BackupArgHandler(),
     ];
 
     public static void Parse(string[] args, WebApplicationBuilder builder) {

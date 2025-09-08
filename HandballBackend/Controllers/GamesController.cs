@@ -1,10 +1,9 @@
-﻿using HandballBackend.Authentication;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GamesController(IAuthorizationService authorizationService) : ControllerBase {
+public class GamesController() : ControllerBase {
     public record ChangeCodeResponse {
         public int Code { get; set; }
     }
@@ -32,7 +31,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     }
 
     public record GetGameResponse {
-        public GameData Game { get; set; }
+        public required GameData Game { get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
@@ -52,7 +51,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             .ThenInclude(pgs => pgs.Player)
             .FirstOrDefault(g => g.GameNumber == gameNumber);
         if (game is null) {
-            return NotFound();
+            return NotFound(new DoesNotExist("Game", gameNumber.ToString()));
         }
 
         var cards = db.GameEvents.Where(gE =>
@@ -91,11 +90,11 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
 
-        var query = db.Games.IncludeRelevant();
+        var query = db.Games.IncludeRelevant().Where(g => g.GameNumber > -2);
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
         }
@@ -147,12 +146,12 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
                 .ThenInclude(gE => gE.Player);
         }
 
-        var games = query.OrderBy(g => g.Id)
+        var games = await query.OrderBy(g => g.Id)
             .Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, isAdmin))
-            .ToArray();
+            .ToArrayAsync();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -169,7 +168,7 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
 
     [HttpGet("noteable")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    public ActionResult<GetNoteableResponse> GetNoteableGames(
+    public async Task<ActionResult<GetNoteableResponse>> GetNoteableGames(
         [FromQuery(Name = "tournament")] string? tournamentSearchable = null,
         [FromQuery] bool includeGameEvents = false,
         [FromQuery] bool returnTournament = false,
@@ -180,10 +179,10 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
-        var query = db.Games.IncludeRelevant()
+        var query = db.Games.Where(g => g.GameNumber > -2).IncludeRelevant()
             .Where(g => !g.IsBye && !Game.ResolvedStatuses.Contains(g.NoteableStatus));
         if (tournament is not null) {
             query = query.Where(g => g.TournamentId == tournament.Id);
@@ -199,11 +198,11 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
         query = query.Include(g => g.Events);
 
 
-        var games = query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
-            .ToArray();
+        var games = await query.Select(g => g.ToSendableData(false, includeGameEvents, includeStats, formatData, true))
+            .ToArrayAsync();
 
         if (returnTournament && tournament is null) {
-            return BadRequest("Cannot return null tournament");
+            return BadRequest(new TournamentNotProvidedForReturn());
         }
 
 
@@ -229,18 +228,18 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
     ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return BadRequest("Invalid tournament");
+            return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
 
-        var query = db.Games.Where(g => g.TournamentId == tournament.Id).IncludeRelevant();
+        var query = db.Games.Where(g => g.GameNumber > -2 && g.TournamentId == tournament!.Id).IncludeRelevant().OrderBy(g => g.Round);
 
         query = query.OrderBy(g => g.Id);
 
 
-        var games = query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArray();
+        var games = await query.Select(g => g.ToSendableData(false, false, false, false, isAdmin)).ToArrayAsync();
 
         List<FixturesRound> fixtures = [];
 
@@ -267,14 +266,14 @@ public class GamesController(IAuthorizationService authorizationService) : Contr
             fixtures = fixtures.TakeLast(maxRounds).ToList();
         }
 
-        var output = new GetFixturesResponse() {
+        var output = new GetFixturesResponse {
             Fixtures = separateFinals ? fixtures.Where(f => !f.Final).ToArray() : fixtures.ToArray(),
-            Finals = separateFinals ? fixtures?.Where(f => f.Final).ToArray() : null
+            Finals = separateFinals ? fixtures.Where(f => f.Final).ToArray() : null
         };
 
         if (returnTournament) {
             if (tournament is null) {
-                return BadRequest("Cannot return null tournament");
+                return BadRequest(new TournamentNotProvidedForReturn());
             }
 
             output.Tournament = tournament.ToSendableData();

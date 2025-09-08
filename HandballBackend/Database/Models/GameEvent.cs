@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
@@ -23,7 +23,8 @@ public enum GameEventType {
     Notes,
     Protest,
     Resolve,
-    Votes
+    Votes,
+    Merit
 }
 
 [Table("game_events")]
@@ -33,9 +34,8 @@ public class GameEvent : IHasRelevant<GameEvent> {
         GameEventType.Warning,
         GameEventType.GreenCard,
         GameEventType.YellowCard,
-        GameEventType.RedCard
+        GameEventType.RedCard,
     ];
-
 
     [Key]
     [Column("id")]
@@ -124,7 +124,8 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public Game Game { get; set; }
 
     [NotMapped]
-    public bool IsCard => EventType == GameEventType.Warning || EventType.ToString().EndsWith("Card");
+    public bool IsCard =>
+        EventType == GameEventType.Warning || EventType.ToString().EndsWith("Card");
 
     public GameEventData ToSendableData(bool includeGame = false) {
         return new GameEventData(this, includeGame);

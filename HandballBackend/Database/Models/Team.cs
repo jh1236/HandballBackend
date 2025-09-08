@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.Utils;
@@ -29,7 +29,6 @@ public class Team : IHasRelevant<Team> {
     [Column("captain_id")]
     public int? CaptainId { get; set; }
 
-
     [Column("non_captain_id")]
     public int? NonCaptainId { get; set; }
 
@@ -57,22 +56,34 @@ public class Team : IHasRelevant<Team> {
     public List<TournamentTeam> TournamentTeams { get; set; } = [];
 
     [NotMapped]
-    public List<Person> People => new List<Person?> {Captain, NonCaptain, Substitute}
-        .Where(p => p != null)
-        .Select(p => p!)
-        .ToList();
+    public List<Person> People =>
+        new List<Person?> { Captain, NonCaptain, Substitute }
+            .Where(p => p != null)
+            .Select(p => p!)
+            .ToList();
 
-
-    public TeamData ToSendableData(bool generateStats = false,
-        bool generatePlayerStats = false, bool formatData = false, Tournament? tournament = null) {
+    public TeamData ToSendableData(
+        bool generateStats = false,
+        bool generatePlayerStats = false,
+        bool formatData = false,
+        Tournament? tournament = null
+    ) {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
-    public double Elo() => new[] {Captain?.Elo(), NonCaptain?.Elo(), Substitute?.Elo()}.Where(e => e.HasValue)
-        .Select(e => e!.Value).DefaultIfEmpty(1500.0).Average();
+    public double Elo() =>
+        new[] { Captain?.Elo(), NonCaptain?.Elo(), Substitute?.Elo() }
+            .Where(e => e.HasValue)
+            .Select(e => e!.Value)
+            .DefaultIfEmpty(1500.0)
+            .Average();
 
-    public GameTeamData ToGameSendableData(Game game, bool generateStats = false,
-        bool formatData = false, bool isAdmin = false) {
+    public GameTeamData ToGameSendableData(
+        Game game,
+        bool generateStats = false,
+        bool formatData = false,
+        bool isAdmin = false
+    ) {
         if (Id == 1) {
             return new GameTeamData(this, game, false, false, formatData);
         }
@@ -83,10 +94,7 @@ public class Team : IHasRelevant<Team> {
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
         return query
             .Include(t => t.Captain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
             .Include(t => t.NonCaptain)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1))
-            .Include(t => t.Substitute)
-            .ThenInclude(p => p.PlayerGameStats.OrderByDescending(pgs => pgs.Id).Take(1));
+            .Include(t => t.Substitute);
     }
 }

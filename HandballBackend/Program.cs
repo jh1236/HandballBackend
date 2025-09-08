@@ -23,9 +23,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpLogging(o => { });
 builder.Services.AddAuthentication(options => {
-        options.DefaultAuthenticateScheme = "TokenAuthentication";
-        options.DefaultChallengeScheme = "TokenAuthentication";
-    })
+    options.DefaultAuthenticateScheme = "TokenAuthentication";
+    options.DefaultChallengeScheme = "TokenAuthentication";
+})
     .AddScheme<AuthenticationSchemeOptions, TokenAuthenticator>(
         "TokenAuthentication", null);
 builder.Services.AddAuthorization(Policies.RegisterPolicies);
@@ -39,7 +39,7 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (Config.REQUEST_LOGGING) {
+if (Config.LOGGING) {
     app.UseMiddleware<RequestLogger>();
 }
 
