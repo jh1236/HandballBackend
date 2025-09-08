@@ -4,6 +4,7 @@ using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,8 +14,8 @@ namespace HandballBackend.Controllers;
 [Route("api/[controller]")]
 public class TeamsController : ControllerBase {
     public record GetTeamResponse {
-        public required TeamData Team { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required TeamData Team { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("{searchable}")]
@@ -28,7 +29,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData? teamData;
@@ -66,8 +67,8 @@ public class TeamsController : ControllerBase {
     }
 
     public record GetTeamsResponse {
-        public required TeamData[] Teams { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required TeamData[] Teams { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet]
@@ -81,7 +82,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData[] teamData;
@@ -150,11 +151,11 @@ public class TeamsController : ControllerBase {
 
 
     public record GetLadderResponse {
-        public TeamData[]? Ladder { get; set; }
-        public TeamData[]? PoolOne { get; set; }
-        public TeamData[]? PoolTwo { get; set; }
-        public bool Pooled { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public TeamData[]? Ladder { [UsedImplicitly] get; set; }
+        public TeamData[]? PoolOne { [UsedImplicitly] get; set; }
+        public TeamData[]? PoolTwo { [UsedImplicitly] get; set; }
+        public bool Pooled { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("ladder")]
@@ -168,7 +169,7 @@ public class TeamsController : ControllerBase {
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (tournament is not null) {

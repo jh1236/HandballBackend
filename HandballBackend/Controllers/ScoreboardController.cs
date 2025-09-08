@@ -37,7 +37,7 @@ public class ScoreboardController : ControllerBase {
         while (socket.State == WebSocketState.Open) {
             var result = await socket.ReceiveAsync(buffer, CancellationToken.None);
             if (result.MessageType != WebSocketMessageType.Text) continue;
-            var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+            var message = Encoding.UTF8.GetString(buffer.Array!, 0, result.Count);
             switch (message) {
                 case "update":
                     await SocketSendUpdate(socket, gameId);

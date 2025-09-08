@@ -1,20 +1,13 @@
-using HandballBackend;
-using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
+namespace HandballBackend.Authentication;
+
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public class TournamentAuthorizeAttribute : Attribute, IAuthorizationFilter {
-    private readonly PermissionType _requiredRole;
-    private readonly string _routeKey;
-
-    public TournamentAuthorizeAttribute(PermissionType requiredRole, string routeKey = "searchable") {
-        _requiredRole = requiredRole;
-        _routeKey = routeKey;
-    }
-
+public class TournamentAuthorizeAttribute(PermissionType requiredRole, string routeKey = "searchable")
+    : Attribute, IAuthorizationFilter {
     public void OnAuthorization(AuthorizationFilterContext context) {
         var db = new HandballContext();
         var token = context.HttpContext.User.Claims.First(c => c.Type == CustomClaimTypes.Token).Value;
@@ -28,10 +21,10 @@ public class TournamentAuthorizeAttribute : Attribute, IAuthorizationFilter {
         var tournamentSearch = context.HttpContext.Request.Query["tournament"].FirstOrDefault();
         if (tournamentSearch is null) {
 
-            if (!context.RouteData.Values.TryGetValue(_routeKey, out var rawSearchable) ||
+            if (!context.RouteData.Values.TryGetValue(routeKey, out var rawSearchable) ||
                 rawSearchable is not string searchable) {
                 //this is not a tournament-specific request
-                if (person.PermissionLevel.ToInt() < _requiredRole.ToInt()) {
+                if (person.PermissionLevel.ToInt() < requiredRole.ToInt()) {
                     context.Result = new ForbidResult();
                 }
                 return;
@@ -53,7 +46,7 @@ public class TournamentAuthorizeAttribute : Attribute, IAuthorizationFilter {
             to.TournamentId == tournament!.Id &&
             to.Official.PersonId == person.Id);
 
-        if (to.Role.ToInt() < _requiredRole.ToInt()) {
+        if (to.Role.ToInt() < requiredRole.ToInt()) {
             context.Result = new ForbidResult();
         }
     }

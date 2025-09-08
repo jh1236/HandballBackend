@@ -36,30 +36,30 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("team_one_score")]
-    public int TeamOneScore { get; set; } = 0;
+    public int TeamOneScore { get; set; }
 
     [Required]
     [Column("team_two_score")]
-    public int TeamTwoScore { get; set; } = 0;
+    public int TeamTwoScore { get; set; }
 
     [Required]
     [Column("team_one_timeouts")]
-    public int TeamOneTimeouts { get; set; } = 0;
+    public int TeamOneTimeouts { get; set; }
 
     [Required]
     [Column("team_two_timeouts")]
-    public int TeamTwoTimeouts { get; set; } = 0;
+    public int TeamTwoTimeouts { get; set; }
 
     [Column("winning_team_id")]
     public int? WinningTeamId { get; set; }
 
     [Required]
     [Column("started")]
-    public bool Started { get; set; } = false;
+    public bool Started { get; set; }
 
     [Required]
     [Column("ended")]
-    public bool Ended { get; set; } = false;
+    public bool Ended { get; set; }
 
     [Required]
     [Column("someone_has_won")]
@@ -67,11 +67,11 @@ public class Game : IHasRelevant<Game> {
 
     [Required]
     [Column("protested")]
-    public bool Protested { get; set; } = false;
+    public bool Protested { get; set; }
 
     [Required]
     [Column("resolved")]
-    public bool Resolved { get; set; } = false;
+    public bool Resolved { get; set; }
 
     [Required]
     [Column("ranked")]

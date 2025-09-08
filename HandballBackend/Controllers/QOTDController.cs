@@ -6,7 +6,7 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class QOTDController : ControllerBase {
+public class QotdController : ControllerBase {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<QuoteOfTheDayData>> GetQotd() {

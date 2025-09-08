@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace HandballBackend.Arguments;
 
 public class HelpArgHandler() : AbstractArgumentHandler("h", "help", "Displays this help text.") {

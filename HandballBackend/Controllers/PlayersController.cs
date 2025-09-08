@@ -1,9 +1,9 @@
-using HandballBackend.Authentication;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +11,10 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlayersController() : ControllerBase {
+public class PlayersController : ControllerBase {
     public record GetPlayerResponse {
-        public required PersonData Player { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required PersonData Player { get; init; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
 
@@ -30,7 +30,7 @@ public class PlayersController() : ControllerBase {
     ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
@@ -39,8 +39,8 @@ public class PlayersController() : ControllerBase {
             .Where(t => t.SearchableName == searchable)
             .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
-            .Include(p => p.Official.TournamentOfficials)!
-            .ThenInclude(to => to.Tournament)!
+            .Include(p => p.Official!.TournamentOfficials)
+            .ThenInclude(to => to.Tournament)
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefaultAsync();
         if (player is null) {
             return NotFound(new DoesNotExist("Player", searchable));
@@ -58,8 +58,8 @@ public class PlayersController() : ControllerBase {
     }
 
     public record GetPlayersResponse {
-        public required PersonData[] Players { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required PersonData[] Players { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
 
@@ -78,7 +78,7 @@ public class PlayersController() : ControllerBase {
         Team? teamObj = null;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (team is not null) {
@@ -96,8 +96,8 @@ public class PlayersController() : ControllerBase {
             query = db.People
                 .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
-                .Include(p => p.Official.TournamentOfficials)!
-                .ThenInclude(to => to.Tournament)!
+                .Include(p => p.Official!.TournamentOfficials)
+                .ThenInclude(to => to.Tournament)
                 .Where(p => p.SearchableName != "worstie");
         }
 
@@ -119,8 +119,8 @@ public class PlayersController() : ControllerBase {
     }
 
     public record GetStatsResponse {
-        public Dictionary<string, dynamic?>? Stats { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public Dictionary<string, dynamic?>? Stats { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("stats")]
@@ -131,7 +131,7 @@ public class PlayersController() : ControllerBase {
         [FromQuery] int? gameNumber = null) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         List<Dictionary<string, dynamic?>> statsList;

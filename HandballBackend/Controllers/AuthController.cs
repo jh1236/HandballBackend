@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using HandballBackend.Authentication;
 using HandballBackend.EndpointHelpers;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,21 +9,26 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController(IAuthorizationService authorizationService) : ControllerBase {
+public class AuthController : ControllerBase {
     public class LoginRequest {
-        public required int UserID { get; set; }
-        public required string Password { get; set; }
-        public bool LongSession { get; set; } = false;
+        // ReSharper disable once InconsistentNaming
+        public required int UserID { get; [UsedImplicitly] set; }
+        public required string Password { get; [UsedImplicitly] set; }
+        public bool LongSession { get; [UsedImplicitly] set; } = false;
     }
 
     public class LoginResponse {
-        public required string Token { get; set; }
-        public int UserID { get; set; }
-        public long Timeout { get; set; }
+        public required string Token { [UsedImplicitly] get; set; }
 
-        public int BasePermission { get; set; }
+        // ReSharper disable once InconsistentNaming
+        public int UserID { [UsedImplicitly] get; set; }
+        public long Timeout { [UsedImplicitly] get; set; }
 
-        public required string Username { get; set; }
+        public int BasePermission { [UsedImplicitly] get; set; }
+
+        public required string Username { [UsedImplicitly] get; set; }
+
+        [UsedImplicitly]
         public Dictionary<string, int> Permissions { get; set; } = new();
     }
 

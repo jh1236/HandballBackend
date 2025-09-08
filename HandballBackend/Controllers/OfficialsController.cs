@@ -1,10 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using HandballBackend.Database;
-using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
-using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +12,8 @@ namespace HandballBackend.Controllers;
 [Route("/api/[controller]")]
 public class OfficialsController : ControllerBase {
     public record GetOfficialsResponse {
-        public required OfficialData[] Officials { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required OfficialData[] Officials { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet]
@@ -29,7 +27,7 @@ public class OfficialsController : ControllerBase {
         OfficialData[]? officials;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (tournament is not null) {
@@ -40,7 +38,6 @@ public class OfficialsController : ControllerBase {
                 .ToArrayAsync();
             officials = intermediate.Select(to => to.Official.ToSendableData(tournament))
                 .OrderByDescending(o => o.Role).ToArray();
-            ;
         } else {
             officials = await db.Officials
                 .IncludeRelevant()
@@ -61,8 +58,8 @@ public class OfficialsController : ControllerBase {
     }
 
     public record GetOfficialResponse {
-        public required OfficialData Official { get; set; }
-        public TournamentData? tournament { get; set; }
+        public required OfficialData Official { get; init; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
 
@@ -84,7 +81,7 @@ public class OfficialsController : ControllerBase {
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
 
@@ -95,7 +92,7 @@ public class OfficialsController : ControllerBase {
 
         return new GetOfficialResponse {
             Official = official.ToSendableData(tournament, true),
-            tournament = returnTournament ? tournament!.ToSendableData() : null
+            Tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
 }

@@ -1,7 +1,7 @@
 namespace HandballBackend.Arguments;
 
 public static class ArgsHandler {
-    public static AbstractArgumentHandler[] Handlers = [
+    public static readonly AbstractArgumentHandler[] Handlers = [
         new WorkingDirectoryArgHandler(),
         new LoggingArgHandler(),
         new PortArgHandler(),
@@ -30,16 +30,10 @@ public static class ArgsHandler {
     }
 }
 
-public abstract class AbstractArgumentHandler {
-    public string ShortName { get; init; }
-    public string LongName { get; init; }
-    public string Description { get; init; }
-
-    public AbstractArgumentHandler(string shortName, string longName, string description) {
-        ShortName = shortName;
-        LongName = longName;
-        Description = description;
-    }
+public abstract class AbstractArgumentHandler(string shortName, string longName, string description) {
+    public string ShortName { get; init; } = shortName;
+    public string LongName { get; init; } = longName;
+    public string Description { get; init; } = description;
 
     public virtual bool Parse(string[] args, ref int index, WebApplicationBuilder builder) {
         if (args[index] != $"-{ShortName}" && args[index] != $"--{LongName}") return false;

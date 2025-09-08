@@ -4,6 +4,7 @@ using HandballBackend.EndpointHelpers;
 using HandballBackend.EndpointHelpers.GameManagement;
 using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,19 +15,19 @@ namespace HandballBackend.Controllers;
 [Route("api/games/update")]
 public class EditGamesController : ControllerBase {
     public class CreateRequest {
-        public required string Tournament { get; init; }
-        public string? TeamOne { get; set; } = null;
-        public string? TeamTwo { get; set; } = null;
-        public string[]? PlayersOne { get; set; } = null;
-        public string[]? PlayersTwo { get; set; } = null;
-        public required string Official { get; set; }
-        public string? Scorer { get; set; } = null;
+        public required string Tournament { get; [UsedImplicitly] init; }
+        public string? TeamOne { get; [UsedImplicitly] set; } = null;
+        public string? TeamTwo { get; [UsedImplicitly] set; } = null;
+        public string[]? PlayersOne { get; [UsedImplicitly] set; } = null;
+        public string[]? PlayersTwo { get; [UsedImplicitly] set; } = null;
+        public required string Official { get; [UsedImplicitly] set; }
+        public string? Scorer { get; [UsedImplicitly] set; } = null;
 
-        public bool BlitzGame { get; set; } = false;
+        public bool BlitzGame { get; [UsedImplicitly] set; } = false;
     }
 
     public class CreateResponse {
-        public required GameData Game { get; set; }
+        public required GameData Game { [UsedImplicitly] get; set; }
     }
 
     [HttpPost("create")]
@@ -65,14 +66,14 @@ public class EditGamesController : ControllerBase {
     }
 
     public class StartRequest {
-        public required int Id { get; set; }
-        public required bool SwapService { get; set; }
-        public required string[] TeamOne { get; set; }
-        public required string[] TeamTwo { get; set; }
-        public required bool TeamOneIga { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool SwapService { get; [UsedImplicitly] set; }
+        public required string[] TeamOne { get; [UsedImplicitly] set; }
+        public required string[] TeamTwo { get; [UsedImplicitly] set; }
+        public required bool TeamOneIga { get; [UsedImplicitly] set; }
 
-        public string? Official { get; set; } = null;
-        public string? Scorer { get; set; } = null;
+        public string? Official { get; [UsedImplicitly] set; } = null;
+        public string? Scorer { get; [UsedImplicitly] set; } = null;
     }
 
     [HttpPost("start")]
@@ -91,11 +92,11 @@ public class EditGamesController : ControllerBase {
     }
 
     public class ScorePointRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
         public bool? LeftPlayer { get; set; }
         public string? PlayerSearchable { get; set; }
-        public string? Method { get; set; }
+        public string? Method { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("score")]
@@ -120,11 +121,11 @@ public class EditGamesController : ControllerBase {
     }
 
     public class MeritRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
-        public bool? LeftPlayer { get; set; }
-        public string? PlayerSearchable { get; set; }
-        public string? Reason { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
+        public bool? LeftPlayer { get; [UsedImplicitly] set; }
+        public string? PlayerSearchable { get; [UsedImplicitly] set; }
+        public string? Reason { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("merit")]
@@ -149,13 +150,13 @@ public class EditGamesController : ControllerBase {
     }
 
     public class CardRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
-        public bool? LeftPlayer { get; set; }
-        public string? PlayerSearchable { get; set; }
-        public required string Color { get; set; }
-        public string? Reason { get; set; }
-        public int Duration { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
+        public bool? LeftPlayer { get; [UsedImplicitly] set; }
+        public string? PlayerSearchable { get; [UsedImplicitly] set; }
+        public required string Color { get; [UsedImplicitly] set; }
+        public string? Reason { get; [UsedImplicitly] set; }
+        public int Duration { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("card")]
@@ -183,7 +184,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class AceRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("ace")]
@@ -198,7 +199,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class FaultRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("fault")]
@@ -213,8 +214,8 @@ public class EditGamesController : ControllerBase {
     }
 
     public class TimeoutRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("timeout")]
@@ -229,8 +230,8 @@ public class EditGamesController : ControllerBase {
     }
 
     public class ForfeitRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("forfeit")]
@@ -245,7 +246,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class AbandonRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("abandon")]
@@ -256,7 +257,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class EndTimeoutRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("endTimeout")]
@@ -267,10 +268,10 @@ public class EditGamesController : ControllerBase {
     }
 
     public class SubstituteRequest {
-        public required int Id { get; set; }
-        public required bool FirstTeam { get; set; }
-        public string? PlayerSearchable { get; set; }
-        public bool? LeftPlayer { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
+        public required bool FirstTeam { get; [UsedImplicitly] set; }
+        public string? PlayerSearchable { get; [UsedImplicitly] set; }
+        public bool? LeftPlayer { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("substitute")]
@@ -291,7 +292,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class UndoRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("undo")]
@@ -302,7 +303,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class DeleteRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("delete")]
@@ -313,16 +314,16 @@ public class EditGamesController : ControllerBase {
     }
 
     public class EndGameRequest {
-        public int Id { get; set; }
-        public required List<string> Votes { get; set; }
-        public int TeamOneRating { get; set; }
-        public int TeamTwoRating { get; set; }
-        public string Notes { get; set; } = string.Empty;
-        public string? ProtestReasonTeamOne { get; set; }
-        public string? ProtestReasonTeamTwo { get; set; }
-        public string NotesTeamOne { get; set; } = string.Empty;
-        public string NotesTeamTwo { get; set; } = string.Empty;
-        public bool MarkedForReview { get; set; }
+        public int Id { get; [UsedImplicitly] set; }
+        public required List<string> Votes { get; [UsedImplicitly] set; }
+        public int TeamOneRating { get; [UsedImplicitly] set; }
+        public int TeamTwoRating { get; [UsedImplicitly] set; }
+        public string Notes { get; [UsedImplicitly] set; } = string.Empty;
+        public string? ProtestReasonTeamOne { get; [UsedImplicitly] set; }
+        public string? ProtestReasonTeamTwo { get; [UsedImplicitly] set; }
+        public string NotesTeamOne { get; [UsedImplicitly] set; } = string.Empty;
+        public string NotesTeamTwo { get; [UsedImplicitly] set; } = string.Empty;
+        public bool MarkedForReview { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("end")]
@@ -349,7 +350,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class AlertRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("alert")]
@@ -367,7 +368,7 @@ public class EditGamesController : ControllerBase {
     }
 
     public class ResolveRequest {
-        public required int Id { get; set; }
+        public required int Id { get; [UsedImplicitly] set; }
     }
 
     [HttpPost("resolve")]

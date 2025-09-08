@@ -10,7 +10,7 @@ public static class Policies {
     public static void RegisterPolicies(AuthorizationOptions options) {
         options.AddPolicy(IsAdmin, policy => policy
             .RequireAssertion(c =>
-                c.User.HasClaim(c =>
-                    c.Type == ClaimTypes.Role && c.Value == PermissionType.Admin.ToString())));
+                c.User.HasClaim(c2 =>
+                    c2 is { Type: ClaimTypes.Role, Value: nameof(PermissionType.Admin)})));
     }
 }

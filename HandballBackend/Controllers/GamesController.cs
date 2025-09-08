@@ -1,9 +1,11 @@
+using HandballBackend.Authentication;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -12,9 +14,9 @@ namespace HandballBackend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class GamesController() : ControllerBase {
+public class GamesController : ControllerBase {
     public record ChangeCodeResponse {
-        public int Code { get; set; }
+        public int Code { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("change_code")]
@@ -31,7 +33,7 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetGameResponse {
-        public required GameData Game { get; set; }
+        public required GameData Game { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("{gameNumber:int}")]
@@ -68,8 +70,8 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetGamesResponse {
-        public GameData[] Games { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required GameData[] Games { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet]
@@ -90,7 +92,7 @@ public class GamesController() : ControllerBase {
 
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
 
@@ -162,8 +164,8 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetNoteableResponse {
-        public required GameData[] Games { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required GameData[] Games { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("noteable")]
@@ -179,7 +181,7 @@ public class GamesController() : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var query = db.Games.Where(g => g.GameNumber > -2).IncludeRelevant()
@@ -213,9 +215,9 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetFixturesResponse {
-        public required FixturesRound[] Fixtures { get; set; }
-        public FixturesRound[]? Finals { get; set; }
-        public TournamentData? Tournament { get; set; }
+        public required FixturesRound[] Fixtures { [UsedImplicitly] get; set; }
+        public FixturesRound[]? Finals { [UsedImplicitly] get; set; }
+        public TournamentData? Tournament { [UsedImplicitly] get; set; }
     }
 
     [HttpGet("fixtures")]
@@ -234,7 +236,8 @@ public class GamesController() : ControllerBase {
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
 
-        var query = db.Games.Where(g => g.GameNumber > -2 && g.TournamentId == tournament!.Id).IncludeRelevant().OrderBy(g => g.Round);
+        var query = db.Games.Where(g => g.GameNumber > -2 && g.TournamentId == tournament!.Id).IncludeRelevant()
+            .OrderBy(g => g.Round);
 
         query = query.OrderBy(g => g.Id);
 

@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.Utils;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -43,7 +44,7 @@ public class ImageController : ControllerBase {
     }
 
 
-    //Set the method to be a Http POST method (meaning that it has a body)
+    //Set the method to be an Http POST method (meaning that it has a body)
     [HttpPost("image/people/upload")]
     //Set the method to only be usable as an Admin
     [Authorize(Policy = Policies.IsAdmin)]
@@ -51,7 +52,7 @@ public class ImageController : ControllerBase {
         // Handball Contexts are used to access the db
         var db = new HandballContext();
         if (file.Count != 1) {
-            //when we receive a file it's a list for some reason; we only want 1 file
+            //when we receive a file, it's a list for some reason; we only want 1 file
             return BadRequest("Only one image is allowed");
         }
 
@@ -71,10 +72,10 @@ public class ImageController : ControllerBase {
     }
 
     public class UploadTeamImageResponse {
-        public required TeamData Team { get; set; }
+        public required TeamData Team { [UsedImplicitly] get; set; }
     }
 
-    //Set the method to be a Http POST method (meaning that it has a body)
+    //Set the method to be an Http POST method (meaning that it has a body)
     [HttpPost("image/teams/upload")]
     //Set the method to only be usable as an Admin
     [Authorize(Policy = Policies.IsAdmin)]
@@ -83,7 +84,7 @@ public class ImageController : ControllerBase {
         // Handball Contexts are used to access the db
         var db = new HandballContext();
         if (file.Count != 1) {
-            //when we receive a file it's a list for some reason; we only want 1 file
+            //when we receive a file, it's a list for some reason; we only want 1 file
             return BadRequest("Only one image is allowed");
         }
 
@@ -108,14 +109,14 @@ public class ImageController : ControllerBase {
 
         // Save the changes (duh.)
         db.SaveChanges();
-        return Ok(new UploadTeamImageResponse { Team = team.ToSendableData() });
+        return Ok(new UploadTeamImageResponse {Team = team.ToSendableData()});
     }
 
     public class UploadTournamentImageResponse {
-        public required TournamentData Tournament { get; set; }
+        public required TournamentData Tournament { [UsedImplicitly] get; set; }
     }
 
-    //Set the method to be a Http POST method (meaning that it has a body)
+    //Set the method to be an Http POST method (meaning that it has a body)
     [HttpPost("image/tournament/upload")]
     //Set the method to only be usable as an Admin
     [Authorize(Policy = Policies.IsAdmin)]
@@ -123,7 +124,7 @@ public class ImageController : ControllerBase {
         // Handball Contexts are used to access the db
         var db = new HandballContext();
         if (file.Count != 1) {
-            //when we receive a file it's a list for some reason; we only want 1 file
+            //when we receive a file, it's a list for some reason; we only want 1 file
             return BadRequest("Only one image is allowed");
         }
 
@@ -137,6 +138,6 @@ public class ImageController : ControllerBase {
 
         // Save the changes (duh.)
         db.SaveChanges();
-        return Ok(new UploadTournamentImageResponse { Tournament = tournament.ToSendableData() });
+        return Ok(new UploadTournamentImageResponse {Tournament = tournament.ToSendableData()});
     }
 }
