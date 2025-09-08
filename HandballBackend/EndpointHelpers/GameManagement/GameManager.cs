@@ -846,7 +846,7 @@ public static class GameManager {
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, gameEvent);
     }
-    
+
     public static async Task Replay(int gameNumber) {
         var db = new HandballContext();
         var game = await db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events)

@@ -381,7 +381,7 @@ public class EditGamesController : ControllerBase {
         await GameManager.Resolve(resolveRequest.Id);
         return NoContent();
     }
-    
+
     public class ReplayRequest {
         public required int Id { get; set; }
     }
