@@ -211,7 +211,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             .Select(to => to.ToList())
             .ToList();
 
-        if (courtOne && !scorer) {
+        if (!courtOne && !scorer) {
             officialsByPreference.Reverse();
         }
 
