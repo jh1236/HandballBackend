@@ -64,6 +64,7 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
+                case GameEventType.Replay:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
