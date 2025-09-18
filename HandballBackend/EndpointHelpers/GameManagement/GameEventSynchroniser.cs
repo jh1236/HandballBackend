@@ -234,7 +234,7 @@ internal static class GameEventSynchroniser {
             var playerWhoServed = //doing this like this means that it won't give served points to carded players
                 playersOnCourt.Where(pgs => pgs.TeamId == gameEvent.TeamWhoServedId)
                     .OrderByDescending(pgs => pgs.CardTimeRemaining == 0)
-                    .ThenBy(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId).First();
+                    .ThenByDescending(pgs => pgs.PlayerId == gameEvent.PlayerWhoServedId).First();
             playerWhoServed.ServedPoints += 1;
             if (playerWhoServed.TeamId == gameEvent.TeamId) {
                 playerWhoServed.ServedPointsWon += 1;
