@@ -98,11 +98,14 @@ public class OfficialsController : ControllerBase {
             tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
-    
-    
+
+
     public class AddOfficialRequest {
         public required string OfficialSearchableName { get; set; }
         public required string TournamentSearchableName { get; set; }
+
+        public required int UmpireProficiency { get; set; }
+        public required int ScorerProficiency { get; set; }
     }
 
     [HttpPost("addOfficialToTournament")]
@@ -136,8 +139,8 @@ public class OfficialsController : ControllerBase {
             TournamentId = tournament.Id,
             OfficialId = official.Id,
             Role = OfficialRole.Umpire,
-            UmpireProficiency = official.Proficiency,
-            ScorerProficiency = official.Proficiency,
+            UmpireProficiency = request.ScorerProficiency,
+            ScorerProficiency = request.UmpireProficiency,
         });
 
         await db.SaveChangesAsync();
