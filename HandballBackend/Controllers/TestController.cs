@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HandballBackend.Controllers;
 
 [ApiController]
-[Authorize(Policy = Policies.IsAdmin)]
+// [Authorize(Policy = Policies.IsAdmin)]
 [Route("/api/[controller]")]
 public class TestController : ControllerBase {
     [HttpPost("backup")]
