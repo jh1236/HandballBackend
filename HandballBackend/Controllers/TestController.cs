@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HandballBackend.Controllers;
 
 [ApiController]
-[Authorize(Policy = Policies.IsAdmin)]
+// [Authorize(Policy = Policies.IsAdmin)]
 [Route("/api/[controller]")]
 public class TestController : ControllerBase {
     [HttpPost("backup")]
@@ -43,6 +43,19 @@ public class TestController : ControllerBase {
             await Task.Delay(200);
             ServerManagmentHelper.RebuildServer();
         });
+        return Ok();
+    }
+
+    [HttpGet("log")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<string>> GetLog() {
+        return await ExceptionLoggingHelper.Read();
+    }
+
+    [HttpPost("log/clear")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ClearLog() {
+        await ExceptionLoggingHelper.Clear();
         return Ok();
     }
 }

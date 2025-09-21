@@ -1,6 +1,7 @@
 namespace HandballBackend;
 
 public static class Config {
+    public static bool SAVE_ERRORS = false;
     public static string BACKUP_FOLDER = "./backup";
     public static bool USING_POSTGRES = true;
     public static string RESOURCES_FOLDER = "./resources";
