@@ -108,7 +108,7 @@ public class OfficialsController : ControllerBase {
         public required int ScorerProficiency { get; set; }
     }
 
-    [HttpPost("addOfficialToTournament")]
+    [HttpPost("addToTournament")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<ActionResult> AddOfficialToTournament(
         [FromBody] AddOfficialRequest request) {
@@ -153,7 +153,7 @@ public class OfficialsController : ControllerBase {
     }
 
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    [HttpDelete("removeOfficialFromTournament")]
+    [HttpDelete("removeFromTournament")]
     public async Task<ActionResult> RemoveOfficialFromTournament([FromBody] RemoveOfficialRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments

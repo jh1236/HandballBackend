@@ -235,7 +235,7 @@ public class TeamsController : ControllerBase {
         public required TeamData Team { get; set; }
     }
 
-    [HttpPost("/addTeamToTournament")]
+    [HttpPost("/addToTournament")]
     [Authorize(Policy = Policies.IsAdmin)]
     public async Task<ActionResult<AddTeamResponse>> AddTeamToTournament(
         [FromBody] AddTeamRequest request) {
@@ -322,7 +322,7 @@ public class TeamsController : ControllerBase {
         public required TeamData Team { get; set; }
     }
 
-    [HttpPatch("updateTeamForTournament")]
+    [HttpPatch("updateForTournament")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<ActionResult<UpdateTeamResponse>> UpdateTeamForTournament(
         [FromBody] UpdateTeamRequest request) {
@@ -376,7 +376,7 @@ public class TeamsController : ControllerBase {
         public string? TournamentSearchableName { get; set; }
     }
 
-    [HttpDelete("removeTeamFromTournament")]
+    [HttpDelete("removeFromTournament")]
     [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<ActionResult> RemoveTeamFromTournament([FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
