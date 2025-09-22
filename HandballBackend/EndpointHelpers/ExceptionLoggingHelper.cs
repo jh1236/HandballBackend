@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace HandballBackend.EndpointHelpers;
@@ -7,7 +7,9 @@ public static class ExceptionLoggingHelper {
     private const string Path = "./error.log";
 
     public static async Task Write(Exception exception, HttpContext httpContext) {
-        await File.AppendAllTextAsync(Path, $"[{DateTime.Now} - {httpContext.Request.Path}] {exception.Message}\n");
+        var exceptionOrigin = exception.StackTrace?.Split('\r').FirstOrDefault(l => l.Contains("HandballBackend"))?.Split(" in ")[1].Trim();
+        await File.AppendAllTextAsync(Path,
+            $"[{DateTime.Now} - {httpContext.Request.Path}] {exception.GetType()} - {exception.Message} {(exceptionOrigin != null ? $"- {exceptionOrigin}" : "")}\n");
     }
 
     public static async Task<string> Read() {

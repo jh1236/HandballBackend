@@ -8,7 +8,13 @@ public class ExceptionLoggingMiddleware(RequestDelegate next) {
         var originalBody = context.Response.Body;
         await using var memStream = new MemoryStream();
         context.Response.Body = memStream;
-        await next(context);
+        try {
+            await next(context);
+        } catch (Exception ex) {
+            await ExceptionLoggingHelper.Write(ex, context);
+            throw;
+        }
+
         memStream.Seek(0, SeekOrigin.Begin);
         var bodyText = await new StreamReader(memStream).ReadToEndAsync();
         if (context.Response.StatusCode >= 400) {
