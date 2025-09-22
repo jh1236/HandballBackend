@@ -130,6 +130,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         var db = new HandballContext();
         var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started && !g.IsBye)
             .IncludeRelevant().ToListAsync();
+        if (games.Count <= 0) return;
         var round = games.Max(g => g.Round);
         var courtOneGames = games.Where(g => g.Court == 0).ToList();
         var courtTwoGames = games.Where(g => g.Court == 1).Cast<Game?>().ToList();
