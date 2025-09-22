@@ -13,7 +13,7 @@ public class SaveErrorsHandler()
         }
 
         if (!output) return;
-        
+
         builder.Services.AddProblemDetails();
         Config.SAVE_ERRORS = true;
     }
