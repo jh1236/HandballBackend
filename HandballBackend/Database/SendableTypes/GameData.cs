@@ -47,6 +47,7 @@ public class AdminGameData {
             .FirstOrDefault();
         Cards = game.Events.Where(a => GameEvent.CardTypes.Contains(a.EventType))
             .Select(a => a.ToSendableData())
+            .OrderBy(ge => ge.Id)
             .ToArray();
         Resolved = game.Resolved;
     }
