@@ -45,4 +45,17 @@ public class TestController : ControllerBase {
         });
         return Ok();
     }
+
+    [HttpGet("log")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<string>> GetLog() {
+        return await ExceptionLoggingHelper.Read();
+    }
+
+    [HttpPost("log/clear")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ClearLog() {
+        await ExceptionLoggingHelper.Clear();
+        return Ok();
+    }
 }

@@ -3,6 +3,7 @@ using HandballBackend.Arguments;
 using HandballBackend.Authentication;
 using HandballBackend.Converters;
 using HandballBackend.Database.Models;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authentication;
 
@@ -43,6 +44,12 @@ var app = builder.Build();
 if (Config.LOGGING) {
     app.UseMiddleware<RequestLogger>();
 }
+
+if (Config.SAVE_ERRORS) {
+    // app.UseExceptionHandler();
+    app.UseExceptionLogging();
+}
+
 
 app.UseSwagger();
 app.UseSwaggerUI();
