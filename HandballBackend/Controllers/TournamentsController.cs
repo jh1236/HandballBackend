@@ -78,5 +78,28 @@ public class TournamentsController : ControllerBase {
         return Ok();
     }
 
+    public class CreateTournamentRequest {
+        public required string Name { get; set; }
+        public required string FixturesType { get; set; }
+        public required string FinalsType { get; set; }
+    }
 
+    [HttpPost("create")]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
+    public async Task<ActionResult> CreateTournament([FromBody] CreateTournamentRequest request) {
+        var db = new HandballContext();
+        var tournament = new Tournament {
+            Name = request.Name,
+            SearchableName = Utilities.ToSearchable(request.Name),
+            Editable = false,
+            FixturesType = request.FixturesType,
+            FinalsType = request.FinalsType,
+            Ranked = true,
+            TwoCourts = true,
+            Started = false,
+            ImageUrl = "/api/image?name=blank"
+        };
+        await db.Tournaments.AddAsync(tournament);
+        return Ok();
+    }
 }
