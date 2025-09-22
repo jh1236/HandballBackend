@@ -46,10 +46,16 @@ public class TestController : ControllerBase {
         return Ok();
     }
 
+    public class GetLogResponse {
+        public required string Log { get; set; }
+    }
+
     [HttpGet("log")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<string>> GetLog() {
-        return await ExceptionLoggingHelper.Read();
+    public async Task<ActionResult<GetLogResponse>> GetLog() {
+        return new GetLogResponse {
+            Log = await ExceptionLoggingHelper.Read()
+        };
     }
 
     [HttpPost("log/clear")]
