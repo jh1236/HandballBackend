@@ -179,4 +179,46 @@ public class OfficialsController : ControllerBase {
         await db.SaveChangesAsync();
         return Ok();
     }
+
+    public class UpdateOfficialRequest {
+        public required string OfficialSearchableName { get; set; }
+        public required string TournamentSearchableName { get; set; }
+
+        public int? UmpireProficiency { get; set; }
+        public int? ScorerProficiency { get; set; }
+    }
+
+    [TournamentAuthorize(PermissionType.UmpireManager)]
+    [HttpDelete("updateForTournament")]
+    public async Task<ActionResult> UpdateOfficialFromTournament([FromBody] UpdateOfficialRequest request) {
+        var db = new HandballContext();
+        var tournament = await db.Tournaments
+            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+        if (tournament is null) {
+            return NotFound("Invalid Tournament");
+        }
+
+        if (tournament.Started) {
+            return NotFound("Tournament has already started!");
+        }
+
+        var tournamentOfficial = await db.TournamentOfficials.FirstOrDefaultAsync(to =>
+            to.TournamentId == tournament.Id && to.Official.Person.SearchableName == request.OfficialSearchableName);
+
+
+        if (tournamentOfficial == null) {
+            return BadRequest("The Official doesn't exist");
+        }
+
+        if (request.UmpireProficiency.HasValue) {
+            tournamentOfficial.UmpireProficiency = request.UmpireProficiency.Value;
+        }
+
+        if (request.ScorerProficiency.HasValue) {
+            tournamentOfficial.UmpireProficiency = request.ScorerProficiency.Value;
+        }
+
+        await db.SaveChangesAsync();
+        return Ok();
+    }
 }
