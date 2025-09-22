@@ -28,9 +28,12 @@ public class OfficialsController : ControllerBase {
         var db = new HandballContext();
         OfficialData[]? officials;
 
+
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
             return NotFound(new InvalidTournament(tournamentSearchable));
         }
+
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
 
         if (tournament is not null) {
             var intermediate = await db.TournamentOfficials
@@ -38,14 +41,14 @@ public class OfficialsController : ControllerBase {
                 .IncludeRelevant()
                 .OrderBy(p => p.Official.Person.SearchableName)
                 .ToArrayAsync();
-            officials = intermediate.Select(to => to.Official.ToSendableData(tournament))
+            officials = intermediate.Select(to => to.Official.ToSendableData(tournament, isAdmin: isAdmin))
                 .OrderByDescending(o => o.Role).ToArray();
             ;
         } else {
             officials = await db.Officials
                 .IncludeRelevant()
                 .OrderBy(p => p.Person.SearchableName)
-                .Select(o => o.ToSendableData(null, false))
+                .Select(o => o.ToSendableData(null, false, isAdmin))
                 .ToArrayAsync();
         }
 
@@ -75,6 +78,7 @@ public class OfficialsController : ControllerBase {
         [FromQuery] bool returnTournament = false
     ) {
         var db = new HandballContext();
+
         var official = await db.Officials.Where(o => o.Person.SearchableName == searchable).IncludeRelevant()
             .Include(o => o.Games)
             .ThenInclude(g => g.Players)
@@ -87,6 +91,8 @@ public class OfficialsController : ControllerBase {
             return NotFound(new InvalidTournament(tournamentSearchable));
         }
 
+        var isAdmin = PermissionHelper.IsUmpireManager(tournament);
+
 
         if (returnTournament && tournament is null) {
             return BadRequest(new TournamentNotProvidedForReturn());
@@ -94,7 +100,7 @@ public class OfficialsController : ControllerBase {
 
 
         return new GetOfficialResponse {
-            Official = official.ToSendableData(tournament, true),
+            Official = official.ToSendableData(tournament, true, isAdmin: isAdmin),
             tournament = returnTournament ? tournament!.ToSendableData() : null
         };
     }
@@ -106,6 +112,8 @@ public class OfficialsController : ControllerBase {
 
         public required int UmpireProficiency { get; set; }
         public required int ScorerProficiency { get; set; }
+
+        public string Role { get; set; } = "Umpire";
     }
 
     [HttpPost("addToTournament")]
@@ -135,12 +143,16 @@ public class OfficialsController : ControllerBase {
             return BadRequest("That official is already in this tournament!");
         }
 
+        if (!Enum.TryParse<OfficialRole>(request.Role.Replace(" ", ""), out var role)) {
+            return BadRequest("Invalid Role");
+        }
+
         await db.TournamentOfficials.AddAsync(new TournamentOfficial {
             TournamentId = tournament.Id,
             OfficialId = official.Id,
-            Role = OfficialRole.Umpire,
-            UmpireProficiency = request.ScorerProficiency,
-            ScorerProficiency = request.UmpireProficiency,
+            Role = role,
+            UmpireProficiency = request.UmpireProficiency,
+            ScorerProficiency = request.ScorerProficiency,
         });
 
         await db.SaveChangesAsync();
@@ -186,10 +198,11 @@ public class OfficialsController : ControllerBase {
 
         public int? UmpireProficiency { get; set; }
         public int? ScorerProficiency { get; set; }
+        public string? Role { get; set; }
     }
 
     [TournamentAuthorize(PermissionType.UmpireManager)]
-    [HttpDelete("updateForTournament")]
+    [HttpPost("updateForTournament")]
     public async Task<ActionResult> UpdateOfficialFromTournament([FromBody] UpdateOfficialRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
@@ -215,7 +228,15 @@ public class OfficialsController : ControllerBase {
         }
 
         if (request.ScorerProficiency.HasValue) {
-            tournamentOfficial.UmpireProficiency = request.ScorerProficiency.Value;
+            tournamentOfficial.ScorerProficiency = request.ScorerProficiency.Value;
+        }
+
+        if (request.Role != null) {
+            if (Enum.TryParse<OfficialRole>(request.Role.Replace(" ", ""), out var role)) {
+                tournamentOfficial.Role = role;
+            } else {
+                return BadRequest("Invalid Role");
+            }
         }
 
         await db.SaveChangesAsync();

@@ -89,7 +89,7 @@ public class TournamentsController : ControllerBase {
     }
 
     [HttpPost("create")]
-    [TournamentAuthorize(PermissionType.Admin)]
+    [Authorize(Policy = Policies.IsAdmin)]
     public async Task<ActionResult> CreateTournament([FromBody] CreateTournamentRequest request) {
         var db = new HandballContext();
         var tournament = new Tournament {
@@ -104,6 +104,7 @@ public class TournamentsController : ControllerBase {
             ImageUrl = "/api/image?name=blank"
         };
         await db.Tournaments.AddAsync(tournament);
+        await db.SaveChangesAsync();
         return Created(Config.MY_ADDRESS + $"/api/tournaments/{tournament.SearchableName}", new CreateTournamentResponse {
             Tournament = tournament.ToSendableData()
         });
