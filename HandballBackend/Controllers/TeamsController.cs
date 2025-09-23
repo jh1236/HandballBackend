@@ -235,7 +235,7 @@ public class TeamsController : ControllerBase {
         public required TeamData Team { get; set; }
     }
 
-    [HttpPost("/addToTournament")]
+    [HttpPost("addToTournament")]
     [Authorize(Policy = Policies.IsAdmin)]
     public async Task<ActionResult<AddTeamResponse>> AddTeamToTournament(
         [FromBody] AddTeamRequest request) {
