@@ -141,7 +141,7 @@ public class TournamentsController : ControllerBase {
         }
 
         await db.SaveChangesAsync();
-        
+
         return Ok();
     }
 }
