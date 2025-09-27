@@ -139,6 +139,8 @@ public class TournamentsController : ControllerBase {
         if (request.FinalsType != null) {
             tournament.FinalsType = request.FinalsType;
         }
+
+        await db.SaveChangesAsync();
         
         return Ok();
     }
