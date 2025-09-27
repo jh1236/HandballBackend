@@ -7,9 +7,18 @@ using Microsoft.EntityFrameworkCore;
 
 [assembly: InternalsVisibleTo("HandballBackend.Tests")]
 
+
 namespace HandballBackend.FixtureGenerator;
 
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool fillCourts) {
+    protected static class UmpiringProficiencies {
+        public const int BestOfficial = 3;
+        public const int MiddleOfficial = 2;
+        public const int BadOfficial = 1;
+        public const int NotOfficial = 0;
+        public const int EmergencyOfficial = -1;
+    }
+
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
         return name switch {
             "OneRound" => new OneRound(tournamentId),
@@ -117,7 +126,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
     internal class OfficialContainer {
-        public string Name;
+        public required string Name;
         public int PlayerId;
         public int OfficialId;
         public int GamesUmpired;
@@ -178,6 +187,16 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             //the solution found no possible result
             TrySolution(solutionArray, officials, 0, true, false, true);
         }
+
+        foreach (var soln in solution.SelectMany(i => new[] { i.Item1, i.Item2 }).Where(i => i != null).Cast<UmpiringSolution>()) {
+            var game = games.First(g => g.Id == soln.GameId);
+            if (soln.Official!.OfficialId > 0) {
+                game.OfficialId = soln.Official.OfficialId;
+            }
+            if (soln.Scorer!.OfficialId > 0) {
+                game.ScorerId = soln.Scorer.OfficialId;
+            }
+        }
     }
 
     internal static bool TrySolution((UmpiringSolution, UmpiringSolution?)[] solutions,
@@ -206,9 +225,10 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         }
 
         var officialsByPreference = officials
-            .Where(to => (scorer ? to.ScorerProficiency : to.UmpireProficiency) != 0)
+            .Where(to => (scorer ? to.ScorerProficiency : to.UmpireProficiency) != UmpiringProficiencies.NotOfficial)
             .GroupBy(to => scorer ? to.ScorerProficiency : to.UmpireProficiency)
-            .OrderByDescending(k => k.Key)
+            .OrderByDescending(k => k.Key != UmpiringProficiencies.EmergencyOfficial)
+            .ThenByDescending(k => k.Key)
             .Select(to => to.ToList())
             .ToList();
 
@@ -258,7 +278,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                 myGame.Scorer = official;
                 official.GamesScored++;
             } else {
-                var official = new OfficialContainer() {
+                var official = new OfficialContainer {
                     GamesScored = 0,
                     GamesUmpired = 0,
                     Name = "Unfillable",
