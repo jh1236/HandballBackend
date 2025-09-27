@@ -129,7 +129,7 @@ public class TournamentsController : ControllerBase {
         }
 
         if (request.Name != null) {
-            tournament.Name = request.SearchableName;
+            tournament.Name = request.Name;
         }
 
         if (request.FixturesType != null) {
