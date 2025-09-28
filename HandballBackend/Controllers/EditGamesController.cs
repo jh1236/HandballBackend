@@ -315,7 +315,7 @@ public class EditGamesController : ControllerBase {
     public class EndGameRequest {
         public int Id { get; set; }
         public required List<string> Votes { get; set; }
-        public List<string> NefariousVotes { get; set; }
+        public List<string> NefariousVotes { get; set; } = [];
         public int TeamOneRating { get; set; }
         public int TeamTwoRating { get; set; }
         public string Notes { get; set; } = string.Empty;
