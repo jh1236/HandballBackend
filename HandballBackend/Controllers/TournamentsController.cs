@@ -3,6 +3,7 @@ using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
+using HandballBackend.ErrorTypes;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -108,5 +109,39 @@ public class TournamentsController : ControllerBase {
         return Created(Config.MY_ADDRESS + $"/api/tournaments/{tournament.SearchableName}", new CreateTournamentResponse {
             Tournament = tournament.ToSendableData()
         });
+    }
+
+    public class UpdateTournamentRequest {
+        public required string SearchableName { get; set; }
+        public string? Name { get; set; }
+        public string? FixturesType { get; set; }
+        public string? FinalsType { get; set; }
+    }
+
+
+    [HttpPost("update")]
+    [Authorize(Policy = Policies.IsAdmin)]
+    public async Task<ActionResult> UpdateTournament([FromBody] UpdateTournamentRequest request) {
+        var db = new HandballContext();
+
+        if (!Utilities.TournamentOrElse(db, request.SearchableName, out var tournament)) {
+            return NotFound(new InvalidTournament($"The Tournament {request.SearchableName} does not exist"));
+        }
+
+        if (request.Name != null) {
+            tournament.Name = request.Name;
+        }
+
+        if (request.FixturesType != null) {
+            tournament.FixturesType = request.FixturesType;
+        }
+
+        if (request.FinalsType != null) {
+            tournament.FinalsType = request.FinalsType;
+        }
+
+        await db.SaveChangesAsync();
+
+        return Ok();
     }
 }
