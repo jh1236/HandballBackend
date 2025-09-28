@@ -568,7 +568,7 @@ public static class GameManager {
 
         var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes);
         await db.AddAsync(endEvent);
-        
+
 
         if (!string.IsNullOrEmpty(protestReasonTeamOne)) {
             var protestEvent = SetUpGameEvent(game, GameEventType.Protest, true, null, protestReasonTeamOne);

@@ -117,7 +117,7 @@ public class PlayerGameStats {
     [Required]
     [Column("serve_streak")]
     public int ServeStreak { get; set; } = 0;
-    
+
     [Required]
     [Column("is_evil")]
     public bool IsEvil { get; set; } = false;
