@@ -553,6 +553,7 @@ public static class GameManager {
     public static async Task End(
         int gameNumber,
         List<string> bestPlayerOrder,
+        List<string> nefariousPlayers,
         int teamOneRating, int teamTwoRating,
         string notes,
         string? protestReasonTeamOne, string? protestReasonTeamTwo,
@@ -586,6 +587,7 @@ public static class GameManager {
         var votes = 2;
         var task = new List<Task>();
         foreach (var pgs in playersInOrder) {
+            pgs.IsEvil = nefariousPlayers.Contains(pgs.Player.SearchableName);
             pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
             if (votes <= 0) continue;
             var votesEvent = SetUpGameEvent(game, GameEventType.Votes, true, pgs.PlayerId, details: votes--);
