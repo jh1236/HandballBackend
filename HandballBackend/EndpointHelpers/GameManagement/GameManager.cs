@@ -569,8 +569,6 @@ public static class GameManager {
         var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes);
         await db.AddAsync(endEvent);
         
-        
-
 
         if (!string.IsNullOrEmpty(protestReasonTeamOne)) {
             var protestEvent = SetUpGameEvent(game, GameEventType.Protest, true, null, protestReasonTeamOne);
@@ -589,6 +587,7 @@ public static class GameManager {
         var votes = 2;
         var task = new List<Task>();
         foreach (var pgs in playersInOrder) {
+            pgs.IsEvil = nefariousPlayers.Contains(pgs.Player.SearchableName);
             pgs.Rating = pgs.TeamId == game.TeamOneId ? teamOneRating : teamTwoRating;
             if (votes <= 0) continue;
             var votesEvent = SetUpGameEvent(game, GameEventType.Votes, true, pgs.PlayerId, details: votes--);
