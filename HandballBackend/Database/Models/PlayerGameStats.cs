@@ -119,8 +119,8 @@ public class PlayerGameStats {
     public int ServeStreak { get; set; } = 0;
 
     [Required]
-    [Column("is_evil")]
-    public bool IsEvil { get; set; } = false;
+    [Column("demerits")]
+    public int Demerits { get; set; } = 0;
 
     [Column("side_of_court")]
     public string? SideOfCourt { get; set; }

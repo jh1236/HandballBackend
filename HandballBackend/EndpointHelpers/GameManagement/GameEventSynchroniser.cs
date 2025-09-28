@@ -134,6 +134,12 @@ internal static class GameEventSynchroniser {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
         player.Merits++;
     }
+
+    public static void SyncDemerit(Game game, GameEvent gameEvent) {
+        var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
+        player.Demerits++;
+    }
+
     public static void SyncCard(Game game, GameEvent gameEvent) {
         var player = game.Players.FirstOrDefault(p => p.PlayerId == gameEvent.PlayerId)!;
         switch (gameEvent.EventType) {

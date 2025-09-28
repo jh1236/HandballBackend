@@ -96,8 +96,7 @@ internal static class UtilityFunctions {
             GameManager.Forfeit(i, false);
             GameManager.End(
                 i,
-                game.Players.Select(p => p.Player.SearchableName).ToList(),
-                [], 3, 3,
+                game.Players.Select(p => p.Player.SearchableName).ToList(), 3, 3,
                 "Testing",
                 null,
                 null,
