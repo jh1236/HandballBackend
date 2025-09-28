@@ -383,4 +383,19 @@ public class EditGamesController : ControllerBase {
         await GameManager.Resolve(resolveRequest.Id);
         return NoContent();
     }
+
+    public class ReplayRequest {
+        public required int Id { get; set; }
+    }
+
+    [HttpPost("replay")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ReplayForGame([FromBody] ReplayRequest replayRequest) {
+        if (!PermissionHelper.IsUmpire(new HandballContext().Games.First(g => g.GameNumber == replayRequest.Id))) {
+            return Forbid();
+        }
+
+        await GameManager.Replay(replayRequest.Id);
+        return NoContent();
+    }
 }
