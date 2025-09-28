@@ -11,7 +11,7 @@ namespace HandballBackend;
 internal static class UtilityFunctions {
     public static void init() {
         Config.SECRETS_FOLDER =
-            @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\secrets";
+            @"C:\Users\thatg\RiderProjects\HandballBackend\build\secrets";
         Config.RESOURCES_FOLDER =
             @"G:\Programming\c#\HandballBackend\HandballBackend\bin\Release\net8.0\win-x64\publish\resources";
     }

@@ -553,6 +553,7 @@ public static class GameManager {
     public static async Task End(
         int gameNumber,
         List<string> bestPlayerOrder,
+        List<string> nefariousPlayers,
         int teamOneRating, int teamTwoRating,
         string notes,
         string? protestReasonTeamOne, string? protestReasonTeamTwo,
@@ -567,6 +568,8 @@ public static class GameManager {
 
         var endEvent = SetUpGameEvent(game, GameEventType.EndGame, null, null, notes);
         await db.AddAsync(endEvent);
+        
+        
 
 
         if (!string.IsNullOrEmpty(protestReasonTeamOne)) {
