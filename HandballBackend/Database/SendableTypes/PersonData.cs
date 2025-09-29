@@ -142,7 +142,7 @@ public class PersonData {
                     Stats["Games Started Substitute"] += 1;
                     break;
             }
-            Stats["Nefarious Votes"] += pgs.IsEvil ? 1 : 0;
+            Stats["Nefarious Votes"] += pgs.Demerits;
         }
 
         var tournaments = new HashSet<int>();

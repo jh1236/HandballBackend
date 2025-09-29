@@ -148,6 +148,35 @@ public class EditGamesController : ControllerBase {
         return NoContent();
     }
 
+    public class DemeritRequest {
+        public required int Id { get; set; }
+        public required bool FirstTeam { get; set; }
+        public bool? LeftPlayer { get; set; }
+        public string? PlayerSearchable { get; set; }
+        public string? Reason { get; set; }
+    }
+
+    [HttpPost("demerit")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DemeritForGame([FromBody] DemeritRequest demeritRequest) {
+        if (!PermissionHelper.IsUmpire(new HandballContext().Games.First(g => g.GameNumber == demeritRequest.Id))) {
+            return Forbid();
+        }
+
+        if (!string.IsNullOrEmpty(demeritRequest.PlayerSearchable)) {
+            await GameManager.Demerit(demeritRequest.Id, demeritRequest.FirstTeam,
+                demeritRequest.PlayerSearchable, demeritRequest.Reason);
+        } else if (demeritRequest.LeftPlayer.HasValue) {
+            await GameManager.Demerit(demeritRequest.Id, demeritRequest.FirstTeam,
+                demeritRequest.LeftPlayer.Value, demeritRequest.Reason);
+        } else {
+            return BadRequest(new MustProvideArgument(nameof(demeritRequest.LeftPlayer),
+                nameof(demeritRequest.PlayerSearchable)));
+        }
+
+        return NoContent();
+    }
+
     public class CardRequest {
         public required int Id { get; set; }
         public required bool FirstTeam { get; set; }
@@ -315,7 +344,6 @@ public class EditGamesController : ControllerBase {
     public class EndGameRequest {
         public int Id { get; set; }
         public required List<string> Votes { get; set; }
-        public List<string> NefariousVotes { get; set; } = [];
         public int TeamOneRating { get; set; }
         public int TeamTwoRating { get; set; }
         public string Notes { get; set; } = string.Empty;
@@ -336,7 +364,6 @@ public class EditGamesController : ControllerBase {
         await GameManager.End(
             endGameRequest.Id,
             endGameRequest.Votes,
-            endGameRequest.NefariousVotes,
             endGameRequest.TeamOneRating,
             endGameRequest.TeamTwoRating,
             endGameRequest.Notes,
