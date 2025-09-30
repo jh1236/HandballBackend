@@ -108,7 +108,7 @@ public class OfficialsController : ControllerBase {
 
     public class AddOfficialRequest {
         public required string OfficialSearchableName { get; set; }
-        public required string TournamentSearchableName { get; set; }
+        public required string Tournament { get; set; }
 
         public required int UmpireProficiency { get; set; }
         public required int ScorerProficiency { get; set; }
@@ -122,7 +122,7 @@ public class OfficialsController : ControllerBase {
         [FromBody] AddOfficialRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
-            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefaultAsync(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
@@ -161,7 +161,7 @@ public class OfficialsController : ControllerBase {
 
     public class RemoveOfficialRequest {
         public required string OfficialSearchableName { get; set; }
-        public required string TournamentSearchableName { get; set; }
+        public required string Tournament { get; set; }
     }
 
     [TournamentAuthorize(PermissionType.UmpireManager)]
@@ -169,7 +169,7 @@ public class OfficialsController : ControllerBase {
     public async Task<ActionResult> RemoveOfficialFromTournament([FromBody] RemoveOfficialRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
-            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefaultAsync(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
@@ -194,7 +194,7 @@ public class OfficialsController : ControllerBase {
 
     public class UpdateOfficialRequest {
         public required string OfficialSearchableName { get; set; }
-        public required string TournamentSearchableName { get; set; }
+        public required string Tournament { get; set; }
 
         public int? UmpireProficiency { get; set; }
         public int? ScorerProficiency { get; set; }
@@ -206,7 +206,7 @@ public class OfficialsController : ControllerBase {
     public async Task<ActionResult> UpdateOfficialFromTournament([FromBody] UpdateOfficialRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
-            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefaultAsync(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
