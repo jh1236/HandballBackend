@@ -233,6 +233,10 @@ public class OfficialsController : ControllerBase {
 
         if (request.Role != null) {
             if (Enum.TryParse<OfficialRole>(request.Role.Replace(" ", ""), out var role)) {
+                if (tournamentOfficial.Role.ToPermissionType() >= PermissionHelper.GetRequestPermissions(tournament)) {
+                    return Forbid("You cannot set permissions of someone who is higher than your own!");
+                }
+
                 if (role.ToPermissionType() >= PermissionHelper.GetRequestPermissions(tournament)) {
                     return Forbid("You cannot set permissions higher than your own!");
                 }
