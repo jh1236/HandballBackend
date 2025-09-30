@@ -236,7 +236,7 @@ public class TeamsController : ControllerBase {
     }
 
     [HttpPost("addToTournament")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<ActionResult<AddTeamResponse>> AddTeamToTournament(
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
