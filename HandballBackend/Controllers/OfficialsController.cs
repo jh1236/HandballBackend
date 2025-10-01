@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
@@ -185,6 +184,11 @@ public class OfficialsController : ControllerBase {
         if (tournamentOfficial == null) {
             return BadRequest("The Official doesn't exist");
         }
+
+        if (tournamentOfficial.Role.ToPermissionType() >= PermissionHelper.GetRequestPermissions(tournament)) {
+            return Forbid("You cannot delete someone with permissions higher than your own!");
+        }
+
 
         db.TournamentOfficials.Remove(tournamentOfficial);
 
