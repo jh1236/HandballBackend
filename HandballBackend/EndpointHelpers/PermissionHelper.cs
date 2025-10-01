@@ -95,6 +95,15 @@ public static class PermissionHelper {
         };
     }
 
+    public static PermissionType GetRequestPermissions(Tournament? tournament) {
+        var person = PersonByToken(GetToken());
+        if (person == null) return PermissionType.None;
+        if (IsAdmin()) return PermissionType.Admin;
+        if (tournament == null) return person.PermissionLevel;
+        return person.Official!.TournamentOfficials.First(to =>
+            to.TournamentId == tournament.Id).Role.ToPermissionType();
+    }
+
     private static bool PersonOrElse(HandballContext db, int personId, out Person person) {
         person = db.People.Include(p => p.Official.TournamentOfficials)!
             .ThenInclude(to => to.Tournament)!

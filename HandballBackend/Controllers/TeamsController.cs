@@ -223,7 +223,7 @@ public class TeamsController : ControllerBase {
 
 
     public class AddTeamRequest {
-        public required string TournamentSearchableName { get; set; }
+        public required string Tournament { get; set; }
         public string? TeamName { get; set; }
         public string? CaptainName { get; set; }
         public string? NonCaptainName { get; set; }
@@ -236,12 +236,12 @@ public class TeamsController : ControllerBase {
     }
 
     [HttpPost("addToTournament")]
-    [Authorize(Policy = Policies.IsAdmin)]
+    [TournamentAuthorize(PermissionType.UmpireManager)]
     public async Task<ActionResult<AddTeamResponse>> AddTeamToTournament(
         [FromBody] AddTeamRequest request) {
         var db = new HandballContext();
         var tournament = db.Tournaments
-            .FirstOrDefault(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefault(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
@@ -312,7 +312,7 @@ public class TeamsController : ControllerBase {
 
 
     public class UpdateTeamRequest {
-        public required string TournamentSearchableName { get; set; }
+        public required string Tournament { get; set; }
         public required string TeamSearchableName { get; set; }
         public string? NewName { get; set; }
         public string? NewColor { get; set; }
@@ -328,7 +328,7 @@ public class TeamsController : ControllerBase {
         [FromBody] UpdateTeamRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
-            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefaultAsync(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }
@@ -373,7 +373,7 @@ public class TeamsController : ControllerBase {
 
     public class RemoveTeamRequest {
         public string? TeamSearchableName { get; set; }
-        public string? TournamentSearchableName { get; set; }
+        public string? Tournament { get; set; }
     }
 
     [HttpDelete("removeFromTournament")]
@@ -381,7 +381,7 @@ public class TeamsController : ControllerBase {
     public async Task<ActionResult> RemoveTeamFromTournament([FromBody] RemoveTeamRequest request) {
         var db = new HandballContext();
         var tournament = await db.Tournaments
-            .FirstOrDefaultAsync(a => a.SearchableName == request.TournamentSearchableName);
+            .FirstOrDefaultAsync(a => a.SearchableName == request.Tournament);
         if (tournament is null) {
             return NotFound("Invalid Tournament");
         }

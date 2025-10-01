@@ -112,7 +112,7 @@ public class TournamentsController : ControllerBase {
     }
 
     public class UpdateTournamentRequest {
-        public required string SearchableName { get; set; }
+        public required string Tournament { get; set; }
         public string? Name { get; set; }
         public string? FixturesType { get; set; }
         public string? FinalsType { get; set; }
@@ -124,20 +124,20 @@ public class TournamentsController : ControllerBase {
     public async Task<ActionResult> UpdateTournament([FromBody] UpdateTournamentRequest request) {
         var db = new HandballContext();
 
-        if (!Utilities.TournamentOrElse(db, request.SearchableName, out var tournament)) {
-            return NotFound(new InvalidTournament($"The Tournament {request.SearchableName} does not exist"));
+        if (!Utilities.TournamentOrElse(db, request.Tournament, out var tournament)) {
+            return NotFound(new InvalidTournament($"The Tournament {request.Tournament} does not exist"));
         }
 
         if (request.Name != null) {
-            tournament.Name = request.Name;
+            tournament!.Name = request.Name;
         }
 
         if (request.FixturesType != null) {
-            tournament.FixturesType = request.FixturesType;
+            tournament!.FixturesType = request.FixturesType;
         }
 
         if (request.FinalsType != null) {
-            tournament.FinalsType = request.FinalsType;
+            tournament!.FinalsType = request.FinalsType;
         }
 
         await db.SaveChangesAsync();
