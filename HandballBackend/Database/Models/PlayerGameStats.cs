@@ -1,3 +1,4 @@
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HandballBackend.Database.SendableTypes;
@@ -176,5 +177,6 @@ public class PlayerGameStats {
         CardTimeRemaining = 0;
         BestPlayerVotes = 0;
         Merits = 0;
+        Demerits = 0;
     }
 }
