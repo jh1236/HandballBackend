@@ -61,6 +61,9 @@ internal static class GameEventSynchroniser {
                 case GameEventType.Merit:
                     SyncMerit(game, gameEvent);
                     break;
+                case GameEventType.Demerit:
+                    SyncDemerit(game, gameEvent);
+                    break;
                 case GameEventType.Notes:
                 case GameEventType.Substitute:
                 case GameEventType.EndTimeout:
