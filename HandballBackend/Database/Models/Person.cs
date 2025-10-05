@@ -89,13 +89,8 @@ public class Person {
                 return pgs.InitialElo;
             }
         }
-
-        var player = PlayerGameStats?.OrderByDescending(pgs => pgs.GameId).FirstOrDefault();
-        if (player is { EloDelta: not null }) {
-            return (double) (player.EloDelta + player.InitialElo);
-        }
-
-        return player?.InitialElo ?? 1500.0;
+        
+        return EloCalculator.GetPlayerElos().GetValueOrDefault(Id, 1500);
     }
 
     public PersonData ToSendableData(

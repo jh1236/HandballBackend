@@ -57,7 +57,7 @@ public class Team : IHasRelevant<Team> {
 
     [NotMapped]
     public List<Person> People =>
-        new List<Person?> { Captain, NonCaptain, Substitute }
+        new List<Person?> {Captain, NonCaptain, Substitute}
             .Where(p => p != null)
             .Select(p => p!)
             .ToList();
@@ -71,12 +71,21 @@ public class Team : IHasRelevant<Team> {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
-    public double Elo() =>
-        new[] { Captain?.Elo(), NonCaptain?.Elo(), Substitute?.Elo() }
-            .Where(e => e.HasValue)
-            .Select(e => e!.Value)
-            .DefaultIfEmpty(1500.0)
-            .Average();
+    public double Elo(Tournament? tournament = null) {
+        var lastGame = PlayerGameStats.OrderByDescending(pgs => pgs.TournamentId == tournament?.Id)
+            .ThenByDescending(pgs => pgs.GameId).GroupBy(pgs => pgs.GameId).SelectMany(i => i)
+            .Select(pgs => pgs.EloDelta + pgs.InitialElo).Where(elo => elo.HasValue).Cast<double>().ToList();
+        if (lastGame.Count != 0) {
+            return lastGame.Average();
+        }
+        var ids = new[] { CaptainId, NonCaptainId, SubstituteId }
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value);
+
+        var allElos = EloCalculator.GetPlayerElos();
+        
+        return ids.Select(id => allElos.GetValueOrDefault(id, 1500)).DefaultIfEmpty(1500).Average();
+    }
 
     public GameTeamData ToGameSendableData(
         Game game,
@@ -85,7 +94,7 @@ public class Team : IHasRelevant<Team> {
         bool isAdmin = false
     ) {
         if (Id == 1) {
-            return new GameTeamData(this, game, false, false, formatData);
+            return new GameTeamData(this, game, false, false, false);
         }
 
         return new GameTeamData(this, game, generateStats, formatData, isAdmin);
