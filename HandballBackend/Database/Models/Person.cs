@@ -89,7 +89,7 @@ public class Person {
                 return pgs.InitialElo;
             }
         }
-        
+
         return EloCalculator.GetPlayerElos().GetValueOrDefault(Id, 1500);
     }
 

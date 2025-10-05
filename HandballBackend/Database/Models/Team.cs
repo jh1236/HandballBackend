@@ -57,7 +57,7 @@ public class Team : IHasRelevant<Team> {
 
     [NotMapped]
     public List<Person> People =>
-        new List<Person?> {Captain, NonCaptain, Substitute}
+        new List<Person?> { Captain, NonCaptain, Substitute }
             .Where(p => p != null)
             .Select(p => p!)
             .ToList();
@@ -83,7 +83,7 @@ public class Team : IHasRelevant<Team> {
             .Select(id => id!.Value);
 
         var allElos = EloCalculator.GetPlayerElos();
-        
+
         return ids.Select(id => allElos.GetValueOrDefault(id, 1500)).DefaultIfEmpty(1500).Average();
     }
 

@@ -47,7 +47,7 @@ public static class EloCalculator {
         var lastId = db.PlayerGameStats.Select(pgs => pgs.Id).OrderByDescending(i => i).FirstOrDefault();
         if (lastPgsID != lastId) {
             lastPgsID = lastId;
-            _cachedElos =  db.PlayerGameStats
+            _cachedElos = db.PlayerGameStats
                 .Join(
                     db.PlayerGameStats
                         .GroupBy(s => s.PlayerId)
