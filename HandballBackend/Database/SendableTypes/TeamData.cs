@@ -70,7 +70,7 @@ public class TeamData {
         if (!generateStats)
             return;
 
-        Elo = team.Elo(tournament);
+        Elo = team.DisplayElo(tournament);
 
         Stats = new Dictionary<string, dynamic>
         {

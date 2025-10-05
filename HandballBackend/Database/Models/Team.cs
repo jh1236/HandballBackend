@@ -71,13 +71,17 @@ public class Team : IHasRelevant<Team> {
         return new TeamData(this, tournament, generateStats, generatePlayerStats, formatData);
     }
 
-    public double Elo(Tournament? tournament = null) {
+    public double DisplayElo(Tournament? tournament = null) {
         var lastGame = PlayerGameStats.OrderByDescending(pgs => pgs.TournamentId == tournament?.Id)
             .ThenByDescending(pgs => pgs.GameId).GroupBy(pgs => pgs.GameId).SelectMany(i => i)
             .Select(pgs => pgs.EloDelta + pgs.InitialElo).Where(elo => elo.HasValue).Cast<double>().ToList();
         if (lastGame.Count != 0) {
             return lastGame.Average();
         }
+        return TrueElo();
+    }
+
+    public double TrueElo() {
         var ids = new[] { CaptainId, NonCaptainId, SubstituteId }
             .Where(id => id.HasValue)
             .Select(id => id!.Value);
