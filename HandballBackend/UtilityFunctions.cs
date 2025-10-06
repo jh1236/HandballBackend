@@ -106,7 +106,7 @@ internal static class UtilityFunctions {
             i++;
             game = db.Games.Include(game => game.Players).ThenInclude(playerGameStats => playerGameStats.Player)
                 .FirstOrDefault(g => g.GameNumber == i);
-            c = Console.ReadLine().ToLower() != "x";
+            c = !Console.ReadLine()!.Equals("x", StringComparison.CurrentCultureIgnoreCase);
         }
     }
 
