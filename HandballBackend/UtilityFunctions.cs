@@ -25,37 +25,41 @@ internal static class UtilityFunctions {
 
     public static void RegenerateElos() {
         init();
-        var teamElos = new Dictionary<int, double>();
+        var playerElos = new Dictionary<int, double>();
         var db = new HandballContext();
-        var games = db.Games.Where(g => !g.IsFinal && g.Ranked && !g.IsBye)
-            .OrderBy(g => g.TournamentId == 2)
-            .ThenBy(g => g.TournamentId == 3)
-            .ThenBy(g => g.StartTime)
-            .ThenBy(g => g.Id)
+        var games = db.Games
+            .OrderBy(g => g.GameNumber)
+            .Where(g => g.GameNumber > 0)
             .IncludeRelevant().Include(g =>
-                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon));
+                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon)).ToList();
         foreach (var game in games) {
-            if (!game.Ended) continue;
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
-            if (isRandomAbandonment) continue;
+            var shouldHaveDelta = game is { IsBye: false, IsFinal: false, Ranked: true } && !isRandomAbandonment &&
+                                  game.Ended;
             var playingPlayers = game.Players
                 .Where(pgs =>
                     game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
                     pgs.RoundsCarded + pgs.RoundsOnCourt > 0).ToList();
-            var teamOneElo = teamElos.GetValueOrDefault(game.TeamOne.Id, playingPlayers
-                .Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
-                .Average());
-            var teamTwoElo = teamElos.GetValueOrDefault(game.TeamTwo.Id, playingPlayers
-                .Where(pgs => pgs.TeamId == game.TeamTwoId).Select(pgs => pgs.InitialElo)
-                .Average());
+            var teamOneElo = playingPlayers
+                .Where(pgs => pgs.TeamId == game.TeamOneId)
+                .Select(pgs => playerElos.GetValueOrDefault(pgs.PlayerId, 1500))
+                .DefaultIfEmpty()
+                .Average();
+            var teamTwoElo = playingPlayers
+                .Where(pgs => pgs.TeamId == game.TeamTwoId)
+                .Select(pgs => playerElos.GetValueOrDefault(pgs.PlayerId, 1500))
+                .DefaultIfEmpty()
+                .Average();
             foreach (var pgs in playingPlayers) {
+                var initialElo = playerElos.GetValueOrDefault(pgs.PlayerId, 1500);
+                pgs.InitialElo = initialElo;
+                if (!shouldHaveDelta) continue;
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 var eloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
                 pgs.EloDelta = eloDelta;
-                teamElos[pgs.TeamId] = myElo + eloDelta;
-                if (pgs.TeamId == 7) Console.WriteLine(teamElos[7]);
+                playerElos[pgs.PlayerId] = initialElo + eloDelta;
             }
         }
 
