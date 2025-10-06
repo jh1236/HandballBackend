@@ -134,7 +134,7 @@ public class PlayersController() : ControllerBase {
             return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
-        List<Dictionary<string, dynamic?>> statsList;
+        List<Dictionary<string, dynamic>> statsList;
         if (gameNumber is not null) {
             statsList = db.PlayerGameStats
                 .Where(pgs => pgs.Game.GameNumber == gameNumber.Value)
