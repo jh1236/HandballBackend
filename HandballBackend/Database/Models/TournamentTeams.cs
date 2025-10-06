@@ -44,10 +44,10 @@ public class TournamentTeam : IHasRelevant<TournamentTeam> {
     public string? BigImageUrl { get; set; }
 
     [ForeignKey("TournamentId")]
-    public Tournament Tournament { get; set; }
+    public Tournament Tournament { get; set; } = null!;
 
     [ForeignKey("TeamId")]
-    public Team Team { get; set; }
+    public Team Team { get; set; } = null!;
 
     public TeamData ToSendableData(
         bool generateStats = false,

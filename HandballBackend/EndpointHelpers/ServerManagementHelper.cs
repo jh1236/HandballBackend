@@ -1,7 +1,9 @@
 namespace HandballBackend.EndpointHelpers;
 
 public static class ServerManagementHelper {
-    private static Timer _timer;
+    
+    // ReSharper disable once NotAccessedField.Local
+    private static Timer _timer = null!;
 
     public static void CheckForUpdates() {
         RunGitCommand("fetch --all");

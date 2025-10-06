@@ -70,7 +70,7 @@ public static class GameManager {
         int? playerId,
         bool penalty = false, string? notes = null) {
         var game = await db.Games.IncludeRelevant().Include(g => g.Events)
-            .SingleOrDefaultAsync(g => g.GameNumber == gameNumber);
+            .SingleAsync(g => g.GameNumber == gameNumber);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes);
@@ -479,7 +479,7 @@ public static class GameManager {
         string reason) {
         var db = new HandballContext();
         var game = await db.Games.IncludeRelevant().Include(g => g.Events)
-            .FirstOrDefaultAsync(g => g.GameNumber == gameNumber);
+            .FirstAsync(g => g.GameNumber == gameNumber);
         int player;
         var prevEvent = game.Events.OrderBy(gE => gE.Id).FirstOrDefault()!;
         if (firstTeam) {
@@ -575,7 +575,7 @@ public static class GameManager {
 
     public static async Task Delete(int gameNumber) {
         var db = new HandballContext();
-        var game = await db.Games.Include(game => game.Tournament).FirstOrDefaultAsync(g => g.GameNumber == gameNumber);
+        var game = await db.Games.Include(game => game.Tournament).FirstAsync(g => g.GameNumber == gameNumber);
         if (!game.Tournament.Editable) {
             throw new InvalidOperationException("The game is not in an editable tournament");
         }
@@ -640,11 +640,11 @@ public static class GameManager {
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         GameEventSynchroniser.SyncGameEnd(game, endEvent);
         if (!isRandomAbandonment && game is {
-            Ranked:
+                Ranked:
                 true,
-            IsFinal:
+                IsFinal:
                 false
-        }) {
+            }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
             var teamOneElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
@@ -683,7 +683,7 @@ public static class GameManager {
         var teams = new List<Team>();
         var people = await
             db.People.Where(p => allNames.Contains(p.Name)).ToListAsync();
-        foreach (var (players, teamName) in new[] { (playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName) }) {
+        foreach (var (players, teamName) in new[] {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
             Team team;
             if (players == null || players.Length == 0) {
                 if (teamName == null) {
@@ -711,8 +711,10 @@ public static class GameManager {
                         (t.SubstituteId.HasValue ? 1 : 0) == playerIds.Count(a => a.HasValue))
                 );
                 if (maybeTeam == null) {
+                    if (teamName == null)
+                        throw new ArgumentNullException(null, "A name must be provided when creating a new team");
                     team = new Team {
-                        CaptainId = playerIds![0],
+                        CaptainId = playerIds[0],
                         NonCaptainId = playerIds[1],
                         SubstituteId = null,
                         Name = teamName,
@@ -747,7 +749,7 @@ public static class GameManager {
         var ranked = tournament.Ranked;
         var isBye = false;
         var tasks = new List<Task>();
-        foreach (var team in new[] { teamOne, teamTwo }) {
+        foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) {
                 // this is the bye team
                 isBye = true;
@@ -832,7 +834,7 @@ public static class GameManager {
             .ToDictionaryAsync(pgs => pgs!.PlayerId);
 
         tasks.Clear();
-        foreach (var team in new[] { teamOne, teamTwo }) {
+        foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
             foreach (var p in teamPlayers.Where(p => p != null).Cast<Person>()) {

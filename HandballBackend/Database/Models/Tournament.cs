@@ -30,7 +30,7 @@ public class Tournament {
     public required string FixturesType { get; set; }
 
     [Column("finals_type", TypeName = "TEXT")]
-    public string FinalsType { get; set; }
+    public string FinalsType { get; set; } = null!;
 
     [Required]
     [Column("ranked")]
@@ -64,7 +64,7 @@ public class Tournament {
     public string? Notes { get; set; }
 
     [Column("image_url", TypeName = "TEXT")]
-    public string ImageUrl { get; set; }
+    public string ImageUrl { get; set; } = null!;
 
     [Required]
     [Column("created_at")]
@@ -89,8 +89,8 @@ public class Tournament {
         }
     }
 
-    public void BeginTournament() {
-        GetFixtureGenerator.BeginTournament();
+    public async Task BeginTournament() {
+        await GetFixtureGenerator.BeginTournament();
     }
 
     [NotMapped]

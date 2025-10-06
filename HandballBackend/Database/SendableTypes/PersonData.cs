@@ -21,7 +21,7 @@ public class PersonData {
         "Percentage of Games Started Left"
     ];
 
-    public Dictionary<string, dynamic?>? Stats { get; protected set; }
+    public Dictionary<string, dynamic>? Stats { get; protected set; }
 
 
     public PersonData(Person person, Tournament? tournament = null, bool generateStats = false, Team? team = null,
@@ -33,7 +33,7 @@ public class PersonData {
 
         if (!generateStats) return;
 
-        Stats = new Dictionary<string, dynamic?> {
+        Stats = new Dictionary<string, dynamic> {
             ["B&F Votes"] = 0.0,
             ["Elo"] = 0.0,
             ["Games Won"] = 0.0,
@@ -206,19 +206,25 @@ public class PersonData {
     }
 
     protected void FormatData() {
+        if (Stats == null) throw new InvalidOperationException("Cannot format the stats if stats are not set!");
         foreach (var stat in Stats.Keys) {
             if (Stats[stat] == null) {
                 Stats[stat] = "-";
                 continue;
             }
 
-            if (double.IsNaN(Stats[stat])) Stats[stat] = "-";
+            if (double.IsNaN(Stats[stat]))
+                Stats[stat] = "-";
             else if (PercentageColumns.Contains(stat)) {
-                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e%";
-                else Stats[stat] = Stats[stat].ToString("P2");
+                if (double.IsInfinity(Stats[stat]))
+                    Stats[stat] = "\u221e%";
+                else
+                    Stats[stat] = Stats[stat].ToString("P2");
             } else {
-                if (double.IsInfinity(Stats[stat])) Stats[stat] = "\u221e";
-                else Stats[stat] = Math.Round((double) Stats[stat], 2);
+                if (double.IsInfinity(Stats[stat]))
+                    Stats[stat] = "\u221e";
+                else
+                    Stats[stat] = Math.Round((double) Stats[stat], 2);
             }
         }
     }

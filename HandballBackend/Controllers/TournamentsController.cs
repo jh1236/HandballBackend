@@ -60,7 +60,7 @@ public class TournamentsController : ControllerBase {
             return NotFound("Invalid Tournament");
         }
 
-        tournament.BeginTournament();
+        await tournament.BeginTournament();
         return Ok();
     }
 

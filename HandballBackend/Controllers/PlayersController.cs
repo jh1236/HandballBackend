@@ -30,7 +30,7 @@ public class PlayersController() : ControllerBase {
     ) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
@@ -39,7 +39,7 @@ public class PlayersController() : ControllerBase {
             .Where(t => t.SearchableName == searchable)
             .Include(p => p.PlayerGameStats)!
             .ThenInclude(pgs => pgs.Game)
-            .Include(p => p.Official.TournamentOfficials)!
+            .Include(p => p.Official!.TournamentOfficials)!
             .ThenInclude(to => to.Tournament)!
             .Select(t => t.ToSendableData(tournament, true, null, formatData, isAdmin)).FirstOrDefaultAsync();
         if (player is null) {
@@ -78,7 +78,7 @@ public class PlayersController() : ControllerBase {
         Team? teamObj = null;
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (team is not null) {
@@ -96,7 +96,7 @@ public class PlayersController() : ControllerBase {
             query = db.People
                 .Include(p => p.PlayerGameStats)!
                 .ThenInclude(pgs => pgs.Game)
-                .Include(p => p.Official.TournamentOfficials)!
+                .Include(p => p.Official!.TournamentOfficials)!
                 .ThenInclude(to => to.Tournament)!
                 .Where(p => p.SearchableName != "worstie");
         }
@@ -131,7 +131,7 @@ public class PlayersController() : ControllerBase {
         [FromQuery] int? gameNumber = null) {
         var db = new HandballContext();
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         List<Dictionary<string, dynamic?>> statsList;

@@ -134,6 +134,7 @@ public class TeamData {
     }
 
     public void FormatData() {
+        if (Stats == null) throw new InvalidOperationException("Cannot format the stats if stats are not set!");
         foreach (var stat in Stats.Keys) {
             if (Stats[stat] == null) {
                 Stats[stat] = "-";

@@ -72,13 +72,13 @@ public class Pooled : AbstractFixtureGenerator {
         for (var i = 0; i < poolOne.Count / 2; i++) {
             var teamOne = poolOne[i];
             var teamTwo = poolOne[poolOne.Count - i - 1];
-            GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
 
         for (var i = 0; i < poolTwo.Count / 2; i++) {
             var teamOne = poolTwo[i];
             var teamTwo = poolTwo[poolTwo.Count - i - 1];
-            GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, round: rounds + 1);
         }
 
         await db.SaveChangesAsync();

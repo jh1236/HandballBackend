@@ -30,7 +30,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData? teamData;
@@ -83,7 +83,7 @@ public class TeamsController : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         TeamData[] teamData;
@@ -170,7 +170,7 @@ public class TeamsController : ControllerBase {
         TeamData[]? poolOne = null;
         TeamData[]? poolTwo = null;
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         if (tournament is not null) {
