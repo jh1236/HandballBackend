@@ -81,6 +81,7 @@ public class TournamentsController : ControllerBase {
 
     public class CreateTournamentRequest {
         public required string Name { get; set; }
+        public required string Color { get; set; }
         public required string FixturesType { get; set; }
         public required string FinalsType { get; set; }
     }
@@ -102,7 +103,8 @@ public class TournamentsController : ControllerBase {
             Ranked = true,
             TwoCourts = true,
             Started = false,
-            ImageUrl = "/api/image?name=blank"
+            ImageUrl = "/api/image?name=blank",
+            Color = request.Color,
         };
         await db.Tournaments.AddAsync(tournament);
         await db.SaveChangesAsync();
@@ -116,6 +118,7 @@ public class TournamentsController : ControllerBase {
         public string? Name { get; set; }
         public string? FixturesType { get; set; }
         public string? FinalsType { get; set; }
+        public string? Color { get; set; }
     }
 
 
@@ -138,6 +141,10 @@ public class TournamentsController : ControllerBase {
 
         if (request.FinalsType != null) {
             tournament!.FinalsType = request.FinalsType;
+        }
+
+        if (request.Color != null) {
+            tournament!.Color = request.Color;
         }
 
         await db.SaveChangesAsync();
