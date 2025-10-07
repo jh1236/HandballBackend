@@ -66,7 +66,6 @@ public class AuthController(IAuthorizationService authorizationService) : Contro
         if (user.PermissionLevel.ToInt() < PermissionType.Admin.ToInt()) {
             foreach (var tournamentOfficial in tournamentOfficials ?? []) {
                 var responsePermission = tournamentOfficial.Role.ToInt();
-                Console.WriteLine(responsePermission);
                 response.Permissions[tournamentOfficial.Tournament.SearchableName] =
                     responsePermission;
             }

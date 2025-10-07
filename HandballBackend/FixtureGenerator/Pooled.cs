@@ -21,7 +21,7 @@ public class Pooled : AbstractFixtureGenerator {
         var teams = (await db.TournamentTeams
             .Where(t => t.TournamentId == _tournamentId)
             .IncludeRelevant()
-            .ToArrayAsync()).OrderByDescending(t => t.Team.Elo()).ToList();
+            .ToArrayAsync()).OrderByDescending(t => t.Team.TrueElo()).ToList();
 
         var pool = 0;
         foreach (var team in teams) {
