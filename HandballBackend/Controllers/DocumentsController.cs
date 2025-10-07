@@ -6,11 +6,16 @@ namespace HandballBackend.Controllers;
 [Route("api/[controller]")]
 public class DocumentsController : ControllerBase {
     // GET api/values
-    [HttpGet("rules")]
-    public IActionResult GetRulesFile() {
-        return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules.pdf"), "application/pdf");
-    }
 
+    public class IndexResponse {
+        public Dictionary<string, string> Documents = new();
+    }
+    
+    [HttpGet("index")]
+    public ActionResult<IndexResponse> GetDocuments() {
+        return Ok(new IndexResponse());
+    }
+    
     [HttpGet("simplified_rules")]
     public IActionResult GetSimplifiedRulesFile() {
         return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules_simple.pdf"),
@@ -29,6 +34,11 @@ public class DocumentsController : ControllerBase {
             "application/pdf");
     }
 
+    [HttpGet("rules/current")]
+    public IActionResult GetRulesFile() {
+        return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules.pdf"), "application/pdf");
+    }
+    
     [HttpGet("rules/{tournament}")]
     public IActionResult GetOldRulesFile(string tournament) {
         var fileName = Uri.EscapeDataString(tournament);
