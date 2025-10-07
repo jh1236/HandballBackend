@@ -31,11 +31,12 @@ internal static class UtilityFunctions {
             .OrderBy(g => g.GameNumber)
             .Where(g => g.GameNumber > 0)
             .IncludeRelevant().Include(g =>
-                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon)).ToList();
+                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon))
+            .ToList();
         foreach (var game in games) {
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
-            var shouldHaveDelta = game is { IsBye: false, IsFinal: false, Ranked: true } && !isRandomAbandonment &&
+            var shouldHaveDelta = game is {IsBye: false, IsFinal: false, Ranked: true} && !isRandomAbandonment &&
                                   game.Ended;
             var playingPlayers = game.Players
                 .Where(pgs =>
@@ -278,9 +279,9 @@ internal static class UtilityFunctions {
                 .Select(to => new AbstractFixtureGenerator.OfficialContainer {
                     PlayerId = to.Official.PersonId,
                     OfficialId = to.OfficialId,
-                    GamesUmpired = to.Official.Games.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesUmpired = to.Official.Games.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     Name = to.Official.Person.Name,
-                    GamesScored = to.Official.ScoredGames.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesScored = to.Official.ScoredGames.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     UmpireProficiency = to.UmpireProficiency,
                     ScorerProficiency = to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
@@ -319,7 +320,7 @@ internal static class UtilityFunctions {
         Console.WriteLine("--------------------");
         Console.WriteLine($"Success: {AbstractFixtureGenerator.TrySolution(solutionArray, officials, force: true)}");
         Console.WriteLine("--------------------");
-        foreach (var game in solutionArray.SelectMany(g => new[] { g.Item1, g.Item2 })) {
+        foreach (var game in solutionArray.SelectMany(g => new[] {g.Item1, g.Item2})) {
             if (game == null) continue;
             Console.WriteLine($"Game {game.GameId} on Court {game.CourtId + 1}");
             Console.WriteLine($"\tPlayers: {string.Join(", ", game.PlayerIds)}");
@@ -335,5 +336,42 @@ internal static class UtilityFunctions {
             Console.WriteLine(
                 $"{string.Join("\n", officialList.Select(o => $"\t{o.Name} ({o.PlayerId}) : {o.GamesUmpired}, {o.GamesScored}"))}");
         }
+    }
+
+    public static void UploadRules() {
+        init();
+        var db = new HandballContext();
+        var tournaments = db.Tournaments.OrderBy(t => t.Id).ToList();
+        foreach (var tournament in tournaments) {
+            Console.WriteLine($"Do you want to skip {tournament.Name}:\t");
+            if (Console.ReadLine()!.ToLower() == "y") {
+                Console.WriteLine($"Skipped!");
+                continue;
+            }
+
+            Console.WriteLine("Writing the rules...");
+            db.Add(new Document {
+                Name = $"{tournament.Name} Rules",
+                Link = $"/api/rules/{tournament.SearchableName}",
+                Description = $"The rules which were in effect during {tournament.Name}",
+                Type = Document.DocumentType.Rules
+            });
+            Console.WriteLine("Please paste the UQP link");
+            var uqpLink = Console.ReadLine();
+            if (uqpLink is null or "x") {
+                Console.WriteLine($"Skipped!");
+                continue;
+            }
+
+            db.Add(new Document {
+                Name = $"{tournament.Name} UQP",
+                Link = uqpLink,
+                Description =
+                    $"The Briefing presented by the SUSS officiating core covering current interpretations of the rules for {tournament.Name}",
+                Type = Document.DocumentType.UmpireQualificationProgram
+            });
+        }
+
+        db.SaveChanges();
     }
 }

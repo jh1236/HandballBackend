@@ -52,6 +52,12 @@ public class HandballContext : DbContext {
                 v => Utilities.SplitCamelCase(v.ToString()),
                 v => Parse<GameEventType>(v.Replace(" ", "")));
         modelBuilder
+            .Entity<Document>()
+            .Property(e => e.Type)
+            .HasConversion(
+                v => Utilities.SplitCamelCase(v.ToString()),
+                v => Parse<Document.DocumentType>(v.Replace(" ", "")));
+        modelBuilder
             .Entity<TournamentOfficial>()
             .Property(e => e.Role)
             .HasConversion(
