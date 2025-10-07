@@ -135,19 +135,19 @@ public class PlayerGameStats {
     public double? EloDelta { get; set; }
 
     [ForeignKey("GameId")]
-    public Game Game { get; set; }
+    public Game Game { get; set; } = null!;
 
     [ForeignKey("PlayerId")]
-    public Person Player { get; set; }
+    public Person Player { get; set; } = null!;
 
     [ForeignKey("TeamId")]
-    public Team Team { get; set; }
+    public Team Team { get; set; } = null!;
 
     [ForeignKey("OpponentId")]
-    public Team Opponent { get; set; }
+    public Team Opponent { get; set; } = null!;
 
     [ForeignKey("TournamentId")]
-    public Tournament Tournament { get; set; }
+    public Tournament Tournament { get; set; } = null!;
 
     public GamePlayerData ToSendableData(
         bool includeStats = false,

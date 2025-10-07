@@ -25,7 +25,7 @@ public class Official : IHasRelevant<Official> {
     public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("PersonId")]
-    public Person Person { get; set; }
+    public Person Person { get; set; } = null!;
 
     public List<Game> Games { get; set; } = [];
 

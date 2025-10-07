@@ -29,7 +29,7 @@ public class OfficialsController : ControllerBase {
 
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);
@@ -87,7 +87,7 @@ public class OfficialsController : ControllerBase {
         }
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var isAdmin = PermissionHelper.IsUmpireManager(tournament);

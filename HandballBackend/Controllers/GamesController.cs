@@ -68,7 +68,7 @@ public class GamesController() : ControllerBase {
     }
 
     public record GetGamesResponse {
-        public GameData[] Games { get; set; }
+        public required GameData[] Games { get; set; }
         public TournamentData? Tournament { get; set; }
     }
 
@@ -90,7 +90,7 @@ public class GamesController() : ControllerBase {
 
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
 
@@ -179,7 +179,7 @@ public class GamesController() : ControllerBase {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament)) {
-            return NotFound(new InvalidTournament(tournamentSearchable));
+            return NotFound(new InvalidTournament(tournamentSearchable!));
         }
 
         var query = db.Games.Where(g => g.GameNumber > -2).IncludeRelevant()

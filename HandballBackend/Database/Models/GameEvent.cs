@@ -87,7 +87,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public int? TeamToServeId { get; set; }
 
     [Column("side_to_serve", TypeName = "TEXT")]
-    public string SideToServe { get; set; }
+    public string SideToServe { get; set; } = null!;
 
     [Column("team_one_left_id")]
     public int? TeamOneLeftId { get; set; }
@@ -102,13 +102,13 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public int? TeamTwoRightId { get; set; }
 
     [ForeignKey("PlayerId")]
-    public Person Player { get; set; }
+    public Person? Player { get; set; }
 
     [ForeignKey("TeamId")]
-    public Team Team { get; set; }
+    public Team? Team { get; set; }
 
     [ForeignKey("TournamentId")]
-    public Tournament Tournament { get; set; }
+    public Tournament Tournament { get; set; } = null!;
 
     [ForeignKey("TeamOneLeftId")]
     public Person? TeamOneLeft { get; set; }
@@ -123,7 +123,7 @@ public class GameEvent : IHasRelevant<GameEvent> {
     public Person? TeamTwoRight { get; set; }
 
     [ForeignKey("GameId")]
-    public Game Game { get; set; }
+    public Game Game { get; set; } = null!;
 
     [NotMapped]
     public bool IsCard =>

@@ -105,7 +105,7 @@ public static class PermissionHelper {
     }
 
     private static bool PersonOrElse(HandballContext db, int personId, out Person person) {
-        person = db.People.Include(p => p.Official.TournamentOfficials)!
+        person = db.People.Include(p => p.Official!.TournamentOfficials)!
             .ThenInclude(to => to.Tournament)!
             .First(p => p.Id == personId);
         return person is not null;

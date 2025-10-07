@@ -8,8 +8,7 @@ namespace HandballBackend.Database.Models;
 
 [Table("games")]
 public class Game : IHasRelevant<Game> {
-    public static readonly string[] ResolvedStatuses =
-    [
+    public static readonly string[] ResolvedStatuses = [
         "Resolved",
         "In Progress",
         "Official",
@@ -153,13 +152,13 @@ public class Game : IHasRelevant<Game> {
     public bool BlitzGame { get; set; } = false;
 
     [ForeignKey("TournamentId")]
-    public Tournament Tournament { get; set; }
+    public Tournament Tournament { get; set; } = null!;
 
     [ForeignKey("TeamOneId")]
-    public Team TeamOne { get; set; }
+    public Team TeamOne { get; set; } = null!;
 
     [ForeignKey("TeamTwoId")]
-    public Team TeamTwo { get; set; }
+    public Team TeamTwo { get; set; } = null!;
 
     [ForeignKey("BestPlayerId")]
     public Person? BestPlayer { get; set; }
@@ -231,8 +230,8 @@ public class Game : IHasRelevant<Game> {
             .Include(t => t.TeamTwo.TournamentTeams)
             .Include(x => x.Tournament)
             .Include(x => x.BestPlayer)
-            .Include(x => x.Official.Person)
-            .Include(x => x.Scorer.Person)
+            .Include(x => x.Official!.Person)
+            .Include(x => x.Scorer!.Person)
             .Include(x => x.Players)
             .ThenInclude(pgs => pgs.Player);
     }

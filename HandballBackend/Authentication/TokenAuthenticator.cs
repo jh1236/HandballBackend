@@ -13,16 +13,16 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
         UrlEncoder encoder) : base(options, logger, encoder) {
     }
 
-    protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
         if (!Request.Headers.ContainsKey("Authorization")) {
-            return AuthenticateResult.NoResult();
+            return Task.FromResult(AuthenticateResult.NoResult());
         }
 
         var token = Request.Headers.Authorization.ToString().Split(" ")[1];
         var person = PermissionHelper.PersonByToken(token);
 
         if (person == null || person.TokenTimeout < Utilities.GetUnixSeconds()) {
-            return AuthenticateResult.Fail("Invalid Token");
+            return Task.FromResult(AuthenticateResult.Fail("Invalid Token"));
         }
 
         List<Claim> claims = [
@@ -40,6 +40,6 @@ public class TokenAuthenticator : AuthenticationHandler<AuthenticationSchemeOpti
         var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
         var ticket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
 
-        return AuthenticateResult.Success(ticket);
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }

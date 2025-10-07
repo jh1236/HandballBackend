@@ -29,7 +29,7 @@ public class OfficialData : PersonData {
                 .Where(g => !g.IsBye && (g.Ranked || (!tournament?.Ranked ?? false)))
                 .OrderBy(g => g.Id).SelectMany(g => g.Players);
         var prevGameId = 0;
-        Stats = new Dictionary<string, dynamic?> {
+        Stats = new Dictionary<string, dynamic> {
             {"Games Umpired", 0},
             {"Caps", 0},
             {"Rounds Umpired", 0},

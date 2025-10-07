@@ -41,9 +41,9 @@ public class GamePlayerData : PersonData {
             : [];
         if (!includeStats)
             return;
-        Stats = new Dictionary<string, dynamic?> {
+        Stats = new Dictionary<string, dynamic> {
             ["Elo"] = pgs.InitialElo,
-            ["Elo Delta"] = pgs.EloDelta,
+            ["Elo Delta"] = pgs.EloDelta ?? float.NaN,
             ["B&F Votes"] = pgs.BestPlayerVotes,
             ["Games Won"] = pgs.Game.Ended && pgs.Game.WinningTeamId == pgs.TeamId ? 1 : 0,
             ["Games Lost"] = pgs.Game.Ended && pgs.Game.WinningTeamId != pgs.TeamId ? 1 : 0,

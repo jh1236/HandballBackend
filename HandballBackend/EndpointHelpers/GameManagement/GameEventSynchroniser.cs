@@ -178,7 +178,7 @@ internal static class GameEventSynchroniser {
 
 
     public static void SyncFault(Game game, GameEvent gameEvent) {
-        var player = game.Players.FirstOrDefault(pgs => pgs.PlayerId == gameEvent.PlayerId);
+        var player = game.Players.First(pgs => pgs.PlayerId == gameEvent.PlayerId);
         var faulted = game.Events.OrderByDescending(gE => gE.EventType is GameEventType.Fault or GameEventType.Score)
             .Select(gE => gE.EventType is GameEventType.Fault).FirstOrDefault(false);
         player.Faults += 1;

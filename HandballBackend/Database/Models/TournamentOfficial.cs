@@ -36,10 +36,10 @@ public class TournamentOfficial : IHasRelevant<TournamentOfficial> {
     public long CreatedAt { get; set; } = Utilities.GetUnixSeconds();
 
     [ForeignKey("TournamentId")]
-    public Tournament Tournament { get; set; }
+    public Tournament Tournament { get; set; } = null!;
 
     [ForeignKey("OfficialId")]
-    public Official Official { get; set; }
+    public Official Official { get; set; } = null!;
 
     [Required]
     [Column("umpire_proficiency")]
