@@ -78,6 +78,10 @@ public class Tournament {
     [Column("started")]
     public required bool Started { get; set; }
 
+    [Required]
+    [Column("color")]
+    public required string Color { get; set; }
+
     public async Task EndRound() {
         var finals = InFinals;
         if (!finals) {
@@ -100,6 +104,7 @@ public class Tournament {
     [NotMapped]
     public AbstractFixtureGenerator GetFixtureGenerator =>
         AbstractFixtureGenerator.GetControllerByName(FixturesType, Id);
+
 
     public IQueryable<Person> GetPeopleInTournament() {
         var db = new HandballContext();
