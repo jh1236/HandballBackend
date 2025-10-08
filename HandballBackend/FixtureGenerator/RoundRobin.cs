@@ -38,15 +38,11 @@ public class RoundRobin : AbstractFixtureGenerator {
         }
 
 
-        var tasks = new List<Task>();
-
         for (var i = 0; i < teams.Count / 2; i++) {
             var teamOne = teams[i];
             var teamTwo = teams[teams.Count - i - 1];
-            tasks.Add(GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame:_blitz, round: rounds + 1));
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame: _blitz, round: rounds + 1);
         }
-
-        await Task.WhenAll(tasks);
 
         await db.SaveChangesAsync();
         return await base.EndOfRound();
