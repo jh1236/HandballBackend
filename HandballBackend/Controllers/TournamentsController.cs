@@ -158,7 +158,7 @@ public class TournamentsController : ControllerBase {
         public List<string> FinalsTypes { get; set; } = [];
     }
 
-    [HttpPost("fixtureTypes")]
+    [HttpGet("fixtureTypes")]
     public ActionResult<FixtureTypesResponse> GetFixtureTypes() {
         return new FixtureTypesResponse {
             FixturesTypes = AbstractFixtureGenerator.GetFixtureGeneratorNames(),
