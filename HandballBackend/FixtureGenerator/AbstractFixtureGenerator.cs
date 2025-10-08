@@ -100,7 +100,6 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
     public virtual async Task BeginTournament() {
         var db = new HandballContext();
-        (await db.Tournaments.FindAsync(tournamentId))!.Started = true;
         await EndOfRound();
         await db.SaveChangesAsync();
     }

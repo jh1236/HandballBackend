@@ -94,6 +94,7 @@ public class Tournament {
     }
 
     public void BeginTournament() {
+        Started = true;
         GetFixtureGenerator.BeginTournament();
     }
 
