@@ -71,23 +71,19 @@ public class Pooled : AbstractFixtureGenerator {
             poolTwo.RemoveAt(poolTwo.Count - 1);
         }
 
-        var tasks = new List<Task>();
-
         for (var i = 0; i < poolOne.Count / 2; i++) {
             var teamOne = poolOne[i];
             var teamTwo = poolOne[poolOne.Count - i - 1];
-            tasks.Add(GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame: _blitz,
-                round: rounds + 1));
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame: _blitz,
+                round: rounds + 1);
         }
 
         for (var i = 0; i < poolTwo.Count / 2; i++) {
             var teamOne = poolTwo[i];
             var teamTwo = poolTwo[poolTwo.Count - i - 1];
-            tasks.Add(GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame: _blitz,
-                round: rounds + 1));
+            await GameManager.CreateGame(_tournamentId, teamOne.Id, teamTwo.Id, blitzGame: _blitz,
+                round: rounds + 1);
         }
-
-        await Task.WhenAll(tasks);
 
         await db.SaveChangesAsync();
         return await base.EndOfRound();
