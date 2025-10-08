@@ -47,7 +47,7 @@ internal static class GameEventSynchroniser {
                     game.Protested = true;
                     break;
                 case GameEventType.Resolve:
-                    game.Resolved = true;
+                    SyncResolve(game, gameEvent);
                     break;
                 case GameEventType.EndGame:
                     SyncGameEnd(game, gameEvent);
@@ -92,6 +92,11 @@ internal static class GameEventSynchroniser {
             game.SideToServe = lastEvent.SideToServe;
             game.PlayerToServeId = lastEvent.PlayerToServeId;
         }
+    }
+
+    public static void SyncResolve(Game game, GameEvent gameEvent) {
+        game.Resolved = true;
+        game.AdminStatus = "Resolved";
     }
 
     public static void SyncGameEnd(Game game, GameEvent gameEvent) {
