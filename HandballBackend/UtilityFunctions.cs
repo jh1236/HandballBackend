@@ -281,8 +281,8 @@ internal static class UtilityFunctions {
                     GamesUmpired = to.Official.Games.Count(g => g is { TournamentId: tournamentId, Round: < round }),
                     Name = to.Official.Person.Name,
                     GamesScored = to.Official.ScoredGames.Count(g => g is { TournamentId: tournamentId, Round: < round }),
-                    UmpireProficiency = to.UmpireProficiency,
-                    ScorerProficiency = to.ScorerProficiency,
+                    UmpireProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.UmpireProficiency,
+                    ScorerProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
 
 
