@@ -93,8 +93,11 @@ public class Tournament {
         }
     }
 
-    public void BeginTournament() {
-        GetFixtureGenerator.BeginTournament();
+    public async Task BeginTournament() {
+        var db = new HandballContext();
+        (await db.Tournaments.FindAsync(Id))!.Started = true;
+        await db.SaveChangesAsync();
+        await GetFixtureGenerator.BeginTournament();
     }
 
     [NotMapped]

@@ -11,6 +11,34 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.FixtureGenerator;
 
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool fillCourts) {
+    private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FixtureGenerators = new();
+    private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FinalsGenerators = new();
+    private static bool _isPopulated = false;
+
+    private static void Register(Func<int, AbstractFixtureGenerator> func, string name, bool isFinal) {
+        if (isFinal) {
+            FinalsGenerators[name] = func;
+        } else {
+            FixtureGenerators[name] = func;
+        }
+    }
+
+    private static void PopulateFixtures() {
+        _isPopulated = true;
+        Register(tid => new OneRound(tid), "OneRound", false);
+        Register(tid => new Pooled(tid), "Pooled", false);
+        Register(tid => new RoundRobin(tid), "RoundRobin", false);
+        Register(tid => new Swiss(tid), "Swiss", false);
+        Register(tid => new Pooled(tid, blitz: true), "PooledBlitz", false);
+        Register(tid => new RoundRobin(tid, blitz: true), "RoundRobinBlitz", false);
+
+
+        Register(tid => new PooledFinals(tid), "PooledFinals", true);
+        Register(tid => new BasicFinals(tid), "BasicFinals", true);
+        Register(tid => new TopThreeFinals(tid), "TopThreeFinals", true);
+    }
+
+
     protected static class UmpiringProficiencies {
         public const int BestOfficial = 3;
         public const int MiddleOfficial = 2;
@@ -20,17 +48,33 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
     }
 
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
-        return name switch {
-            "OneRound" => new OneRound(tournamentId),
-            "Pooled" => new Pooled(tournamentId),
-            "RoundRobin" => new RoundRobin(tournamentId),
-            "Swiss" => new Swiss(tournamentId),
-            "PooledFinals" => new PooledFinals(tournamentId),
-            "BasicFinals" => new BasicFinals(tournamentId),
-            "TopThreeFinals" => new TopThreeFinals(tournamentId),
-            _ => throw new ArgumentOutOfRangeException(nameof(name), name, null)
-        };
+        if (!_isPopulated) {
+            PopulateFixtures();
+        }
+
+        if (FixtureGenerators.TryGetValue(name, out var func) || FinalsGenerators.TryGetValue(name, out func)) {
+            return func(tournamentId);
+        }
+
+        throw new ArgumentException($"Unknown fixture generator {name}");
     }
+
+    public static List<string> GetFixtureGeneratorNames() {
+        if (!_isPopulated) {
+            PopulateFixtures();
+        }
+
+        return FixtureGenerators.Keys.ToList();
+    }
+
+    public static List<string> GetFinalsGeneratorNames() {
+        if (!_isPopulated) {
+            PopulateFixtures();
+        }
+
+        return FinalsGenerators.Keys.ToList();
+    }
+
 
     public virtual async Task<bool> EndOfRound() {
         if (fillCourts) {
@@ -56,7 +100,6 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
 
     public virtual async Task BeginTournament() {
         var db = new HandballContext();
-        (await db.Tournaments.FindAsync(tournamentId))!.Started = true;
         await EndOfRound();
         await db.SaveChangesAsync();
     }
@@ -188,11 +231,13 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             TrySolution(solutionArray, officials, 0, true, false, true);
         }
 
-        foreach (var soln in solution.SelectMany(i => new[] { i.Item1, i.Item2 }).Where(i => i != null).Cast<UmpiringSolution>()) {
+        foreach (var soln in solution.SelectMany(i => new[] { i.Item1, i.Item2 }).Where(i => i != null)
+                     .Cast<UmpiringSolution>()) {
             var game = games.First(g => g.Id == soln.GameId);
             if (soln.Official!.OfficialId > 0) {
                 game.OfficialId = soln.Official.OfficialId;
             }
+
             if (soln.Scorer!.OfficialId > 0) {
                 game.ScorerId = soln.Scorer.OfficialId;
             }
