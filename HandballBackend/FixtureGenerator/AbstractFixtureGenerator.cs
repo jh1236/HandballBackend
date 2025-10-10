@@ -11,6 +11,13 @@ using Microsoft.EntityFrameworkCore;
 namespace HandballBackend.FixtureGenerator;
 
 public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOfficials, bool fillCourts) {
+    public enum UmpiringProficiencies {
+        BestOfficial = 3,
+        MiddleOfficial = 2,
+        BadOfficial = 1,
+        NotOfficial = 0,
+        EmergencyOfficial = -1
+    }
     private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FixtureGenerators = new();
     private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FinalsGenerators = new();
     private static bool _isPopulated = false;
@@ -36,15 +43,6 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         Register(tid => new PooledFinals(tid), "PooledFinals", true);
         Register(tid => new BasicFinals(tid), "BasicFinals", true);
         Register(tid => new TopThreeFinals(tid), "TopThreeFinals", true);
-    }
-
-
-    protected static class UmpiringProficiencies {
-        public const int BestOfficial = 3;
-        public const int MiddleOfficial = 2;
-        public const int BadOfficial = 1;
-        public const int NotOfficial = 0;
-        public const int EmergencyOfficial = -1;
     }
 
     public static AbstractFixtureGenerator GetControllerByName(string name, int tournamentId) {
@@ -174,8 +172,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         public int OfficialId;
         public int GamesUmpired;
         public int GamesScored;
-        public int UmpireProficiency;
-        public int ScorerProficiency;
+        public UmpiringProficiencies UmpireProficiency;
+        public UmpiringProficiencies ScorerProficiency;
     }
 
     private async Task AddUmpires() {
@@ -200,8 +198,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                     GamesUmpired = to.Official.Games.Count(g => g.TournamentId == tournamentId && g.Round < round),
                     Name = to.Official.Person.Name,
                     GamesScored = to.Official.ScoredGames.Count(g => g.TournamentId == tournamentId && g.Round < round),
-                    UmpireProficiency = to.UmpireProficiency,
-                    ScorerProficiency = to.ScorerProficiency
+                    UmpireProficiency = (UmpiringProficiencies) to.UmpireProficiency,
+                    ScorerProficiency = (UmpiringProficiencies) to.ScorerProficiency
                 }).OrderBy(o => o.GamesUmpired).ToList();
 
         while (courtOneGames.Count > courtTwoGames.Count) {
