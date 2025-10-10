@@ -197,6 +197,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                 game.ScorerId = soln.Scorer.OfficialId;
             }
         }
+
+        await db.SaveChangesAsync();
     }
 
     internal static bool TrySolution((UmpiringSolution, UmpiringSolution?)[] solutions,
