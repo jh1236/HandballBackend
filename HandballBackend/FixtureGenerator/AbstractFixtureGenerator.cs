@@ -31,8 +31,8 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         Register(tid => new Swiss(tid), "Swiss", false);
         Register(tid => new Pooled(tid, blitz: true), "PooledBlitz", false);
         Register(tid => new RoundRobin(tid, blitz: true), "RoundRobinBlitz", false);
-        
-        
+
+
         Register(tid => new PooledFinals(tid), "PooledFinals", true);
         Register(tid => new BasicFinals(tid), "BasicFinals", true);
         Register(tid => new TopThreeFinals(tid), "TopThreeFinals", true);
@@ -231,7 +231,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
             TrySolution(solutionArray, officials, 0, true, false, true);
         }
 
-        foreach (var soln in solution.SelectMany(i => new[] {i.Item1, i.Item2}).Where(i => i != null)
+        foreach (var soln in solution.SelectMany(i => new[] { i.Item1, i.Item2 }).Where(i => i != null)
                      .Cast<UmpiringSolution>()) {
             var game = games.First(g => g.Id == soln.GameId);
             if (soln.Official!.OfficialId > 0) {
