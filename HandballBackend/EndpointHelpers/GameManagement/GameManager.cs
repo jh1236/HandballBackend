@@ -864,9 +864,8 @@ public static class GameManager {
         if (Game.ResolvedStatuses.Contains(game.AdminStatus))
             throw new InvalidOperationException("The game is resolved");
         var gameEvent = SetUpGameEvent(game, GameEventType.Resolve, null, null);
-        game.AdminStatus = "Resolved";
-        game.Resolved = true;
         await db.AddAsync(gameEvent);
+        GameEventSynchroniser.SyncResolve(game, gameEvent);
         await db.SaveChangesAsync();
         BroadcastUpdate(gameNumber);
     }
