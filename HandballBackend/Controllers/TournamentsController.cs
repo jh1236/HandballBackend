@@ -4,6 +4,7 @@ using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
+using HandballBackend.FixtureGenerator;
 using HandballBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +61,7 @@ public class TournamentsController : ControllerBase {
             return NotFound("Invalid Tournament");
         }
 
-        tournament.BeginTournament();
+        await tournament.BeginTournament();
         return Ok();
     }
 
@@ -150,5 +151,18 @@ public class TournamentsController : ControllerBase {
         await db.SaveChangesAsync();
 
         return Ok();
+    }
+
+    public class FixtureTypesResponse {
+        public List<string> FixturesTypes { get; set; } = [];
+        public List<string> FinalsTypes { get; set; } = [];
+    }
+
+    [HttpGet("fixtureTypes")]
+    public ActionResult<FixtureTypesResponse> GetFixtureTypes() {
+        return new FixtureTypesResponse {
+            FixturesTypes = AbstractFixtureGenerator.GetFixtureGeneratorNames(),
+            FinalsTypes = AbstractFixtureGenerator.GetFinalsGeneratorNames()
+        };
     }
 }
