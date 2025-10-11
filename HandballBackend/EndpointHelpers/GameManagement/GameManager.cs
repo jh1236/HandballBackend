@@ -683,10 +683,11 @@ public static class GameManager {
         var teams = new List<Team>();
         var people = await
             db.People.Where(p => allNames.Contains(p.Name)).ToListAsync();
-        foreach (var (players, givenTeamName) in new[] {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
+        foreach (var (playerNames, givenTeamName) in new[]
+                     {(playersTeamOne, teamOneName), (playersTeamTwo, teamTwoName)}) {
             var teamName = givenTeamName;
             Team team;
-            if (players == null || players.Length == 0) {
+            if (playerNames == null || playerNames.Length == 0) {
                 if (teamName == null) {
                     throw new ArgumentNullException(teams.Count == 0 ? nameof(playersTeamOne) : nameof(playersTeamTwo),
                         "You must specify either a team name or the players for the team");
@@ -694,7 +695,7 @@ public static class GameManager {
 
                 team = (await db.Teams.IncludeRelevant().FirstOrDefaultAsync(t => t.Name == teamName))!;
             } else {
-                var playerIds = players.Select(a => people.FirstOrDefault(p => p.Name == a)?.Id)
+                var playerIds = playerNames.Select(a => people.FirstOrDefault(p => p.Name == a)?.Id)
                     .ToList();
                 while (playerIds.Count < 3) {
                     playerIds.Add(null);
@@ -713,7 +714,7 @@ public static class GameManager {
                 );
                 if (maybeTeam == null) {
                     if (playerIds[1] == null) {
-                        teamName = "(Solo) " + players[0];
+                        teamName = "(Solo) " + playerNames[0];
                     }
 
                     if (teamName == null) {
@@ -729,9 +730,12 @@ public static class GameManager {
                     };
                     if (playerIds[1] == null) {
                         team.TeamColor = "#12114a";
+                        team.ImageUrl = "/api/people/image?name=" + people[0].SearchableName;
+                        team.BigImageUrl = "/api/people/image?name=" + people[0].SearchableName + "&big=true";
+                    } else {
+                        _ = Task.Run(() => ImageHelper.SetGoogleImageForTeam(team.Id));
                     }
 
-                    _ = Task.Run(() => ImageHelper.SetGoogleImageForTeam(team.Id));
                     await db.Teams.AddAsync(team);
                 } else {
                     team = maybeTeam;
