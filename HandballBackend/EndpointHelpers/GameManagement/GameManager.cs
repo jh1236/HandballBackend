@@ -647,14 +647,23 @@ public static class GameManager {
         }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
+            var playingPlayerIds = playingPlayers.Select(pgs => pgs.PlayerId).ToList();
             var teamOneElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamOneId).Select(pgs => pgs.InitialElo)
                 .Average();
             var teamTwoElo = playingPlayers.Where(pgs => pgs.TeamId == game.TeamTwoId).Select(pgs => pgs.InitialElo)
                 .Average();
-            foreach (var pgs in playingPlayers) {
+            foreach (var pgs in game.Players) {
+                if (!playingPlayerIds.Contains(pgs.PlayerId)) {
+                    pgs.EloDelta = 0;
+                    continue;
+                }
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
+            }
+        } else {
+            foreach (var pgs in game.Players) {
+                pgs.EloDelta = 0;
             }
         }
 
@@ -863,7 +872,8 @@ public static class GameManager {
                     OpponentId = team.Id == teamOneId ? teamTwoId : teamOneId,
                     InitialElo = (prevGame?.InitialElo ?? 1500.0) + (prevGame?.EloDelta ?? 0),
                     CardTime = carryCardTimes ? Math.Max(prevGame?.CardTime ?? 0, 0) : 0,
-                    CardTimeRemaining = carryCardTimes ? Math.Max(prevGame?.CardTimeRemaining ?? 0, 0) : 0
+                    CardTimeRemaining = carryCardTimes ? Math.Max(prevGame?.CardTimeRemaining ?? 0, 0) : 0,
+                    EloDelta = isBye ? 0 : null
                 }).AsTask());
             }
         }
