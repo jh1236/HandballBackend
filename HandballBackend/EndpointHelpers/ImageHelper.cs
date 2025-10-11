@@ -23,7 +23,7 @@ public static class ImageHelper {
         return $"/api/people/image?name={searchableName}";
     }
 
-    public static string CreateTeamImageWithCircle(Stream image, string searchableName = "test") {
+    public static (string, string) CreateTeamImageWithCircle(Stream image, string searchableName = "test") {
         using (var bigImage = AddCircleToImage(image, true)) {
             bigImage.Write(Config.RESOURCES_FOLDER + $"/images/big/teams/{searchableName}.png");
         }
@@ -33,7 +33,13 @@ public static class ImageHelper {
             smallImage.Write(Config.RESOURCES_FOLDER + $"/images/teams/{searchableName}.png");
         }
 
-        return $"/api/teams/image?name={searchableName}";
+        string magickColor;
+        using (var magick = new MagickImage(image)) {
+            magick.Resize(1, 1);
+            magickColor = magick.GetPixels().First().ToColor()!.ToHexString();
+        }
+
+        return ($"/api/teams/image?name={searchableName}", magickColor);
     }
 
     public static string CreateTeamImage(Stream imageIn, string searchableName) {
@@ -70,9 +76,10 @@ public static class ImageHelper {
         if (imageLink == null)
             return;
         var stream = await GetImageFromLink(imageLink);
-        var localLink = CreateTeamImageWithCircle(stream, team.SearchableName);
+        var (localLink, color) = CreateTeamImageWithCircle(stream, team.SearchableName);
         team.ImageUrl = localLink;
         team.BigImageUrl = localLink + "?big=true";
+        team.TeamColor = color;
         await db.SaveChangesAsync();
     }
 
