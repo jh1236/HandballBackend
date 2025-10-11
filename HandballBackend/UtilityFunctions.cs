@@ -27,15 +27,21 @@ internal static class UtilityFunctions {
         init();
         var playerElos = new Dictionary<int, double>();
         var db = new HandballContext();
+        var allPgs = db.PlayerGameStats.ToList();
+        foreach (var p in allPgs) {
+            p.EloDelta = 0;
+        }
+        db.SaveChanges();
         var games = db.Games
             .OrderBy(g => g.GameNumber)
             .Where(g => g.GameNumber > 0)
             .IncludeRelevant().Include(g =>
-                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon)).ToList();
+                g.Events.Where(gE => gE.EventType == GameEventType.Forfeit || gE.EventType == GameEventType.Abandon))
+            .ToList();
         foreach (var game in games) {
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
-            var shouldHaveDelta = game is { IsBye: false, IsFinal: false, Ranked: true } && !isRandomAbandonment &&
+            var shouldHaveDelta = game is {IsBye: false, IsFinal: false, Ranked: true} && !isRandomAbandonment &&
                                   game.Ended;
             var playingPlayers = game.Players
                 .Where(pgs =>
@@ -51,10 +57,21 @@ internal static class UtilityFunctions {
                 .Select(pgs => playerElos.GetValueOrDefault(pgs.PlayerId, 1500))
                 .DefaultIfEmpty()
                 .Average();
+            var last = 0;
             foreach (var pgs in playingPlayers) {
                 var initialElo = playerElos.GetValueOrDefault(pgs.PlayerId, 1500);
                 pgs.InitialElo = initialElo;
-                if (!shouldHaveDelta) continue;
+                if (!shouldHaveDelta) {
+                    pgs.EloDelta = 0;
+                    continue;
+                }
+
+                if (pgs.GameId > last + 50) {
+                    Console.WriteLine($"Game {pgs.GameId}");
+                    last = pgs.GameId;
+                }
+
+
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 var eloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);
@@ -63,9 +80,22 @@ internal static class UtilityFunctions {
             }
         }
 
+        foreach (var kvp in playerElos) {
+            Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+        }
+
         db.SaveChanges();
     }
 
+
+    public static void DestroyElos() {
+        init();
+        var db = new HandballContext();
+
+
+
+        db.SaveChanges();
+    }
 
     public static void EncryptString() {
         string? x;
@@ -116,7 +146,7 @@ internal static class UtilityFunctions {
 
     public static void ResetTournament() {
         init();
-        const int tournamentId = 11;
+        const int tournamentId = 13;
         Console.WriteLine($"Please Type 'CONFRIM' to confirm you want to reset the {tournamentId - 1}th tournament:");
         if (Console.ReadLine() != "CONFIRM") return;
 
@@ -278,9 +308,9 @@ internal static class UtilityFunctions {
                 .Select(to => new AbstractFixtureGenerator.OfficialContainer {
                     PlayerId = to.Official.PersonId,
                     OfficialId = to.OfficialId,
-                    GamesUmpired = to.Official.Games.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesUmpired = to.Official.Games.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     Name = to.Official.Person.Name,
-                    GamesScored = to.Official.ScoredGames.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesScored = to.Official.ScoredGames.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     UmpireProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.UmpireProficiency,
                     ScorerProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
@@ -319,7 +349,7 @@ internal static class UtilityFunctions {
         Console.WriteLine("--------------------");
         Console.WriteLine($"Success: {AbstractFixtureGenerator.TrySolution(solutionArray, officials, force: true)}");
         Console.WriteLine("--------------------");
-        foreach (var game in solutionArray.SelectMany(g => new[] { g.Item1, g.Item2 })) {
+        foreach (var game in solutionArray.SelectMany(g => new[] {g.Item1, g.Item2})) {
             if (game == null) continue;
             Console.WriteLine($"Game {game.GameId} on Court {game.CourtId + 1}");
             Console.WriteLine($"\tPlayers: {string.Join(", ", game.PlayerIds)}");
