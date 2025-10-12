@@ -104,7 +104,7 @@ public class TournamentsController : ControllerBase {
             Ranked = true,
             TwoCourts = true,
             Started = false,
-            ImageUrl = "/api/image?name=blank",
+            ImageUrl = "/api/image?name=SUSS",
             Color = request.Color,
         };
         await db.Tournaments.AddAsync(tournament);
