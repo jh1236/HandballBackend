@@ -739,8 +739,9 @@ public static class GameManager {
                     };
                     if (playerIds[1] == null) {
                         team.TeamColor = "#12114a";
-                        team.ImageUrl = "/api/people/image?name=" + people[0].SearchableName;
-                        team.BigImageUrl = "/api/people/image?name=" + people[0].SearchableName + "&big=true";
+                        var searchableName = people.First(p => p.Id == playerIds[0]).SearchableName;
+                        team.ImageUrl = "/api/people/image?name=" + searchableName;
+                        team.BigImageUrl = "/api/people/image?name=" + searchableName + "&big=true";
                     } else {
                         _ = Task.Run(() => ImageHelper.SetGoogleImageForTeam(team.Id));
                     }
