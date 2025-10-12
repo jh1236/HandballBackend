@@ -69,10 +69,10 @@ public static class PermissionHelper {
         var person = PersonByToken(GetToken());
         if (person == null) return false;
         if (IsAdmin()) return true;
-        if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.UmpireManager.ToInt();
+        if (tournament == null) return person.PermissionLevel.ToInt() >= PermissionType.Umpire.ToInt();
         return person.Official!.TournamentOfficials.Any(to =>
             to.TournamentId == tournament.Id &&
-            to.Role.ToInt() >= PermissionType.UmpireManager.ToInt());
+            to.Role.ToInt() >= PermissionType.Umpire.ToInt());
     }
 
     public static bool IsUmpire(Game g) {
