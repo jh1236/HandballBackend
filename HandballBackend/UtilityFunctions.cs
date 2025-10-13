@@ -31,6 +31,7 @@ internal static class UtilityFunctions {
         foreach (var p in allPgs) {
             p.EloDelta = 0;
         }
+
         db.SaveChanges();
         var games = db.Games
             .OrderBy(g => g.GameNumber)
@@ -41,8 +42,15 @@ internal static class UtilityFunctions {
         foreach (var game in games) {
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
-            var shouldHaveDelta = game is { IsBye: false, IsFinal: false, Ranked: true } && !isRandomAbandonment &&
-                                  game.Ended;
+            var shouldHaveDelta =
+                game is {
+                    IsBye: false,
+                    IsFinal: false,
+                    Ranked: true,
+                    TeamOne.NonCaptainId: not null,
+                    TeamTwo.NonCaptainId: not null
+                } && !isRandomAbandonment &&
+                game.Ended;
             var playingPlayers = game.Players
                 .Where(pgs =>
                     game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
@@ -91,7 +99,6 @@ internal static class UtilityFunctions {
     public static void DestroyElos() {
         init();
         var db = new HandballContext();
-
 
 
         db.SaveChanges();
@@ -308,9 +315,9 @@ internal static class UtilityFunctions {
                 .Select(to => new AbstractFixtureGenerator.OfficialContainer {
                     PlayerId = to.Official.PersonId,
                     OfficialId = to.OfficialId,
-                    GamesUmpired = to.Official.Games.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesUmpired = to.Official.Games.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     Name = to.Official.Person.Name,
-                    GamesScored = to.Official.ScoredGames.Count(g => g is { TournamentId: tournamentId, Round: < round }),
+                    GamesScored = to.Official.ScoredGames.Count(g => g is {TournamentId: tournamentId, Round: < round}),
                     UmpireProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.UmpireProficiency,
                     ScorerProficiency = (AbstractFixtureGenerator.UmpiringProficiencies) to.ScorerProficiency,
                 }).OrderBy(o => o.GamesUmpired).ToList();
@@ -349,7 +356,7 @@ internal static class UtilityFunctions {
         Console.WriteLine("--------------------");
         Console.WriteLine($"Success: {AbstractFixtureGenerator.TrySolution(solutionArray, officials, force: true)}");
         Console.WriteLine("--------------------");
-        foreach (var game in solutionArray.SelectMany(g => new[] { g.Item1, g.Item2 })) {
+        foreach (var game in solutionArray.SelectMany(g => new[] {g.Item1, g.Item2})) {
             if (game == null) continue;
             Console.WriteLine($"Game {game.GameId} on Court {game.CourtId + 1}");
             Console.WriteLine($"\tPlayers: {string.Join(", ", game.PlayerIds)}");
