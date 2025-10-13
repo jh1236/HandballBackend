@@ -18,6 +18,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         NotOfficial = 0,
         EmergencyOfficial = -1
     }
+
     private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FixtureGenerators = new();
     private static readonly Dictionary<string, Func<int, AbstractFixtureGenerator>> FinalsGenerators = new();
     private static bool _isPopulated = false;
@@ -181,6 +182,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         var games = await db.Games.Where(g => g.TournamentId == tournamentId && !g.Started && !g.IsBye)
             .IncludeRelevant().ToListAsync();
         if (games.Count <= 0) return;
+        var tournament = (await db.Tournaments.FindAsync(tournamentId))!;
         var round = games.Max(g => g.Round);
         var courtOneGames = games.Where(g => g.Court == 0).ToList();
         var courtTwoGames = games.Where(g => g.Court == 1).Cast<Game?>().ToList();
@@ -224,9 +226,9 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         }
 
         var solutionArray = solution.ToArray();
-        if (!TrySolution(solutionArray, officials)) {
+        if (!TrySolution(solutionArray, officials, requiresScorer: tournament.HasScorer)) {
             //the solution found no possible result
-            TrySolution(solutionArray, officials, 0, true, false, true);
+            TrySolution(solutionArray, officials, 0, true, false, true, requiresScorer: true);
         }
 
         foreach (var soln in solution.SelectMany(i => new[] { i.Item1, i.Item2 }).Where(i => i != null)
@@ -236,7 +238,7 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
                 game.OfficialId = soln.Official.OfficialId;
             }
 
-            if (soln.Scorer!.OfficialId > 0) {
+            if (tournament.HasScorer && soln.Scorer!.OfficialId > 0) {
                 game.ScorerId = soln.Scorer.OfficialId;
             }
         }
@@ -249,9 +251,10 @@ public abstract class AbstractFixtureGenerator(int tournamentId, bool fillOffici
         int index = 0,
         bool courtOne = true,
         bool scorer = false,
-        bool force = false) {
+        bool force = false,
+        bool requiresScorer = true) {
         if (index >= solutions.Length) {
-            if (scorer) return true;
+            if (scorer || !requiresScorer) return true;
             // we have reached the last game
             if (!TrySolution(solutions, officials, 0, true, true)) {
                 return TrySolution(solutions, officials, 0, true, true, true);
