@@ -643,7 +643,9 @@ public static class GameManager {
             Ranked:
                 true,
             IsFinal:
-                false
+                false,
+            TeamOne.NonCaptainId: not null,
+            TeamTwo.NonCaptain: not null
         }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
@@ -657,6 +659,7 @@ public static class GameManager {
                     pgs.EloDelta = 0;
                     continue;
                 }
+
                 var myElo = pgs.TeamId == game.TeamOneId ? teamOneElo : teamTwoElo;
                 var oppElo = pgs.TeamId == game.TeamOneId ? teamTwoElo : teamOneElo;
                 pgs.EloDelta = EloCalculator.CalculateEloDelta(myElo, oppElo, game.WinningTeamId == pgs.TeamId);

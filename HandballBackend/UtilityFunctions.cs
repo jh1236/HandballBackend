@@ -31,6 +31,7 @@ internal static class UtilityFunctions {
         foreach (var p in allPgs) {
             p.EloDelta = 0;
         }
+
         db.SaveChanges();
         var games = db.Games
             .OrderBy(g => g.GameNumber)
@@ -41,8 +42,15 @@ internal static class UtilityFunctions {
         foreach (var game in games) {
             var isRandomAbandonment = Math.Max(game.TeamOneScore, game.TeamTwoScore) < 5 &&
                                       game.Events.Any(gE => gE.EventType == GameEventType.Abandon);
-            var shouldHaveDelta = game is { IsBye: false, IsFinal: false, Ranked: true } && !isRandomAbandonment &&
-                                  game.Ended;
+            var shouldHaveDelta =
+                game is {
+                    IsBye: false,
+                    IsFinal: false,
+                    Ranked: true,
+                    TeamOne.NonCaptainId: not null,
+                    TeamTwo.NonCaptainId: not null
+                } && !isRandomAbandonment &&
+                game.Ended;
             var playingPlayers = game.Players
                 .Where(pgs =>
                     game.Events.Any(gE => gE.EventType == GameEventType.Forfeit) ||
@@ -91,7 +99,6 @@ internal static class UtilityFunctions {
     public static void DestroyElos() {
         init();
         var db = new HandballContext();
-
 
 
         db.SaveChanges();
