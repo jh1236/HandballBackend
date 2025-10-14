@@ -17,17 +17,12 @@ public class DocumentData(Document document, bool includeTournament = false) {
     public string ImageUrl { get; set; } = document.ImageUrl ?? ImageOf(document.Type);
 
     private static string ImageOf(Document.DocumentType documentType) {
-        switch (documentType) {
-            case Document.DocumentType.Rules:
-                return "/api/image?name=umpire&big=true";
-            case Document.DocumentType.UmpireQualificationProgram:
-                break;
-            case Document.DocumentType.TournamentRegulations:
-                break;
-            case Document.DocumentType.Other:
-                return "/api/image?name=SUSS_dark";
-            default:
-                throw new ArgumentOutOfRangeException(nameof(documentType), documentType, null);
-        }
+        return documentType switch {
+            Document.DocumentType.Rules => "/api/image?name=umpire&big=true",
+            Document.DocumentType.UmpireQualificationProgram => "/api/image?name=uqp",
+            Document.DocumentType.TournamentRegulations => "/api/image?name=tournament_regulations",
+            Document.DocumentType.Other => "/api/image?name=SUSS_dark",
+            _ => "/api/image?name=blank"
+        };
     }
 }
