@@ -44,8 +44,8 @@ public class TeamData {
         Name = team.Name;
         ExtendedName = team.LongName ?? team.Name;
         SearchableName = team.SearchableName;
-        ImageUrl = Utilities.FixImageUrl(team.ImageUrl);
-        BigImageUrl = Utilities.FixImageUrl(team.BigImageUrl);
+        ImageUrl = Utilities.FixHandballUrl(team.ImageUrl);
+        BigImageUrl = Utilities.FixHandballUrl(team.BigImageUrl);
         Captain = team.Captain?.ToSendableData(
             tournament,
             generateStats && generatePlayerStats,
