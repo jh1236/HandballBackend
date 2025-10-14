@@ -29,10 +29,10 @@ public class DocumentsController : ControllerBase {
                 .ToListAsync())
             .OrderBy(tdl => tdl.Key)
             .Select(d => new TournamentDocumentList {
-                    Documents = d.Select(d2 => d2.ToSendableData(false)).OrderBy(d2 => d2.Type).ThenBy(d2 => d2.Name)
+                Documents = d.Select(d2 => d2.ToSendableData(false)).OrderBy(d2 => d2.Type).ThenBy(d2 => d2.Name)
                         .ToList(),
-                    Tournament = d.First().Tournament!.ToSendableData()
-                }
+                Tournament = d.First().Tournament!.ToSendableData()
+            }
             ).ToList();
         var documents = (await db.Documents
                 .Where(d => d.TournamentId == null)
