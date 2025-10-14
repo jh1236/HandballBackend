@@ -19,8 +19,8 @@ public class GameTeamData : TeamData {
     )
         : base(team) {
         var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
-        ImageUrl = tt?.ImageUrl == null ? ImageUrl : Utilities.FixImageUrl(tt.ImageUrl);
-        BigImageUrl = tt?.BigImageUrl == null ? BigImageUrl : Utilities.FixImageUrl(tt.BigImageUrl);
+        ImageUrl = tt?.ImageUrl == null ? ImageUrl : Utilities.FixHandballUrl(tt.ImageUrl);
+        BigImageUrl = tt?.BigImageUrl == null ? BigImageUrl : Utilities.FixHandballUrl(tt.BigImageUrl);
         Name = tt?.Name ?? Name;
         ExtendedName = tt?.LongName ?? tt?.Name ?? ExtendedName;
         var startGame = game.Events.FirstOrDefault(a => a.EventType == GameEventType.Start);

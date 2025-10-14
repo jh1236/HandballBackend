@@ -10,6 +10,7 @@ using static System.Enum;
 namespace HandballBackend;
 
 public class HandballContext : DbContext {
+    public DbSet<Document> Documents { get; set; }
     public DbSet<Game> Games { get; set; }
     public DbSet<GameEvent> GameEvents { get; set; }
     public DbSet<Official> Officials { get; set; }

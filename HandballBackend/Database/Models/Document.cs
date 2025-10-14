@@ -7,9 +7,10 @@ namespace HandballBackend.Database.Models;
 [Table("documents")]
 public class Document {
     public enum DocumentType {
-        UmpireQualificationProgram,
         Rules,
-        TournamentRegulations
+        UmpireQualificationProgram,
+        TournamentRegulations,
+        Other
     }
 
     [Key]
@@ -35,7 +36,13 @@ public class Document {
     [Column("tournament_id")]
     public int? TournamentId { get; set; } = null;
 
+    [Column("image_url")]
+    public string? ImageUrl { get; set; }
 
     [ForeignKey("TournamentId")]
     public Tournament? Tournament { get; set; } = null;
+
+    public DocumentData ToSendableData(bool includeTournament = false) {
+        return new DocumentData(this, includeTournament);
+    }
 }

@@ -28,8 +28,8 @@ public class PersonData {
         bool format = false, bool admin = false) {
         Name = person.Name;
         SearchableName = person.SearchableName;
-        ImageUrl = ImageUrl = Utilities.FixImageUrl(person.ImageUrl);
-        BigImageUrl = Utilities.FixImageUrl(person.BigImageUrl);
+        ImageUrl = ImageUrl = Utilities.FixHandballUrl(person.ImageUrl);
+        BigImageUrl = Utilities.FixHandballUrl(person.BigImageUrl);
 
         if (!generateStats) return;
 

@@ -34,7 +34,7 @@ public class TournamentData {
         InFinals = tournament.InFinals;
         IsPooled = tournament.IsPooled;
         Notes = tournament.Notes ?? string.Empty;
-        ImageUrl = Utilities.FixImageUrl(tournament.ImageUrl);
+        ImageUrl = Utilities.FixHandballUrl(tournament.ImageUrl);
         UsingBadmintonServes = tournament.BadmintonServes;
         Editable = tournament.Editable;
         Color = tournament.Color;

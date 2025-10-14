@@ -1,4 +1,6 @@
+using HandballBackend.Database.SendableTypes;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HandballBackend.Controllers;
 
@@ -8,14 +10,40 @@ public class DocumentsController : ControllerBase {
     // GET api/values
 
     public class IndexResponse {
-        public Dictionary<string, string> Documents = new();
+        public required List<TournamentDocumentList> TournamentDocuments { get; set; }
+        public required List<DocumentData> OtherDocuments { get; set; }
     }
-    
+
+    public class TournamentDocumentList {
+        public required List<DocumentData> Documents { get; set; }
+        public required TournamentData Tournament { get; set; }
+    }
+
     [HttpGet("index")]
-    public ActionResult<IndexResponse> GetDocuments() {
-        return Ok(new IndexResponse());
+    public async Task<ActionResult<IndexResponse>> GetDocuments() {
+        var db = new HandballContext();
+        var tournamentDocuments = (await db.Documents
+                .Where(d => d.TournamentId != null)
+                .Include(d => d.Tournament)
+                .GroupBy(d => d.TournamentId)
+                .ToListAsync())
+            .OrderBy(tdl => tdl.Key)
+            .Select(d => new TournamentDocumentList {
+                    Documents = d.Select(d2 => d2.ToSendableData(false)).OrderBy(d2 => d2.Type).ToList(),
+                    Tournament = d.First().Tournament!.ToSendableData()
+                }
+            ).ToList();
+        var documents = await db.Documents
+            .Where(d => d.TournamentId == null)
+            .Select(d => d.ToSendableData(false))
+            .ToListAsync();
+
+        return Ok(new IndexResponse {
+            TournamentDocuments = tournamentDocuments,
+            OtherDocuments = documents
+        });
     }
-    
+
     [HttpGet("simplified_rules")]
     public IActionResult GetSimplifiedRulesFile() {
         return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules_simple.pdf"),
@@ -34,16 +62,23 @@ public class DocumentsController : ControllerBase {
             "application/pdf");
     }
 
-    [HttpGet("rules/current")]
+    [HttpGet("rules")]
     public IActionResult GetRulesFile() {
         return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules.pdf"), "application/pdf");
     }
-    
+
     [HttpGet("rules/{tournament}")]
     public IActionResult GetOldRulesFile(string tournament) {
         var fileName = Uri.EscapeDataString(tournament);
-        var path = Config.RESOURCES_FOLDER + "/documents/old/" + tournament + ".pdf";
+        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + tournament + "/rules.pdf";
         return File(System.IO.File.OpenRead(path + fileName + ".png"), "image/png");
     }
 
+    [HttpGet("tournament_regulations/{tournament}")]
+    public IActionResult GetOldTournamentRegulationsFile(string tournament) {
+        var fileName = Uri.EscapeDataString(tournament);
+        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + tournament +
+                   "/tournament_regulations.pdf";
+        return File(System.IO.File.OpenRead(path + fileName + ".png"), "image/png");
+    }
 }
