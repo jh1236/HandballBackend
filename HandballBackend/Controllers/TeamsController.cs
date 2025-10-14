@@ -1,11 +1,9 @@
-using HandballBackend.Authentication;
-using HandballBackend.Utils;
 using HandballBackend.Database;
 using HandballBackend.Database.Models;
 using HandballBackend.Database.SendableTypes;
 using HandballBackend.EndpointHelpers;
 using HandballBackend.ErrorTypes;
-using Microsoft.AspNetCore.Authorization;
+using HandballBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -222,8 +220,7 @@ public class TeamsController : ControllerBase {
     }
 
     public class GetStandingsResult {
-        public required TeamData Winner { get; set; }
-        public required TeamData RunnerUp { get; set; }
+        public required List<TeamData> TopThree { get; set; }
     }
 
     [HttpGet("standings")]
@@ -239,13 +236,19 @@ public class TeamsController : ControllerBase {
             return BadRequest(new ActionNotAllowed("Tournament must be ended to get results!"));
         }
 
-        var grandFinal = await db.Games.Where(g => g.TournamentId == tournament.Id && g.IsFinal)
-            .OrderByDescending(g => g.GameNumber).IncludeRelevant().FirstAsync();
+        var finals = await db.Games.Where(g => g.TournamentId == tournament.Id && g.IsFinal)
+            .OrderByDescending(g => g.GameNumber).IncludeRelevant().Take(2).ToListAsync();
 
+        List<TeamData> list = [finals[0].WinningTeam.ToSendableData(), finals[0].LosingTeam.ToSendableData()];
 
+        if (finals[1].WinningTeamId == finals[0].TeamOneId || finals[1].WinningTeamId == finals[1].TeamTwoId) {
+            list.Add(finals[1].LosingTeam.ToSendableData());
+        } else {
+            list.Add(finals[1].WinningTeam.ToSendableData());
+        }
+        
         return new GetStandingsResult {
-            Winner = grandFinal.WinningTeam.ToSendableData(),
-            RunnerUp = grandFinal.LosingTeam.ToSendableData()
+            TopThree = list
         };
     }
 
