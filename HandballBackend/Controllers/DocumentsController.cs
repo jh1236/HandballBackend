@@ -29,14 +29,15 @@ public class DocumentsController : ControllerBase {
                 .ToListAsync())
             .OrderBy(tdl => tdl.Key)
             .Select(d => new TournamentDocumentList {
-                    Documents = d.Select(d2 => d2.ToSendableData(false)).OrderBy(d2 => d2.Type).ToList(),
+                    Documents = d.Select(d2 => d2.ToSendableData(false)).OrderBy(d2 => d2.Type).ThenBy(d2 => d2.Name)
+                        .ToList(),
                     Tournament = d.First().Tournament!.ToSendableData()
                 }
             ).ToList();
-        var documents = await db.Documents
-            .Where(d => d.TournamentId == null)
-            .Select(d => d.ToSendableData(false))
-            .ToListAsync();
+        var documents = (await db.Documents
+                .Where(d => d.TournamentId == null)
+                .Select(d => d.ToSendableData(false)).ToListAsync())
+            .OrderBy(d => d.Type).ThenBy(d => d.Name).ToList();
 
         return Ok(new IndexResponse {
             TournamentDocuments = tournamentDocuments,
@@ -70,15 +71,14 @@ public class DocumentsController : ControllerBase {
     [HttpGet("rules/{tournament}")]
     public IActionResult GetOldRulesFile(string tournament) {
         var fileName = Uri.EscapeDataString(tournament);
-        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + tournament + "/rules.pdf";
-        return File(System.IO.File.OpenRead(path + fileName + ".png"), "image/png");
+        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + fileName + "/rules.pdf";
+        return File(System.IO.File.OpenRead(path), "application/pdf");
     }
 
     [HttpGet("tournament_regulations/{tournament}")]
     public IActionResult GetOldTournamentRegulationsFile(string tournament) {
         var fileName = Uri.EscapeDataString(tournament);
-        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + tournament +
-                   "/tournament_regulations.pdf";
-        return File(System.IO.File.OpenRead(path + fileName + ".png"), "image/png");
+        var path = Config.RESOURCES_FOLDER + "/documents/pdf/old_documents/" + fileName + "/tournament_regulations.pdf";
+        return File(System.IO.File.OpenRead(path), "application/pdf");
     }
 }

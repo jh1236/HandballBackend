@@ -14,15 +14,15 @@ public class DocumentData(Document document, bool includeTournament = false) {
 
     public Document.DocumentType Type { get; set; } = document.Type;
 
-    public string ImageUrl { get; set; } = document.ImageUrl ?? ImageOf(document.Type);
+    public string ImageUrl { get; set; } = Utilities.FixHandballUrl(document.ImageUrl ?? ImageOf(document.Type));
 
     private static string ImageOf(Document.DocumentType documentType) {
         return documentType switch {
             Document.DocumentType.Rules => "/api/image?name=umpire&big=true",
-            Document.DocumentType.UmpireQualificationProgram => "/api/image?name=uqp",
-            Document.DocumentType.TournamentRegulations => "/api/image?name=tournament_regulations",
+            Document.DocumentType.UmpireQualificationProgram => "/api/image?name=uqp&big=true",
+            Document.DocumentType.TournamentRegulations => "/api/image?name=tournament_regulations&big=true",
             Document.DocumentType.Other => "/api/image?name=SUSS_dark",
-            _ => "/api/image?name=blank"
+            _ => throw new ArgumentOutOfRangeException()
         };
     }
 }
