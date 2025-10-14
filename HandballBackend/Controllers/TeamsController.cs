@@ -221,6 +221,34 @@ public class TeamsController : ControllerBase {
         };
     }
 
+    public class GetStandingsResult {
+        public required TeamData Winner { get; set; }
+        public required TeamData RunnerUp { get; set; }
+    }
+
+    [HttpGet("standings")]
+    public async Task<ActionResult<GetStandingsResult>> GetStandings(
+        [FromQuery(Name = "tournament")] string tournamentSearchable) {
+        var db = new HandballContext();
+
+        if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament) || tournament is null) {
+            return NotFound(new InvalidTournament(tournamentSearchable));
+        }
+
+        if (!tournament.Finished) {
+            return BadRequest(new ActionNotAllowed("Tournament must be ended to get results!"));
+        }
+
+        var grandFinal = await db.Games.Where(g => g.TournamentId == tournament.Id && g.IsFinal)
+            .OrderByDescending(g => g.GameNumber).IncludeRelevant().FirstAsync();
+
+
+        return new GetStandingsResult {
+            Winner = grandFinal.WinningTeam.ToSendableData(),
+            RunnerUp = grandFinal.LosingTeam.ToSendableData()
+        };
+    }
+
 
     public class AddTeamRequest {
         public required string Tournament { get; set; }
