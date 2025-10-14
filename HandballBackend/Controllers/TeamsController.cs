@@ -221,11 +221,13 @@ public class TeamsController : ControllerBase {
 
     public class GetStandingsResult {
         public required List<TeamData> TopThree { get; set; }
+        public TournamentData? Tournament { get; set; }
     }
 
     [HttpGet("standings")]
     public async Task<ActionResult<GetStandingsResult>> GetStandings(
-        [FromQuery(Name = "tournament")] string tournamentSearchable) {
+        [FromQuery(Name = "tournament")] string tournamentSearchable,
+        [FromQuery] bool returnTournament = false) {
         var db = new HandballContext();
 
         if (!Utilities.TournamentOrElse(db, tournamentSearchable, out var tournament) || tournament is null) {
@@ -246,9 +248,10 @@ public class TeamsController : ControllerBase {
         } else {
             list.Add(finals[1].WinningTeam.ToSendableData());
         }
-        
+
         return new GetStandingsResult {
-            TopThree = list
+            TopThree = list,
+            Tournament = returnTournament ? tournament.ToSendableData() : null
         };
     }
 
