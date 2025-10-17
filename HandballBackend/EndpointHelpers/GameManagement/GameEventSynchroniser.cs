@@ -78,6 +78,11 @@ internal static class GameEventSynchroniser {
         foreach (var pgs in game.Players) {
             if (lastEvent == null) {
                 pgs.SideOfCourt = pgs.StartSide;
+            } else if (
+                (pgs.TeamId == game.TeamOneId && lastEvent.TeamOneLeftId == lastEvent.TeamOneRightId) ||
+                (pgs.TeamId == game.TeamTwoId && lastEvent.TeamTwoLeftId == lastEvent.TeamTwoRightId)
+            ) {
+                pgs.SideOfCourt = lastEvent.SideToServe;
             } else if (pgs.PlayerId == lastEvent.TeamTwoLeftId || pgs.PlayerId == lastEvent.TeamOneLeftId) {
                 pgs.SideOfCourt = "Left";
             } else if (pgs.PlayerId == lastEvent.TeamTwoRightId || pgs.PlayerId == lastEvent.TeamOneRightId) {
