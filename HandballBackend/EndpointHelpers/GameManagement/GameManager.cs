@@ -117,7 +117,7 @@ public static class GameManager {
 
         var opponent = firstTeam ? game.TeamTwo : game.TeamOne;
 
-        
+
         if (opponent.NonCaptainId == null) {
             var pgs = game.Players.Where(pgs => pgs.TeamId != teamId).First();
             //If we are , we need to be on the same side as the server
@@ -651,13 +651,13 @@ public static class GameManager {
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         GameEventSynchroniser.SyncGameEnd(game, endEvent);
         if (!isRandomAbandonment && game is {
-                Ranked:
+            Ranked:
                 true,
-                IsFinal:
+            IsFinal:
                 false,
-                TeamOne.NonCaptainId: not null,
-                TeamTwo.NonCaptain: not null
-            }) {
+            TeamOne.NonCaptainId: not null,
+            TeamTwo.NonCaptain: not null
+        }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
             var playingPlayerIds = playingPlayers.Select(pgs => pgs.PlayerId).ToList();
@@ -788,7 +788,7 @@ public static class GameManager {
         var ranked = tournament.Ranked;
         var isBye = false;
         var tasks = new List<Task>();
-        foreach (var team in new[] {teamOne, teamTwo}) {
+        foreach (var team in new[] { teamOne, teamTwo }) {
             if (team.Id == 1) {
                 // this is the bye team
                 isBye = true;
@@ -873,7 +873,7 @@ public static class GameManager {
             .ToDictionaryAsync(pgs => pgs!.PlayerId);
 
         tasks.Clear();
-        foreach (var team in new[] {teamOne, teamTwo}) {
+        foreach (var team in new[] { teamOne, teamTwo }) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
             foreach (var p in teamPlayers.Where(p => p != null).Cast<Person>()) {
