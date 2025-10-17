@@ -212,7 +212,7 @@ internal static class GameEventSynchroniser {
 
         var nonServingTeam = playersOnCourt.Where(pgs => gameEvent.TeamWhoServedId != pgs.TeamId).OrderBy(pgs =>
                 pgs.PlayerId != gameEvent.TeamOneLeftId && pgs.PlayerId != gameEvent.TeamTwoLeftId)
-            .Select(PlayerGameStats? (pgs) => pgs)
+            .Cast<PlayerGameStats?>()
             .ToList(); //force the team into LTR order
         nonServingTeam.Add(null);
         var leftServed = gameEvent.SideServed == "Left";
