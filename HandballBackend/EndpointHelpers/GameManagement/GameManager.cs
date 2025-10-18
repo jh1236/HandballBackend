@@ -547,9 +547,6 @@ public static class GameManager {
                     null,
                     penalty: true
                 );
-                foreach (var pgs in players.Where(pgs => pgs.CardTimeRemaining > 0)) {
-                    pgs.CardTimeRemaining--;
-                }
             }
         }
 
