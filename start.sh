@@ -22,7 +22,7 @@ START() {
     git pull
     git add .
     git commit -m "Automatic Commit from Server Restart"
-    git push
+    git push origin
     cd ..
     cd ..
 
