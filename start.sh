@@ -15,7 +15,7 @@ START() {
     fi
 
     git stash
-    git checkout master
+    git checkout move-resources-to-new-repo
     git pull
 
     cd ./build/resources || exit 1
