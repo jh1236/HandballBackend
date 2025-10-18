@@ -108,11 +108,22 @@ public static class GameManager {
             var teamPlayers = game.Players!.Where(pgs => pgs.TeamId == teamId).ToList();
             if (teamPlayers.Count == 1) {
                 newEvent.PlayerToServeId = teamPlayers[0].PlayerId;
+                teamPlayers[0].SideOfCourt = newEvent.SideToServe;
             } else {
                 newEvent.PlayerToServeId = teamPlayers
                     .First(pgs => pgs.SideOfCourt == newEvent.SideToServe).PlayerId;
             }
         }
+
+        var opponent = firstTeam ? game.TeamTwo : game.TeamOne;
+
+
+        if (opponent.NonCaptainId == null) {
+            var pgs = game.Players.Where(pgs => pgs.TeamId != teamId).First();
+            //If we are , we need to be on the same side as the server
+            pgs.SideOfCourt = newEvent.SideToServe;
+        }
+
 
         await db.AddAsync(newEvent);
         GameEventSynchroniser.SyncScorePoint(game, newEvent);
