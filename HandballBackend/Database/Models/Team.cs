@@ -57,7 +57,7 @@ public class Team : IHasRelevant<Team> {
 
     [NotMapped]
     public List<Person> People =>
-        new List<Person?> { Captain, NonCaptain, Substitute }
+        new List<Person?> {Captain, NonCaptain, Substitute}
             .Where(p => p != null)
             .Select(p => p!)
             .ToList();
@@ -78,11 +78,12 @@ public class Team : IHasRelevant<Team> {
         if (lastGame.Count != 0) {
             return lastGame.Average();
         }
+
         return TrueElo();
     }
 
     public double TrueElo() {
-        var ids = new[] { CaptainId, NonCaptainId, SubstituteId }
+        var ids = new[] {CaptainId, NonCaptainId, SubstituteId}
             .Where(id => id.HasValue)
             .Select(id => id!.Value);
 
@@ -91,17 +92,16 @@ public class Team : IHasRelevant<Team> {
         return ids.Select(id => allElos.GetValueOrDefault(id, 1500)).DefaultIfEmpty(1500).Average();
     }
 
-    public GameTeamData ToGameSendableData(
-        Game game,
+    public GameTeamData ToGameSendableData(Game game,
         bool generateStats = false,
         bool formatData = false,
-        bool isAdmin = false
-    ) {
+        bool isUmpire = false,
+        bool isAdmin = false) {
         if (Id == 1) {
-            return new GameTeamData(this, game, false, false, false);
+            return new GameTeamData(this, game, false, false, false, false);
         }
 
-        return new GameTeamData(this, game, generateStats, formatData, isAdmin);
+        return new GameTeamData(this, game, generateStats, formatData, isUmpire, isAdmin);
     }
 
     public static IQueryable<Team> GetRelevant(IQueryable<Team> query) {
