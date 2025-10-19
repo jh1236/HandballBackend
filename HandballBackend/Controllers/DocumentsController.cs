@@ -68,6 +68,11 @@ public class DocumentsController : ControllerBase {
         return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules.pdf"), "application/pdf");
     }
 
+    [HttpGet("rules_solo")]
+    public IActionResult GetSoloRulesFile() {
+        return File(System.IO.File.OpenRead(Config.RESOURCES_FOLDER + "/documents/pdf/rules_solo.pdf"), "application/pdf");
+    }
+
     [HttpGet("rules/{tournament}")]
     public IActionResult GetOldRulesFile(string tournament) {
         var fileName = Uri.EscapeDataString(tournament);
