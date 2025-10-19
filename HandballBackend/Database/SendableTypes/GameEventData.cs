@@ -5,7 +5,7 @@ namespace HandballBackend.Database.SendableTypes;
 
 public class GameEventData {
     public int Id { get; private set; }
-    
+
     public int GameId { get; private set; }
     public GameEventType EventType { get; private set; }
     public bool? FirstTeam { get; private set; }
