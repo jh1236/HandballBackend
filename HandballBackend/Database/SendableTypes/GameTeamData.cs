@@ -10,13 +10,12 @@ public class GameTeamData : TeamData {
     public new GamePlayerData? NonCaptain { get; set; }
     public new GamePlayerData? Substitute { get; set; }
 
-    public GameTeamData(
-        Team team,
+    public GameTeamData(Team team,
         Game game,
         bool generateStats = false,
         bool formatData = false,
-        bool isAdmin = false
-    )
+        bool isUmpire = false,
+        bool isAdmin = false)
         : base(team) {
         var tt = team.TournamentTeams.FirstOrDefault(tt => tt.TournamentId == game.TournamentId);
         ImageUrl = tt?.ImageUrl == null ? ImageUrl : Utilities.FixHandballUrl(tt.ImageUrl);
@@ -45,13 +44,13 @@ public class GameTeamData : TeamData {
 
         Captain = game
             .Players.FirstOrDefault(pgs => pgs.PlayerId == team.CaptainId)
-            ?.ToSendableData(generateStats, formatData, isAdmin);
+            ?.ToSendableData(generateStats, formatData, isUmpire, isAdmin);
         NonCaptain = game
             .Players.FirstOrDefault(pgs => pgs.PlayerId == team.NonCaptainId)
-            ?.ToSendableData(generateStats, formatData, isAdmin);
+            ?.ToSendableData(generateStats, formatData, isUmpire, isAdmin);
         Substitute = game
             .Players.FirstOrDefault(pgs => pgs.PlayerId == team.SubstituteId)
-            ?.ToSendableData(generateStats, formatData, isAdmin);
+            ?.ToSendableData(generateStats, formatData, isUmpire, isAdmin);
 
         if (!generateStats)
             return;

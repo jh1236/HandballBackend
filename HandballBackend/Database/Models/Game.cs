@@ -188,19 +188,19 @@ public class Game : IHasRelevant<Game> {
     [NotMapped]
     public int ScoreToForceWin => 2 * ScoreToWin;
 
-    public GameData ToSendableData(
-        bool includeTournament = false,
+    public GameData ToSendableData(bool includeTournament = false,
         bool includeGameEvents = false,
         bool includeStats = false,
         bool formatData = false,
-        bool isAdmin = false
-    ) {
+        bool isUmpire = false,
+        bool isAdmin = false) {
         return new GameData(
             this,
             includeTournament,
             includeGameEvents,
             includeStats,
             formatData,
+            isUmpire,
             isAdmin
         );
     }
