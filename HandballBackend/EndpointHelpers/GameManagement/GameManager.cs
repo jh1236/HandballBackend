@@ -68,12 +68,20 @@ public static class GameManager {
 
     private static async Task<GameEvent> AddPointToGame(HandballContext db, int gameNumber, bool firstTeam,
         int? playerId,
-        bool penalty = false, string? notes = null) {
+        bool penalty = false, string? notes = null, (int, int)? location = null) {
         var game = await db.Games.IncludeRelevant().Include(g => g.Events)
             .SingleOrDefaultAsync(g => g.GameNumber == gameNumber);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
         var prevEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
-        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes);
+        var details = 0;
+        if (location != null) {
+            //this is a rubbish way of doing this, but I do not want to add another field to the db (yet at least)
+            var (x, y) = location.Value;
+            details = 10 * x + y;
+        }
+
+        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes,
+            details: details);
         newEvent.TeamToServeId = teamId;
         if (teamId == prevEvent.TeamToServeId) {
             //We won this point and the last point
@@ -288,7 +296,30 @@ public static class GameManager {
         BroadcastEvent(gameNumber, e);
     }
 
-    public static async Task ScorePoint(int gameNumber, bool firstTeam, bool leftPlayer, string? scoreMethod) {
+    private static int CourtLatitudeToInt(string courtLatitude) {
+        return courtLatitude switch {
+            "wide-left" => 1,
+            "left" => 2,
+            "center-left" => 3,
+            "center-right" => 4,
+            "right" => 5,
+            "wide-right" => 6,
+            _ => throw new ArgumentOutOfRangeException(nameof(courtLatitude), courtLatitude, null)
+        };
+    }
+
+    private static int CourtLongitudeToInt(string courtLatitude) {
+        return courtLatitude switch {
+            "deep" => 1,
+            "back" => 2,
+            "mid" => 3,
+            "front" => 4,
+            _ => throw new ArgumentOutOfRangeException(nameof(courtLatitude), courtLatitude, null)
+        };
+    }
+
+    public static async Task ScorePoint(int gameNumber, bool firstTeam, bool leftPlayer, string? scoreMethod,
+        string[]? location) {
         var db = new HandballContext();
         var game = await db.Games.IncludeRelevant().Include(g => g.Events).FirstAsync(g => g.GameNumber == gameNumber);
         if (!game.Started) throw new InvalidOperationException("The game has not started");
@@ -305,12 +336,14 @@ public static class GameManager {
             player = leftPlayer ? gameEvent.TeamTwoLeftId : gameEvent.TeamTwoRightId;
         }
 
-        var e = await AddPointToGame(db, gameNumber, firstTeam, player, notes: scoreMethod);
+        var e = await AddPointToGame(db, gameNumber, firstTeam, player, notes: scoreMethod,
+            location: location != null ? (CourtLongitudeToInt(location[0]), CourtLatitudeToInt(location[1])) : null);
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, e);
     }
 
-    public static async Task ScorePoint(int gameNumber, bool firstTeam, string playerSearchable, string? scoreMethod) {
+    public static async Task ScorePoint(int gameNumber, bool firstTeam, string playerSearchable, string? scoreMethod,
+        string[]? location) {
         var db = new HandballContext();
         var game = await db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events)
             .FirstAsync();
@@ -321,12 +354,14 @@ public static class GameManager {
         }
 
         var player = game.Players.First(pgs => pgs.Player.SearchableName == playerSearchable);
-        var e = await AddPointToGame(db, gameNumber, firstTeam, player.PlayerId, notes: scoreMethod);
+        var e = await AddPointToGame(db, gameNumber, firstTeam, player.PlayerId, notes: scoreMethod,
+            location: location != null ? (CourtLongitudeToInt(location[0]), CourtLatitudeToInt(location[1])) : null);
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, e);
     }
 
-    public static async Task Ace(int gameNumber) {
+    public static async Task Ace(int gameNumber,
+        string[]? location) {
         var db = new HandballContext();
         var game = await db.Games.Where(g => g.GameNumber == gameNumber).IncludeRelevant().Include(g => g.Events)
             .FirstAsync();
@@ -334,7 +369,8 @@ public static class GameManager {
         if (game.Ended) throw new InvalidOperationException("The game has ended");
         var prevGameEvent = game.Events.OrderByDescending(gE => gE.Id).FirstOrDefault()!;
         var firstTeam = prevGameEvent.TeamToServeId == game.TeamOneId;
-        var e = await AddPointToGame(db, gameNumber, firstTeam, prevGameEvent.PlayerToServeId, notes: "Ace");
+        var e = await AddPointToGame(db, gameNumber, firstTeam, prevGameEvent.PlayerToServeId, notes: "Ace",
+            location: location != null ? (CourtLongitudeToInt(location[0]), CourtLatitudeToInt(location[1])) : null);
         await db.SaveChangesAsync();
         BroadcastEvent(gameNumber, e);
     }
