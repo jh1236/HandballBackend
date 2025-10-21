@@ -96,6 +96,7 @@ public class EditGamesController : ControllerBase {
         public bool? LeftPlayer { get; set; }
         public string? PlayerSearchable { get; set; }
         public string? Method { get; set; }
+        public string[]? Location { get; set; }
     }
 
     [HttpPost("score")]
@@ -107,10 +108,10 @@ public class EditGamesController : ControllerBase {
 
         if (!string.IsNullOrEmpty(scorePointRequest.PlayerSearchable)) {
             await GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
-                scorePointRequest.PlayerSearchable, scorePointRequest.Method);
+                scorePointRequest.PlayerSearchable, scorePointRequest.Method, scorePointRequest.Location);
         } else if (scorePointRequest.LeftPlayer.HasValue) {
             await GameManager.ScorePoint(scorePointRequest.Id, scorePointRequest.FirstTeam,
-                scorePointRequest.LeftPlayer.Value, scorePointRequest.Method);
+                scorePointRequest.LeftPlayer.Value, scorePointRequest.Method, scorePointRequest.Location);
         } else {
             return BadRequest(new MustProvideArgument(nameof(scorePointRequest.LeftPlayer),
                 nameof(scorePointRequest.PlayerSearchable)));
@@ -213,6 +214,7 @@ public class EditGamesController : ControllerBase {
 
     public class AceRequest {
         public required int Id { get; set; }
+        public required string[]? Location { get; set; }
     }
 
     [HttpPost("ace")]
@@ -222,7 +224,7 @@ public class EditGamesController : ControllerBase {
             return Forbid();
         }
 
-        await GameManager.Ace(aceRequest.Id);
+        await GameManager.Ace(aceRequest.Id, aceRequest.Location);
         return NoContent();
     }
 
