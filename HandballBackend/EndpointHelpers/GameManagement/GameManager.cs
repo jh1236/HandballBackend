@@ -68,7 +68,7 @@ public static class GameManager {
 
     private static async Task<GameEvent> AddPointToGame(HandballContext db, int gameNumber, bool firstTeam,
         int? playerId,
-        bool penalty = false, string? notes = null, (int, int)? location = null) {
+        string? notes = null, (int, int)? location = null) {
         var game = await db.Games.IncludeRelevant().Include(g => g.Events)
             .SingleOrDefaultAsync(g => g.GameNumber == gameNumber);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
@@ -80,7 +80,7 @@ public static class GameManager {
             details = 10 * x + y;
         }
 
-        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes,
+        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, notes,
             details: details);
         newEvent.TeamToServeId = teamId;
         if (teamId == prevEvent.TeamToServeId) {
@@ -389,7 +389,7 @@ public static class GameManager {
             .Select(gE => gE.EventType is GameEventType.Fault).FirstOrDefault(false);
         await db.AddAsync(gameEvent);
         if (faulted) {
-            await AddPointToGame(db, gameNumber, !firstTeam, null, true);
+            await AddPointToGame(db, gameNumber, !firstTeam, null, "Double Fault");
         }
 
         GameEventSynchroniser.SyncFault(game, gameEvent);
@@ -585,14 +585,14 @@ public static class GameManager {
 
             bothCarded = Math.Min(bothCarded,
                 Math.Min(Math.Max(myScore + 2, game.ScoreToWin), game.ScoreToForceWin) - theirScore);
-
+            var penaltyReason = players.Count == 1 ? "Penalty Point" : "Both Players Carded";
             for (var i = 0; i < (players.Count == 1 ? duration : bothCarded); i++) {
                 await AddPointToGame(
                     db,
                     gameNumber,
                     !firstTeam,
                     null,
-                    penalty: true
+                    penaltyReason
                 );
             }
         }
@@ -684,13 +684,13 @@ public static class GameManager {
         game.Length = Utilities.GetUnixSeconds() - game.StartTime;
         GameEventSynchroniser.SyncGameEnd(game, endEvent);
         if (!isRandomAbandonment && game is {
-            Ranked:
+                Ranked:
                 true,
-            IsFinal:
+                IsFinal:
                 false,
-            TeamOne.NonCaptainId: not null,
-            TeamTwo.NonCaptain: not null
-        }) {
+                TeamOne.NonCaptainId: not null,
+                TeamTwo.NonCaptain: not null
+            }) {
             var playingPlayers = game.Players
                 .Where(pgs => (isForfeit || pgs.RoundsCarded + pgs.RoundsOnCourt > 0)).ToList();
             var playingPlayerIds = playingPlayers.Select(pgs => pgs.PlayerId).ToList();
@@ -821,7 +821,7 @@ public static class GameManager {
         var ranked = tournament.Ranked;
         var isBye = false;
         var tasks = new List<Task>();
-        foreach (var team in new[] { teamOne, teamTwo }) {
+        foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) {
                 // this is the bye team
                 isBye = true;
@@ -906,7 +906,7 @@ public static class GameManager {
             .ToDictionaryAsync(pgs => pgs!.PlayerId);
 
         tasks.Clear();
-        foreach (var team in new[] { teamOne, teamTwo }) {
+        foreach (var team in new[] {teamOne, teamTwo}) {
             if (team.Id == 1) continue;
             Person?[] teamPlayers = [team.Captain, team.NonCaptain, team.Substitute];
             foreach (var p in teamPlayers.Where(p => p != null).Cast<Person>()) {
