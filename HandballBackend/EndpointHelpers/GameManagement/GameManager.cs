@@ -68,7 +68,7 @@ public static class GameManager {
 
     private static async Task<GameEvent> AddPointToGame(HandballContext db, int gameNumber, bool firstTeam,
         int? playerId,
-        bool penalty = false, string? notes = null, (int, int)? location = null) {
+        string? notes = null, (int, int)? location = null) {
         var game = await db.Games.IncludeRelevant().Include(g => g.Events)
             .SingleOrDefaultAsync(g => g.GameNumber == gameNumber);
         var teamId = firstTeam ? game.TeamOneId : game.TeamTwoId;
@@ -80,7 +80,7 @@ public static class GameManager {
             details = 10 * x + y;
         }
 
-        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, penalty ? "Penalty" : notes,
+        var newEvent = SetUpGameEvent(game, GameEventType.Score, firstTeam, playerId, notes,
             details: details);
         newEvent.TeamToServeId = teamId;
         if (teamId == prevEvent.TeamToServeId) {
@@ -389,7 +389,7 @@ public static class GameManager {
             .Select(gE => gE.EventType is GameEventType.Fault).FirstOrDefault(false);
         await db.AddAsync(gameEvent);
         if (faulted) {
-            await AddPointToGame(db, gameNumber, !firstTeam, null, true);
+            await AddPointToGame(db, gameNumber, !firstTeam, null, "Double Fault");
         }
 
         GameEventSynchroniser.SyncFault(game, gameEvent);
@@ -585,14 +585,14 @@ public static class GameManager {
 
             bothCarded = Math.Min(bothCarded,
                 Math.Min(Math.Max(myScore + 2, game.ScoreToWin), game.ScoreToForceWin) - theirScore);
-
+            var penaltyReason = players.Count == 1 ? "Penalty Point" : "Both Players Carded";
             for (var i = 0; i < (players.Count == 1 ? duration : bothCarded); i++) {
                 await AddPointToGame(
                     db,
                     gameNumber,
                     !firstTeam,
                     null,
-                    penalty: true
+                    penaltyReason
                 );
             }
         }

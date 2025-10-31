@@ -287,7 +287,7 @@ internal static class GameEventSynchroniser {
             receivingPlayer = nonServingTeam.FirstOrDefault(pgs => (pgs?.CardTimeRemaining ?? 1) == 0);
         }
 
-        if (receivingPlayer != null && gameEvent.Notes != "Penalty") {
+        if (receivingPlayer != null && gameEvent.PlayerId != null) {
             receivingPlayer.ServesReceived += 1;
             if (gameEvent.Notes != "Ace") {
                 receivingPlayer.ServesReturned += 1;
